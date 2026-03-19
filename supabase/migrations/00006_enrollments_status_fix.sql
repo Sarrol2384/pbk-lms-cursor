@@ -1,0 +1,5 @@
+-- Enrollment status fix: the app now inserts 'pending_approval' instead of 'pending'
+-- to match the enrollments_status_check (or enrollment_status enum).
+-- No SQL required unless your DB uses a CHECK that excludes 'pending_approval'.
+-- If you still get enrollments_status_check errors, ensure the constraint/enum
+-- allows: pending_approval, approved, rejected.
