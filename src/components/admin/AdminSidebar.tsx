@@ -48,7 +48,7 @@ export default function AdminSidebar({ profile }: { profile: { first_name: strin
   async function signOut() {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/login')
+    router.push('/login?from=logout')
   }
 
   return (

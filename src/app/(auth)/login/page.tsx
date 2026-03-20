@@ -12,11 +12,14 @@ export default function LoginPage() {
   const [fromRegister, setFromRegister] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [preventAutofill, setPreventAutofill] = useState(false)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       setMessage(params.get('message') || '')
-      setFromRegister(params.get('from') === 'register')
+      const from = params.get('from')
+      setFromRegister(from === 'register')
+      setPreventAutofill(from === 'register' || from === 'logout')
       const emailParam = params.get('email')
       if (emailParam) setEmail(emailParam)
     }
@@ -59,17 +62,17 @@ export default function LoginPage() {
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">{error}</div>
       )}
 
-      <form onSubmit={onSubmit} className="space-y-4" autoComplete={fromRegister ? 'off' : undefined}>
+      <form onSubmit={onSubmit} className="space-y-4" autoComplete={preventAutofill ? 'off' : undefined}>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className={inputClass} placeholder="you@example.com" autoComplete={fromRegister ? 'off' : 'email'} />
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className={inputClass} placeholder="you@example.com" autoComplete={preventAutofill ? 'off' : 'email'} />
         </div>
         <div>
           <div className="flex items-center justify-between mb-1">
             <label className="block text-sm font-medium text-gray-700">Password</label>
             <Link href="/forgot-password" className="text-xs text-blue-600 hover:underline">Forgot password?</Link>
           </div>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className={inputClass} placeholder="••••••••" autoComplete={fromRegister ? 'new-password' : 'current-password'} />
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className={inputClass} placeholder="••••••••" autoComplete={preventAutofill ? 'new-password' : 'current-password'} />
         </div>
         <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm">
           {loading ? 'Signing in...' : 'Sign in'}

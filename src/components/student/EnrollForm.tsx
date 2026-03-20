@@ -14,35 +14,34 @@ export default function EnrollForm({ course, userId }: { course: Course; userId:
   async function applyNow() {
     setLoading(true)
     setError(null)
-    const supabase = createClient()
+    try {
+      const supabase = createClient()
 
-    const { error: enrollErr } = await supabase
-      .from('enrollments')
-      .insert({ user_id: userId, course_id: course.id, status: 'pending_approval' })
-      .select('id').single()
+      const { error: enrollErr } = await supabase
+        .from('enrollments')
+        .insert({ user_id: userId, course_id: course.id, status: 'pending_approval' })
+        .select('id').single()
 
-    if (enrollErr) {
-      if (enrollErr.code === '23505') {
-        router.push(`/student/enroll/${course.id}`)
+      if (enrollErr) {
+        if (enrollErr.code === '23505') {
+          router.refresh()
+          return
+        }
+        setError(enrollErr.message)
         return
       }
-      setError(enrollErr.message)
+
+      fetch('/api/payments/notify', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, courseId: course.id, applicationOnly: true }),
+      }).catch(() => {}) // best-effort; don't block UI
+
+      router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Submission failed')
+    } finally {
       setLoading(false)
-      return
     }
-
-    const notifyRes = await fetch('/api/payments/notify', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, courseId: course.id, applicationOnly: true }),
-    })
-
-    if (!notifyRes.ok) {
-      router.push(`/student/enroll/${course.id}?saved=1`)
-      setLoading(false)
-      return
-    }
-
-    router.push(`/student/enroll/${course.id}`)
   }
 
   return (
