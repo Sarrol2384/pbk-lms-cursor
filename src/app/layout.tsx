@@ -5,8 +5,11 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'PBK University LMS',
-  description: 'SETA-accredited Learning Management System',
+  title: {
+    default: 'PBK Management and Leadership Institute',
+    template: '%s | PBK Institute',
+  },
+  description: 'Accredited management and leadership qualifications — apply online.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
