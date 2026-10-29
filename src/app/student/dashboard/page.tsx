@@ -9,7 +9,7 @@ export default async function StudentDashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('first_name').eq('id', user.id).single()
 
   const [enrollmentsRes, certificatesRes, pendingPaymentsRes, outstandingPaymentsRes, enrollmentsWithDates] = await Promise.all([
     supabase.from('enrollments').select('id, status, course_id, enrolled_at, created_at, courses:course_id(title, code, nqf_level, credits)').eq('user_id', user.id).eq('status', 'approved'),

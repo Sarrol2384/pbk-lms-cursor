@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 /**
- * Syncs the current user's profile from auth.users raw_user_meta_data.
- * Call after email verification or first login to backfill phone/id_number.
+ * Copies name and phone from auth metadata onto the profile after login.
+ * The SA ID number is not read from metadata. Signup writes it to profiles only.
  */
 export async function POST() {
   const supabase = createClient()
@@ -14,7 +14,6 @@ export async function POST() {
   const first_name = meta.first_name ?? ''
   const last_name = meta.last_name ?? ''
   const phone = meta.phone ? String(meta.phone).trim() || null : null
-  const id_number = meta.id_number ? String(meta.id_number).trim() || null : null
 
   const service = createServiceClient()
   const { error } = await service
@@ -23,7 +22,6 @@ export async function POST() {
       first_name: first_name || undefined,
       last_name: last_name || undefined,
       phone: phone ?? undefined,
-      id_number: id_number ?? undefined,
     })
     .eq('id', user.id)
 

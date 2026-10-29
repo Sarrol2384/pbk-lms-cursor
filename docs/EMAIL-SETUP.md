@@ -85,6 +85,10 @@ So the **first** email (confirm your signup) is sent **by Brevo** and doesn’t 
 | Password       | Your Brevo SMTP key (1.3)      |
 
 4. **Save**. New signup confirmation emails will be sent via Brevo.
+5. On the same Email provider page, turn **Confirm email** on. New accounts stay signed out until the person opens that link. The app no longer marks emails as confirmed at signup.
+6. Open **Authentication → URL Configuration**. Set **Site URL** to your live site (`NEXT_PUBLIC_APP_URL`). Under **Redirect URLs**, add:
+   - `https://your-pbk-lms-domain.com/api/auth/callback`
+   - `http://localhost:3000/api/auth/callback` (only if you test signup locally)
 
 ---
 
