@@ -7,7 +7,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('id, first_name, last_name, email, role').eq('id', user.id).single()
   if (!profile) redirect('/login')
 
   if (profile.role === 'super_admin' || profile.role === 'admin') redirect('/admin/dashboard')

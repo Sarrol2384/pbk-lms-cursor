@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+
+const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() || ''
 
 type Step = 1 | 2
 
@@ -17,10 +19,52 @@ export default function RegisterPage() {
     first_name: '', last_name: '', email: '', password: '', confirm_password: '',
     phone: '', id_number: '', address: '',
   })
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const turnstileWidgetId = useRef<string | null>(null)
 
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }))
   }
+
+  useEffect(() => {
+    if (step !== 2 || !turnstileSiteKey) return
+    let cancelled = false
+
+    function renderWidget() {
+      if (cancelled || turnstileWidgetId.current) return
+      const container = document.getElementById('turnstile-widget')
+      const ts = (window as Window & { turnstile?: { render: (el: HTMLElement, opts: Record<string, unknown>) => string; remove: (id: string) => void } }).turnstile
+      if (!container || !ts) return
+      turnstileWidgetId.current = ts.render(container, {
+        sitekey: turnstileSiteKey,
+        callback: (token: string) => setTurnstileToken(token),
+        'expired-callback': () => setTurnstileToken(''),
+        'error-callback': () => setTurnstileToken(''),
+      })
+    }
+
+    const existing = document.querySelector('script[data-turnstile="true"]')
+    if ((window as Window & { turnstile?: unknown }).turnstile) {
+      renderWidget()
+    } else if (!existing) {
+      const script = document.createElement('script')
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+      script.async = true
+      script.dataset.turnstile = 'true'
+      script.onload = () => renderWidget()
+      document.head.appendChild(script)
+    } else {
+      existing.addEventListener('load', () => renderWidget(), { once: true })
+    }
+
+    return () => {
+      cancelled = true
+      const ts = (window as Window & { turnstile?: { remove: (id: string) => void } }).turnstile
+      if (turnstileWidgetId.current && ts?.remove) ts.remove(turnstileWidgetId.current)
+      turnstileWidgetId.current = null
+      setTurnstileToken('')
+    }
+  }, [step])
 
   function isValidPhone(value: string): boolean {
     const v = value.trim()
@@ -37,6 +81,14 @@ export default function RegisterPage() {
       setError('Please enter a valid phone number (e.g. 0821234567). Do not use an email address.')
       return
     }
+    if (!/^\d{13}$/.test(form.id_number.trim())) {
+      setError('Enter a 13-digit SA ID number')
+      return
+    }
+    if (turnstileSiteKey && !turnstileToken) {
+      setError('Please complete the security check.')
+      return
+    }
     setLoading(true)
     setError(null)
 
@@ -51,6 +103,7 @@ export default function RegisterPage() {
           last_name: form.last_name,
           phone: form.phone,
           id_number: form.id_number,
+          turnstileToken,
         }),
       })
       const text = await res.text()
@@ -65,11 +118,19 @@ export default function RegisterPage() {
 
       if (!res.ok) {
         setError(json.error ?? 'Signup failed')
+        const ts = (window as Window & { turnstile?: { reset: (id: string) => void } }).turnstile
+        if (turnstileWidgetId.current && ts?.reset) ts.reset(turnstileWidgetId.current)
+        setTurnstileToken('')
         setLoading(false)
         return
       }
 
-      router.push('/login?from=register&message=' + encodeURIComponent('Account created. Please sign in.') + '&email=' + encodeURIComponent(form.email))
+      const needsEmailVerification = (json as { needsEmailVerification?: boolean }).needsEmailVerification !== false
+      if (needsEmailVerification) {
+        router.push('/verify?email=' + encodeURIComponent(form.email))
+      } else {
+        router.push('/student/dashboard')
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Signup failed')
       setLoading(false)
@@ -94,7 +155,7 @@ export default function RegisterPage() {
       </div>
 
       <h2 className="text-2xl font-bold text-gray-900 mb-1">Create your account</h2>
-      <p className="text-gray-500 text-sm mb-6">Step {step} of 2. After this, you’ll sign in and choose a programme to apply for.</p>
+      <p className="text-gray-500 text-sm mb-6">Step {step} of 2. We email you a confirmation link. Open it before you sign in.</p>
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">{error}</div>}
 
@@ -148,6 +209,11 @@ export default function RegisterPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Confirm password *</label>
             <input type="password" value={form.confirm_password} onChange={e => set('confirm_password', e.target.value)} className={inputClass} placeholder="Repeat your password" />
           </div>
+          {turnstileSiteKey && (
+            <div>
+              <div id="turnstile-widget" />
+            </div>
+          )}
           <div className="flex gap-3">
             <button onClick={() => { setError(null); setStep(1) }}
               className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-sm">

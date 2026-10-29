@@ -130,8 +130,8 @@ export async function sendAccountCreatedEmail(to: string, firstName: string) {
   const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/login`
   const body = `
     <p>Dear ${firstName || 'there'},</p>
-    <p>Your account has been created successfully.</p>
-    <p>You can now sign in with your email and password to browse programmes and apply for courses.</p>
+    <p>Your account has been created. Confirm your email address from the message we sent you before you sign in.</p>
+    <p>After your email is confirmed, sign in to browse programmes and apply for courses.</p>
     <p><a href="${loginUrl}" class="btn">Sign in</a></p>
     <p>If you have any questions, contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>.</p>
     <p>Warm regards,<br>${FROM_NAME}</p>`

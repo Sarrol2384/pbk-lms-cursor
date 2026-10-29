@@ -115,7 +115,7 @@ function VerifyContent() {
               </button>
             </div>
           )}
-          <p className="text-gray-500 text-xs mb-2">After you click the link in the email, sign in and go to My Courses to apply for a programme.</p>
+          <p className="text-gray-500 text-xs mb-2">Open the confirmation link in this browser. After that, sign in and go to My Courses to apply for a programme.</p>
           <p className="text-gray-500 text-xs mb-2">Use the <strong>most recent</strong> verification email—older links may no longer work.</p>
           <p className="text-gray-500 text-xs mb-3">No email received? Try <strong>Sign in</strong> anyway—your account may already be active.</p>
           <Link href="/login" className="text-blue-600 font-medium hover:underline text-sm">Sign in</Link>

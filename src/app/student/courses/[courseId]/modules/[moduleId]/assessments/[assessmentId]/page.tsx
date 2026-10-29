@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { SubmitAssignmentForm } from './SubmitAssignmentForm'
 import { TakeQuiz } from '@/components/student/TakeQuiz'
+import { MAX_QUIZ_ATTEMPTS } from '@/lib/quiz'
 
 export default async function StudentAssessmentPage({
   params,
@@ -41,14 +42,38 @@ export default async function StudentAssessmentPage({
     .eq('assessment_id', params.assessmentId)
     .maybeSingle()
 
-  // Load quiz questions and rubrics with service client so students see them (RLS only allows admin/lecturer by default)
+  // Questions are loaded with the service role and this column list omits correct_answer.
+  // Students have no SELECT policy on quiz_questions (see migration 00024).
   const service = createServiceClient()
   let quizQuestions: { id: string; question: string; option_a: string; option_b: string; option_c: string; option_d: string; marks: number }[] = []
   let rubrics: { criteria: string; marks: number }[] = []
+  let attemptsUsed = 0
+  let attemptsTracked = false
+  let bestAttemptMark: number | null = null
   if (isQuiz) {
     const { data: qRows } = await service.from('quiz_questions').select('id, question, option_a, option_b, option_c, option_d, marks').eq('assessment_id', params.assessmentId).order('id')
     quizQuestions = (qRows ?? []).map(q => ({ id: q.id, question: q.question ?? '', option_a: q.option_a ?? '', option_b: q.option_b ?? '', option_c: q.option_c ?? '', option_d: q.option_d ?? '', marks: q.marks ?? 0 }))
+    const { data: attemptRows, error: attemptsError } = await service
+      .from('quiz_attempts')
+      .select('marks_obtained')
+      .eq('user_id', user.id)
+      .eq('assessment_id', params.assessmentId)
+    if (!attemptsError) {
+      attemptsTracked = true
+      attemptsUsed = attemptRows?.length ?? 0
+      for (const row of attemptRows ?? []) {
+        const score = row.marks_obtained ?? 0
+        if (bestAttemptMark == null || score > bestAttemptMark) bestAttemptMark = score
+      }
+    } else if (existing?.status === 'graded') {
+      attemptsUsed = MAX_QUIZ_ATTEMPTS
+    }
   }
+  const attemptsRemaining = Math.max(0, MAX_QUIZ_ATTEMPTS - attemptsUsed)
+  const submissionMark = existing?.status === 'graded' && existing.marks_obtained != null ? existing.marks_obtained : null
+  const recordedBest = !isQuiz || (bestAttemptMark == null && submissionMark == null)
+    ? null
+    : Math.max(bestAttemptMark ?? 0, submissionMark ?? 0)
   if (isAssignment) {
     const { data: rRows } = await service.from('assignment_rubrics').select('criteria, marks').eq('assessment_id', params.assessmentId).order('id')
     rubrics = (rRows ?? []) as { criteria: string; marks: number }[]
@@ -69,7 +94,7 @@ export default async function StudentAssessmentPage({
         <h1 className="text-xl font-bold text-gray-900 mt-0.5">{assessment.title}</h1>
         <p className="text-sm text-gray-500 mt-1">{assessment.total_marks} marks • Weight {assessment.weight}%</p>
 
-        {existing?.status === 'graded' && existing.marks_obtained != null && (
+        {!isQuiz && existing?.status === 'graded' && existing.marks_obtained != null && (
           <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-sm font-medium text-green-800">Graded: {existing.marks_obtained} / {assessment.total_marks}</p>
           </div>
@@ -122,16 +147,29 @@ export default async function StudentAssessmentPage({
 
         {isQuiz && (
           <>
-            {existing?.status === 'graded' && existing.marks_obtained != null ? (
-              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm font-medium text-green-800">Your score: {existing.marks_obtained} / {assessment.total_marks}</p>
+            {recordedBest != null && (
+              <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm font-medium text-green-800">Best score: {recordedBest} / {assessment.total_marks}</p>
+                <p className="text-xs text-green-700 mt-1">
+                  Your recorded grade is your best score, not your latest attempt.
+                  {attemptsTracked ? ` Attempts used: ${attemptsUsed} of ${MAX_QUIZ_ATTEMPTS}.` : ''}
+                </p>
               </div>
-            ) : quizQuestions.length > 0 ? (
-              <TakeQuiz questions={quizQuestions} totalMarks={assessment.total_marks ?? 0} assessmentId={params.assessmentId} />
-            ) : (
+            )}
+            {attemptsRemaining > 0 && quizQuestions.length > 0 ? (
+              <TakeQuiz
+                questions={quizQuestions}
+                totalMarks={assessment.total_marks ?? 0}
+                assessmentId={params.assessmentId}
+                attemptsRemaining={attemptsRemaining}
+                attemptsAllowed={MAX_QUIZ_ATTEMPTS}
+              />
+            ) : quizQuestions.length === 0 ? (
               <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                 <p className="text-sm text-amber-800">No questions in this quiz yet.</p>
               </div>
+            ) : (
+              <p className="mt-4 text-sm text-gray-600">You have used all {MAX_QUIZ_ATTEMPTS} attempts for this quiz.</p>
             )}
           </>
         )}

@@ -8,10 +8,23 @@ export function TakeQuiz({
   questions,
   totalMarks,
   assessmentId,
-}: { questions: QuestionSafe[]; totalMarks: number; assessmentId: string }) {
+  attemptsRemaining,
+  attemptsAllowed,
+}: {
+  questions: QuestionSafe[]
+  totalMarks: number
+  assessmentId: string
+  attemptsRemaining?: number
+  attemptsAllowed?: number
+}) {
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<{ marks_obtained: number; total_marks: number } | null>(null)
+  const [result, setResult] = useState<{
+    marks_obtained: number
+    best_marks: number
+    total_marks: number
+    attempts_remaining: number
+  } | null>(null)
   const [error, setError] = useState('')
 
   function handleChange(questionId: string, value: string) {
@@ -37,7 +50,12 @@ export function TakeQuiz({
         throw new Error(d.error || res.statusText)
       }
       const data = await res.json()
-      setResult({ marks_obtained: data.marks_obtained, total_marks: data.total_marks })
+      setResult({
+        marks_obtained: data.marks_obtained,
+        best_marks: data.best_marks ?? data.marks_obtained,
+        total_marks: data.total_marks,
+        attempts_remaining: data.attempts_remaining ?? 0,
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Submit failed')
     } finally {
@@ -46,12 +64,24 @@ export function TakeQuiz({
   }
 
   if (result !== null) {
-    const pct = result.total_marks > 0 ? Math.round((result.marks_obtained / result.total_marks) * 100) : 0
+    const pct = result.total_marks > 0 ? Math.round((result.best_marks / result.total_marks) * 100) : 0
     return (
       <div className="mt-6 p-6 bg-green-50 border border-green-200 rounded-xl">
         <h3 className="font-semibold text-green-900 text-lg">Quiz submitted</h3>
-        <p className="text-2xl font-bold text-green-800 mt-2">{result.marks_obtained} / {result.total_marks} ({pct}%)</p>
-        <p className="text-sm text-green-700 mt-1">Your result has been recorded.</p>
+        <p className="text-sm text-green-800 mt-2">This attempt: {result.marks_obtained} / {result.total_marks}</p>
+        <p className="text-2xl font-bold text-green-800 mt-1">Best score: {result.best_marks} / {result.total_marks} ({pct}%)</p>
+        <p className="text-sm text-green-700 mt-1">Your recorded grade is your best score, not your latest attempt.</p>
+        {result.attempts_remaining > 0 ? (
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-sm"
+          >
+            Try again ({result.attempts_remaining} attempt{result.attempts_remaining === 1 ? '' : 's'} left)
+          </button>
+        ) : (
+          <p className="text-sm text-green-700 mt-2">You have used all of your attempts.</p>
+        )}
       </div>
     )
   }
@@ -85,6 +115,11 @@ export function TakeQuiz({
           </div>
         </div>
       ))}
+      {attemptsAllowed != null && attemptsRemaining != null && (
+        <p className="text-sm text-gray-600">
+          {attemptsRemaining} of {attemptsAllowed} attempt{attemptsAllowed === 1 ? '' : 's'} left. Your recorded grade is your best score.
+        </p>
+      )}
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2.5 px-5 rounded-lg text-sm">
         {loading ? 'Submitting...' : 'Submit quiz'}
