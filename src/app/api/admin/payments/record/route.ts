@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sendWelcomeAccessGrantedEmail, sendPaymentReceivedEmail } from '@/lib/email'
+import { approveEnrollmentFirstTime } from '@/lib/enrollment-access'
 
 /** POST: admin records amount received (adds to amount_paid). When fully paid, approves enrollment and sends welcome email. */
 export async function POST(request: NextRequest) {
@@ -93,37 +94,31 @@ export async function POST(request: NextRequest) {
   if (studentProfile?.email && course?.title) {
     try {
       await sendPaymentReceivedEmail(studentProfile.email, studentProfile.first_name, course.title, amountReceived, balanceAfter)
-    } catch (e) {
-      console.error('[Record payment] Payment received email failed:', e)
+    } catch {
+      console.error('[Record payment] Payment received email failed')
     }
   }
 
-  const firstPaymentReceived = totalPaid > 0
-  const enrollmentNotYetApproved = !fullyPaid && firstPaymentReceived
+  let firstApproval = false
+  if (totalPaid > 0) {
+    try {
+      const result = await approveEnrollmentFirstTime(payment.enrollment_id)
+      firstApproval = result.firstApproval
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Could not approve enrolment'
+      return NextResponse.json({ error: `Payment amount was saved, but course access was not updated. Do not record it again. ${message}` }, { status: 500 })
+    }
+  }
 
   if (fullyPaid) {
-    await Promise.all([
-      service.from('payments').update({ status: 'approved' }).eq('enrollment_id', payment.enrollment_id),
-      service.from('enrollments').update({ status: 'approved', enrolled_at: new Date().toISOString() }).eq('id', payment.enrollment_id),
-    ])
-    if (studentProfile?.email && course?.title) {
-      try {
-        await sendWelcomeAccessGrantedEmail(studentProfile.email, studentProfile.first_name, course.title)
-      } catch (e) {
-        console.error('[Record payment] Welcome email failed:', e)
-      }
-    }
-  } else if (enrollmentNotYetApproved) {
-    const { data: currentEnrollment } = await service.from('enrollments').select('status').eq('id', payment.enrollment_id).single()
-    if (currentEnrollment?.status !== 'approved') {
-      await service.from('enrollments').update({ status: 'approved', enrolled_at: new Date().toISOString() }).eq('id', payment.enrollment_id)
-      if (studentProfile?.email && course?.title) {
-        try {
-          await sendWelcomeAccessGrantedEmail(studentProfile.email, studentProfile.first_name, course.title)
-        } catch (e) {
-          console.error('[Record payment] Welcome email failed:', e)
-        }
-      }
+    await service.from('payments').update({ status: 'approved' }).eq('enrollment_id', payment.enrollment_id)
+  }
+
+  if (firstApproval && studentProfile?.email && course?.title) {
+    try {
+      await sendWelcomeAccessGrantedEmail(studentProfile.email, studentProfile.first_name, course.title)
+    } catch {
+      console.error('[Record payment] Welcome email failed')
     }
   }
 

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import { assertPreviousModulePassed, requireActiveEnrollment } from '@/lib/enrollment-access'
 
 export default async function StudentModulePage({
   params,
@@ -9,15 +10,8 @@ export default async function StudentModulePage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: enrollment } = await supabase
-    .from('enrollments')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('course_id', params.courseId)
-    .eq('status', 'approved')
-    .single()
-
-  if (!enrollment) redirect(`/student/enroll/${params.courseId}`)
+  const access = await requireActiveEnrollment(user.id, params.courseId)
+  if (!access.ok) redirect(`/student/enroll/${params.courseId}`)
 
   const { data: module } = await supabase
     .from('modules')
@@ -34,18 +28,9 @@ export default async function StudentModulePage({
     .eq('id', params.courseId)
     .single()
 
-  const { data: courseModules } = await supabase
-    .from('modules')
-    .select('id, sequence')
-    .eq('course_id', params.courseId)
-    .order('sequence', { ascending: true })
-  const modList = courseModules ?? []
-  const currentIdx = modList.findIndex((m: { id: string }) => m.id === params.moduleId)
-  const previousModuleId = currentIdx > 0 ? modList[currentIdx - 1]?.id : null
-  const { data: prevProgress } = previousModuleId
-    ? await supabase.from('module_progress').select('status').eq('user_id', user.id).eq('module_id', previousModuleId).single()
-    : { data: { status: 'passed' } }
-  if (previousModuleId && prevProgress?.status !== 'passed') {
+  const unlocked = await assertPreviousModulePassed(user.id, params.courseId, params.moduleId)
+  if (!unlocked.ok) {
+    if (unlocked.error === 'Module not found') notFound()
     redirect(`/student/courses/${params.courseId}?locked=1`)
   }
 
@@ -57,11 +42,13 @@ export default async function StudentModulePage({
 
   const sortedUnits = (units ?? []).sort((a: any, b: any) => (a.sequence ?? 0) - (b.sequence ?? 0))
   const unitIds = sortedUnits.map((u: { id: string }) => u.id)
-  const { data: completions } = await supabase
-    .from('unit_completions')
-    .select('unit_id')
-    .eq('user_id', user.id)
-    .in('unit_id', unitIds)
+  const { data: completions } = unitIds.length === 0
+    ? { data: [] as { unit_id: string }[] }
+    : await supabase
+      .from('unit_completions')
+      .select('unit_id')
+      .eq('user_id', user.id)
+      .in('unit_id', unitIds)
   const completedUnitIds = new Set((completions ?? []).map((c: { unit_id: string }) => c.unit_id))
   const allUnitsComplete = unitIds.length > 0 && unitIds.every((id: string) => completedUnitIds.has(id))
 

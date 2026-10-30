@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
+/** Lookup the pending payment for an approved application. Does not create a plan. */
 export async function GET(request: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -13,27 +14,24 @@ export async function GET(request: NextRequest) {
 
   const service = createServiceClient()
 
-  const { data: enrollment } = await service.from('enrollments').select('id, user_id, course_id').eq('id', enrollmentId).single()
+  const { data: enrollment } = await service
+    .from('enrollments')
+    .select('id, user_id, course_id, status')
+    .eq('id', enrollmentId)
+    .single()
   if (!enrollment || enrollment.user_id !== user.id) return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
+  if (enrollment.course_id !== courseId) return NextResponse.json({ error: 'Course does not match this enrolment' }, { status: 400 })
+  if (enrollment.status !== 'payment_pending' && enrollment.status !== 'approved' && enrollment.status !== 'on_hold') {
+    return NextResponse.json({ error: 'Your application must be approved before you can upload proof of payment' }, { status: 400 })
+  }
 
-  const { data: existingPayment } = await service.from('payments').select('id').eq('enrollment_id', enrollmentId).eq('status', 'pending').maybeSingle()
+  const { data: existingPayment } = await service
+    .from('payments')
+    .select('id')
+    .eq('enrollment_id', enrollmentId)
+    .eq('status', 'pending')
+    .maybeSingle()
   if (existingPayment?.id) return NextResponse.json({ paymentId: existingPayment.id })
 
-  const { data: course } = await service.from('courses').select('fee').eq('id', courseId).single()
-  const amount = course?.fee ?? 0
-
-  const { data: created, error } = await service.from('payments').insert({
-    user_id: user.id,
-    course_id: courseId,
-    enrollment_id: enrollmentId,
-    amount,
-    status: 'pending',
-    installment_number: 1,
-    installment_months: 1,
-    total_installments: 1,
-    installment_amount: amount,
-  }).select('id').single()
-
-  if (error || !created) return NextResponse.json({ error: error?.message || 'Could not create payment' }, { status: 500 })
-  return NextResponse.json({ paymentId: created.id })
+  return NextResponse.json({ error: 'Save your payment plan before uploading proof of payment' }, { status: 400 })
 }

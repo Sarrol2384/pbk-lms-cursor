@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData()
   const file = formData.get('file') as File | null
   if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+  if (file.size <= 0) return NextResponse.json({ error: 'File is empty' }, { status: 400 })
   if (file.size > MAX_SIZE) return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 })
   if (!ALLOWED.includes(file.type)) return NextResponse.json({ error: 'Use PDF, Word, JPG or PNG.' }, { status: 400 })
 
@@ -22,10 +23,10 @@ export async function POST(request: NextRequest) {
 
   const { error: uploadError } = await service.storage
     .from('submissions')
-    .upload(path, buffer, { contentType: file.type, upsert: true })
+    .upload(path, buffer, { contentType: file.type, upsert: false })
 
   if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 })
 
-  const { data: { publicUrl } } = service.storage.from('submissions').getPublicUrl(path)
-  return NextResponse.json({ url: publicUrl })
+  const { data: signed, error: signErr } = await service.storage.from('submissions').createSignedUrl(path, 60 * 60)
+  return NextResponse.json({ path, url: signErr ? null : signed?.signedUrl ?? null })
 }

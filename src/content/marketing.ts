@@ -225,7 +225,7 @@ export const applySteps = [
   { step: 1, title: 'Create your account', desc: 'Register with your email and set a secure password.' },
   { step: 2, title: 'Choose a programme', desc: 'Browse available qualifications and select the one that fits your goals.' },
   { step: 3, title: 'Submit your application', desc: 'Complete the enrolment form for your chosen programme.' },
-  { step: 4, title: 'Payment & approval', desc: 'Upload proof of payment if required; access your course once approved.' },
+  { step: 4, title: 'Approval, then payment', desc: 'After an administrator approves your application, choose a payment plan and upload proof of payment. Course access opens once the first payment is verified.' },
 ]
 
 export const partnerLogos = [

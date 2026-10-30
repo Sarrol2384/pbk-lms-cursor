@@ -14,9 +14,8 @@ export default function SyncPaymentsButton() {
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
         const parts = []
-        if (data.synced > 0) parts.push(`Synced ${data.synced} payment(s)`)
-        if (data.accessGranted > 0) parts.push(`Granted access to ${data.accessGranted} student(s)`)
-        setMessage(parts.length > 0 ? parts.join('. ') + '. Refreshing…' : 'Sync complete.')
+        if (data.synced > 0) parts.push(`Linked ${data.synced} payment(s) to their enrolment`)
+        setMessage(parts.length > 0 ? parts.join('. ') + '. Refreshing…' : 'Sync complete. Enrolment status was not changed.')
         setTimeout(() => window.location.reload(), 800)
       } else {
         setMessage(data.error || 'Sync failed')

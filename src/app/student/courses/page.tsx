@@ -30,15 +30,18 @@ export default async function StudentCoursesPage() {
               <Link key={e.course_id} href={e.status === 'approved' ? `/student/courses/${e.course_id}` : `/student/enroll/${e.course_id}`} className="block bg-white rounded-xl border border-gray-200 p-5 hover:border-blue-300 hover:shadow-sm transition-colors">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center text-sm font-bold">{e.courses?.code?.substring(0, 2)}</div>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${e.status === 'approved' ? 'bg-green-100 text-green-700' : e.status === 'on_hold' ? 'bg-orange-100 text-orange-700' : e.status === 'pending' || e.status === 'pending_approval' || e.status === 'payment_pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>{e.status === 'pending_approval' ? 'Pending' : e.status === 'payment_pending' ? 'Complete payment' : e.status === 'on_hold' ? 'On hold' : e.status}</span>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${e.status === 'approved' ? 'bg-green-100 text-green-700' : e.status === 'on_hold' ? 'bg-orange-100 text-orange-700' : e.status === 'pending' || e.status === 'pending_approval' || e.status === 'payment_pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>{e.status === 'pending_approval' || e.status === 'pending' ? 'Awaiting approval' : e.status === 'payment_pending' ? 'Complete payment' : e.status === 'on_hold' ? 'On hold' : e.status === 'rejected' ? 'Not approved' : e.status}</span>
                 </div>
                 <h3 className="font-semibold text-gray-900 text-sm mb-1">{e.courses?.title}</h3>
                 <p className="text-xs text-gray-500 mb-3">{e.courses?.code} • NQF {e.courses?.nqf_level} • {e.courses?.credits} credits</p>
                 {e.status === 'approved' && (
                   <p className="text-xs text-blue-600 font-medium">Access course →</p>
                 )}
-                {(e.status === 'pending_approval' || e.status === 'payment_pending') && (
-                  <p className="text-xs text-blue-600 font-medium">View details &amp; upload proof of payment →</p>
+                {e.status === 'pending_approval' && (
+                  <p className="text-xs text-blue-600 font-medium">View application status →</p>
+                )}
+                {e.status === 'payment_pending' && (
+                  <p className="text-xs text-blue-600 font-medium">Choose payment plan &amp; upload proof →</p>
                 )}
                 {e.status === 'on_hold' && (
                   <p className="text-xs text-amber-700 font-medium">Access on hold – view details →</p>

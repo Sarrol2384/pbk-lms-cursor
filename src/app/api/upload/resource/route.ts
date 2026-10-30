@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
   const { error: uploadError } = await service.storage
     .from('resources')
-    .upload(path, buffer, { contentType: file.type, upsert: true })
+    .upload(path, buffer, { contentType: file.type, upsert: false })
 
   if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 })
 

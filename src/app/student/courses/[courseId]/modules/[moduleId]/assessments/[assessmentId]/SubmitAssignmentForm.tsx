@@ -23,11 +23,12 @@ export function SubmitAssignmentForm({ assessmentId, existingSubmissionId }: { a
         const d = await uploadRes.json().catch(() => ({}))
         throw new Error(d.error || uploadRes.statusText)
       }
-      const { url } = await uploadRes.json()
+      const uploaded = await uploadRes.json()
+      if (!uploaded.path) throw new Error('Upload did not return a file path.')
       const subRes = await fetch('/api/student/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assessmentId, fileUrl: url }),
+        body: JSON.stringify({ assessmentId, fileUrl: uploaded.path }),
       })
       if (!subRes.ok) {
         const d = await subRes.json().catch(() => ({}))

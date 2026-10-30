@@ -50,7 +50,8 @@ export default function EnrollForm({ course, userId }: { course: Course; userId:
         <h3 className="text-sm font-semibold text-blue-900 mb-2">What happens next?</h3>
         <ol className="text-xs text-blue-700 space-y-1 list-decimal list-inside">
           <li>Submit your application below</li>
-          <li>Choose your payment plan (full, 3, 6 or 12 months) and upload proof of payment on the next screen</li>
+          <li>Wait for an administrator to approve it. You will get an email</li>
+          <li>After approval, choose a payment plan and upload proof of payment</li>
           <li>After your first payment is verified, you can start the course</li>
         </ol>
       </div>

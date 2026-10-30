@@ -73,6 +73,38 @@ export default function StudentsTable({
   const [message, setMessage] = useState<string | null>(null)
   const [removingId, setRemovingId] = useState<string | null>(null)
 
+  async function approveApplication(enrollmentId: string) {
+    setLoading(true)
+    setMessage(null)
+    const res = await fetch(`/api/admin/enrollments/${enrollmentId}/approve-application`, { method: 'POST' })
+    const data = await res.json().catch(() => ({}))
+    if (res.ok) {
+      setMessage(data.emailSent
+        ? 'Application approved. The student can now choose a payment plan.'
+        : `Application approved, but the email was not sent${data.emailError ? `: ${data.emailError}` : ''}.`)
+      setTimeout(() => window.location.reload(), 800)
+    } else {
+      setMessage(data.error || 'Could not approve application')
+    }
+    setLoading(false)
+  }
+
+  async function rejectApplication(enrollmentId: string) {
+    const reason = window.prompt('Reason for rejection (sent to the student)')
+    if (!reason?.trim()) return
+    setLoading(true)
+    setMessage(null)
+    const res = await fetch(`/api/admin/enrollments/${enrollmentId}/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reason.trim() }),
+    })
+    const data = await res.json().catch(() => ({}))
+    setMessage(res.ok ? 'Application rejected. The student has been emailed.' : (data.error || 'Could not reject application'))
+    setLoading(false)
+    if (res.ok) setTimeout(() => window.location.reload(), 800)
+  }
+
   async function setEnrollmentStatus(enrollmentId: string, status: 'on_hold' | 'approved') {
     setLoading(true)
     const res = await fetch(`/api/admin/enrollments/${enrollmentId}/status`, {
@@ -214,13 +246,13 @@ export default function StudentsTable({
             (pendingApplications.length === 0 && pendingGroups.length === 0) ? (
               <div className="p-8 text-center">
                 <p className="text-gray-400 text-sm mb-2">No pending applications</p>
-                <p className="text-gray-400 text-xs max-w-sm mx-auto">When a student applies, they appear here. Click <strong>Approve application</strong> to grant them course access.</p>
+                <p className="text-gray-400 text-xs max-w-sm mx-auto">When a student applies, they appear here. Approve the application before they can choose a payment plan. Course access is granted only after you record a payment.</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
                 {pendingApplications.length > 0 && (
                   <>
-                    <div className="px-4 py-2 bg-gray-50 text-xs font-semibold text-gray-600 uppercase tracking-wide">Applications (student must submit payment plan and proof first; then they appear under Payment pending)</div>
+                    <div className="px-4 py-2 bg-gray-50 text-xs font-semibold text-gray-600 uppercase tracking-wide">Applications (approve before the student can choose a payment plan)</div>
                     {pendingApplications.map((app: PendingApplication) => (
                       <div key={app.id} className="p-4">
                         <div className="flex items-start justify-between gap-3">
@@ -234,7 +266,20 @@ export default function StudentsTable({
                               <p className="text-xs text-gray-400">{app.courses?.title} • {app.courses?.code} • Applied {formatDateShort(app.created_at)}</p>
                             </div>
                           </div>
-                          <span className="text-xs text-amber-600 font-medium">Awaiting payment plan & proof</span>
+                          {['pending_approval', 'pending', ''].includes((app.status || '').toString().toLowerCase().trim()) ? (
+                            <div className="flex gap-2 shrink-0">
+                              <button type="button" onClick={() => approveApplication(app.id)} disabled={loading}
+                                className="text-xs bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg">Approve</button>
+                              <button type="button" onClick={() => rejectApplication(app.id)} disabled={loading}
+                                className="text-xs bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg">Reject</button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-xs text-amber-600 font-medium">Approved — waiting for payment plan</span>
+                              <button type="button" onClick={() => rejectApplication(app.id)} disabled={loading}
+                                className="text-xs bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg">Reject</button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}

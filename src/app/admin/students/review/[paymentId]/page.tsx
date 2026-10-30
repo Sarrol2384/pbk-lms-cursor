@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import PaymentReviewCard from '@/components/admin/PaymentReviewCard'
+import { signedUrlForStoredFile } from '@/lib/storage/signed-url'
 
 function formatAmount(n: number) {
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -89,7 +90,7 @@ export default async function PaymentReviewPage({
 
           <PaymentReviewCard
             paymentId={paymentId}
-            proofUrl={p.proof_url}
+            proofUrl={await signedUrlForStoredFile('payments', p.proof_url)}
             balance={balance}
             total={total}
           />

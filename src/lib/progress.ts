@@ -23,11 +23,30 @@ export async function updateModuleProgress(userId: string, moduleId: string): Pr
     .select('id, total_marks, weight')
     .eq('module_id', moduleId)
   if (!assessments?.length) {
+    // No quiz or assignment: the module is complete once every unit is done.
+    // A module with neither units nor assessments stays in progress.
+    const { data: units } = await supabase.from('units').select('id').eq('module_id', moduleId)
+    const unitIds = (units ?? []).map((u) => u.id)
+    let passed = false
+    if (unitIds.length > 0) {
+      const { data: completions } = await supabase
+        .from('unit_completions')
+        .select('unit_id')
+        .eq('user_id', userId)
+        .in('unit_id', unitIds)
+      const done = new Set((completions ?? []).map((c) => c.unit_id))
+      passed = unitIds.every((id) => done.has(id))
+    }
     await supabase.from('module_progress').upsert(
-      { user_id: userId, module_id: moduleId, status: 'in_progress' },
+      {
+        user_id: userId,
+        module_id: moduleId,
+        status: passed ? 'passed' : 'in_progress',
+        completed_at: passed ? new Date().toISOString() : null,
+      },
       { onConflict: 'user_id,module_id' }
     )
-    return 'in_progress'
+    return passed ? 'passed' : 'in_progress'
   }
 
   const scores: number[] = []

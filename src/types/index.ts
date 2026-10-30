@@ -1,5 +1,5 @@
 export type UserRole = 'super_admin' | 'admin' | 'lecturer' | 'student'
-export type EnrollmentStatus = 'pending' | 'approved' | 'rejected' | 'suspended'
+export type EnrollmentStatus = 'pending_approval' | 'payment_pending' | 'approved' | 'rejected' | 'on_hold'
 export type PaymentStatus = 'pending' | 'approved' | 'rejected'
 export type AssessmentType = 'formative_quiz' | 'assignment' | 'module_test' | 'final_exam'
 export type SubmissionStatus = 'submitted' | 'graded' | 'returned'

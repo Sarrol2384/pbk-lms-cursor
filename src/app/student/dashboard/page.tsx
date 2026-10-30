@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import UploadProofOfPayment from '@/components/student/UploadProofOfPayment'
 import { formatDate, getPaymentDeadline } from '@/lib/utils'
+import { suspendEnrollmentIfOverdue } from '@/lib/enrollment-access'
 
 export default async function StudentDashboardPage() {
   const supabase = createClient()
@@ -12,14 +13,16 @@ export default async function StudentDashboardPage() {
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
 
   const [enrollmentsRes, certificatesRes, pendingPaymentsRes, outstandingPaymentsRes, enrollmentsWithDates] = await Promise.all([
-    supabase.from('enrollments').select('id, status, course_id, enrolled_at, created_at, courses:course_id(title, code, nqf_level, credits)').eq('user_id', user.id).eq('status', 'approved'),
+    supabase.from('enrollments').select('id, status, course_id, enrolled_at, created_at, courses:course_id(title, code, nqf_level, credits)').eq('user_id', user.id),
     supabase.from('certificates').select('id, certificate_number, issued_at, courses:course_id(title)').eq('user_id', user.id).order('issued_at', { ascending: false }),
     supabase.from('payments').select('id, status, enrollment_id').eq('user_id', user.id).eq('status', 'pending'),
     createServiceClient().from('payments').select('id, amount, amount_paid, enrollment_id, course_id, total_installments, created_at, courses:course_id(title, code)').eq('user_id', user.id).eq('status', 'pending'),
     createServiceClient().from('enrollments').select('id, enrolled_at, created_at').eq('user_id', user.id),
   ])
 
-  const enrollments = (enrollmentsRes.data ?? []) as any[]
+  const allEnrollments = (enrollmentsRes.data ?? []) as any[]
+  const enrollments = allEnrollments.filter((e: any) => e.status === 'approved')
+  const applicationEnrollments = allEnrollments.filter((e: any) => e.status !== 'approved')
   const certificates = (certificatesRes.data ?? []) as any[]
   const approvedEnrollmentIds = new Set(enrollments.map((e: any) => e.id))
   const pendingPayments = (pendingPaymentsRes.data ?? []) as any[]
@@ -67,12 +70,17 @@ export default async function StudentDashboardPage() {
     return acc
   }, {})
 
-  const service = createServiceClient()
   const overdueIds = new Set<string>()
   for (const item of withBalance) {
     if (item.isOverdue && item.balance > 0 && item.enrollmentId) {
-      await service.from('enrollments').update({ status: 'on_hold' }).eq('id', item.enrollmentId).eq('status', 'approved')
-      overdueIds.add(item.enrollmentId)
+      const enrollment = (enrollmentsWithDates?.data ?? []).find((e: any) => e.id === item.enrollmentId)
+      const held = await suspendEnrollmentIfOverdue({
+        id: item.enrollmentId,
+        status: 'approved',
+        enrolled_at: enrollment?.enrolled_at,
+        created_at: enrollment?.created_at,
+      })
+      if (held) overdueIds.add(item.enrollmentId)
     }
   }
   if (overdueIds.size > 0) redirect('/student/dashboard')
@@ -114,6 +122,38 @@ export default async function StudentDashboardPage() {
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
           <p className="text-sm font-medium text-amber-800">You have {pendingCount} pending payment{pendingCount > 1 ? 's' : ''} awaiting approval.</p>
           <p className="text-xs text-amber-600 mt-1">You will receive an email once approved.</p>
+          <Link href="/student/courses" className="text-xs font-medium text-amber-800 underline mt-2 inline-block">View your applications</Link>
+        </div>
+      )}
+
+      {applicationEnrollments.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 mb-6">
+          <div className="p-5 border-b border-gray-100">
+            <h2 className="font-semibold text-gray-900">Applications</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Programmes that are not open for study yet</p>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {applicationEnrollments.map((e: any) => {
+              const label = e.status === 'pending_approval' || e.status === 'pending'
+                ? 'Awaiting approval'
+                : e.status === 'payment_pending'
+                  ? 'Choose payment plan'
+                  : e.status === 'on_hold'
+                    ? 'On hold'
+                    : e.status === 'rejected'
+                      ? 'Not approved'
+                      : e.status
+              return (
+                <Link key={e.id} href={`/student/enroll/${e.course_id}`} className="block p-4 flex items-center gap-3 hover:bg-gray-50 transition-colors">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{e.courses?.title}</p>
+                    <p className="text-xs text-gray-500">{e.courses?.code} • {label}</p>
+                  </div>
+                  <span className="ml-auto text-xs text-blue-600 font-medium shrink-0">View →</span>
+                </Link>
+              )
+            })}
+          </div>
         </div>
       )}
 
@@ -182,8 +222,8 @@ export default async function StudentDashboardPage() {
           {enrollments.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               <p className="text-3xl mb-2">📚</p>
-              <p className="text-sm font-medium text-gray-700 mb-1">No programmes yet</p>
-              <p className="text-xs mb-4">Choose a programme and submit your application.</p>
+              <p className="text-sm font-medium text-gray-700 mb-1">{applicationEnrollments.length > 0 ? 'No active courses yet' : 'No programmes yet'}</p>
+              <p className="text-xs mb-4">{applicationEnrollments.length > 0 ? 'Your applications are listed above. Course access opens after the first payment is verified.' : 'Choose a programme and submit your application.'}</p>
               <Link href="/student/courses" className="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Apply for a programme</Link>
             </div>
           ) : (

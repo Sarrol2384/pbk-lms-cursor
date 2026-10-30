@@ -2,6 +2,7 @@ import { unstable_noStore } from 'next/cache'
 import { createServiceClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
 import DashboardResetButton from '@/components/admin/DashboardResetButton'
+import { signedUrlForStoredFile } from '@/lib/storage/signed-url'
 
 export const dynamic = 'force-dynamic'
 
@@ -94,7 +95,11 @@ export default async function AdminDashboardPage() {
     getStats(supabase),
     getPendingList(supabase),
   ])
-  const pendingList = [...pending.applications, ...pending.payments]
+  const paymentsWithLinks = await Promise.all(pending.payments.map(async (p: any) => ({
+    ...p,
+    proof_url: p.proof_url ? await signedUrlForStoredFile('payments', p.proof_url) : null,
+  })))
+  const pendingList = [...pending.applications, ...paymentsWithLinks]
 
   const statCards = [
     { label: 'Total Students', value: stats.totalStudents, color: 'bg-blue-500', icon: '👥' },
@@ -188,7 +193,7 @@ export default async function AdminDashboardPage() {
                       href="/admin/students"
                       className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-lg transition-colors shrink-0"
                     >
-                      Awaiting payment plan
+                      {(item.status || '').toString().toLowerCase() === 'payment_pending' ? 'Awaiting payment plan' : 'Review application'}
                     </a>
                   ) : (
                     <a
