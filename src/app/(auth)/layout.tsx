@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase/server'
+import { INSTITUTE_NAME } from '@/lib/institute'
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   const service = createServiceClient()
@@ -9,7 +10,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
     .limit(1)
     .single()
 
-  const institutionName = data?.institution_name || 'PBK Management and Leadership Institute'
+  const institutionName = data?.institution_name || INSTITUTE_NAME
   const logoUrl = data?.logo_url ?? null
 
   return (

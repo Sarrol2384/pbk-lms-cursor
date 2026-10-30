@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getMarketingBranding } from '@/lib/marketing/branding'
 import { CTABand } from '@/components/marketing/CTABand'
 import { PartnerLogoMarquee } from '@/components/marketing/PartnerLogoMarquee'
+import { INSTITUTE_MOTTO } from '@/lib/institute'
 
 export default async function HomePage() {
   const { institutionName } = await getMarketingBranding()
@@ -18,12 +19,16 @@ export default async function HomePage() {
             <br className="hidden sm:block" />
             <span className="text-blue-300"> {institutionName}</span>
           </h1>
+          <p className="text-blue-200 font-medium mb-3">{INSTITUTE_MOTTO}</p>
           <p className="text-blue-100 text-lg sm:text-xl mb-10 max-w-2xl mx-auto">
-            Globally recognised qualifications delivered online. Study at your own pace with expert support.
+            Certificate, Diploma and Advanced Diploma programmes across five schools. Study full-time, part-time, in the evening, or by online distance learning.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/apply" className="bg-white text-blue-900 font-semibold px-8 py-3.5 rounded-xl hover:bg-blue-50 transition-colors text-sm">
               Apply for a programme
+            </Link>
+            <Link href="/education" className="border border-white/30 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-white/10 transition-colors text-sm">
+              2027 prospectus
             </Link>
             <Link href="/login" className="border border-white/30 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-white/10 transition-colors text-sm">
               Sign in to my account
@@ -35,9 +40,9 @@ export default async function HomePage() {
       <section className="border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center justify-items-center">
           {[
-            { value: 'NQF 4–10', label: 'Qualification levels' },
-            { value: '100%', label: 'Online & in-person delivery' },
-            { value: 'ZA & ZM', label: 'Recognised in South Africa & Zambia' },
+            { value: '5 schools', label: 'Programmes grouped by school' },
+            { value: '3 levels', label: 'Certificate, Diploma and Advanced Diploma' },
+            { value: '4 modes', label: 'Full-time, part-time, evening and online' },
           ].map(s => (
             <div key={s.label}>
               <p className="text-2xl font-bold text-blue-700">{s.value}</p>

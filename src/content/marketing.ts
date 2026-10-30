@@ -94,6 +94,13 @@ export const teamMembers: TeamMember[] = [
     bio: 'Zambian Christian leader and Founding Pastor of New Beginnings Christian Church. Background in theology (Trans Africa Theological College) and various pastoral roles.',
   },
   {
+    id: 'patchinwe-ejiogu',
+    name: 'Prof Dr PatChinwe Ejiogu',
+    role: 'Head of Health Sciences',
+    photoUrl: '/team/patchinwe-ejiogu.jpg',
+    bio: 'Biography to follow.',
+  },
+  {
     id: 'sarrol-von-willingh',
     name: 'Sarrol Von Willingh',
     role: 'Head of IT',
@@ -246,6 +253,7 @@ export const mainNavLinks = [
   { href: '/about', label: 'About' },
   { href: '/education', label: 'Education' },
   { href: '/team', label: 'Our Team' },
+  { href: '/contact', label: 'Contact' },
 ] as const
 
 export const navLinks = [

@@ -11,7 +11,7 @@ export async function GET() {
   const service = createServiceClient()
   const { data: row } = await service.from('certificate_settings').select('*').limit(1).maybeSingle()
   return NextResponse.json(row ?? {
-    institution_name: 'PBK Management and Leadership Institute',
+    institution_name: 'PBK Memorial Management and Leadership Institute',
     logo_url: null,
     seal_url: null,
     signature1_url: null,
@@ -62,7 +62,7 @@ export async function PATCH(request: NextRequest) {
   } else {
     const { error } = await service.from('certificate_settings').insert({
       ...payload,
-      institution_name: (payload.institution_name as string) || 'PBK Management and Leadership Institute',
+      institution_name: (payload.institution_name as string) || 'PBK Memorial Management and Leadership Institute',
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   }

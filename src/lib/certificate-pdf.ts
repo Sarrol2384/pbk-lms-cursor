@@ -66,7 +66,7 @@ export async function buildCertificatePdf(
 
   drawBorder(doc, W, H)
 
-  const institutionName = settings?.institution_name ?? 'PBK Management and Leadership Institute'
+  const institutionName = settings?.institution_name ?? 'PBK Memorial Management and Leadership Institute'
 
   // ── Institution name ──────────────────────────────────────────────
   // Dynamically scale font so the name fits within 260mm (leaving 18mm margin each side)
