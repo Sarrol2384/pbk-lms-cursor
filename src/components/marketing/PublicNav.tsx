@@ -1,8 +1,7 @@
 import Link from 'next/link'
 import type { MarketingBranding } from '@/lib/marketing/branding'
 import { InstitutionLogo } from './InstitutionLogo'
-import { mainNavLinks } from '@/content/marketing'
-import { PublicNavLinks } from './PublicNavLinks'
+import { PublicNavChips, PublicNavLinks } from './PublicNavLinks'
 
 export function PublicNav({ branding }: { branding: MarketingBranding }) {
   return (
@@ -25,13 +24,7 @@ export function PublicNav({ branding }: { branding: MarketingBranding }) {
           </Link>
         </div>
       </div>
-      <div className="md:hidden border-t border-gray-100 px-4 py-2 flex gap-2 overflow-x-auto">
-        {mainNavLinks.map(({ href, label }) => (
-          <Link key={href} href={href} className="text-xs font-medium text-gray-600 whitespace-nowrap px-2 py-1 rounded bg-gray-50">
-            {label}
-          </Link>
-        ))}
-      </div>
+      <PublicNavChips />
     </nav>
   )
 }
