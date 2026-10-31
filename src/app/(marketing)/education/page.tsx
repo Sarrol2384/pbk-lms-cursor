@@ -13,7 +13,7 @@ import { INSTITUTE_MOTTO, INSTITUTE_NAME } from '@/lib/institute'
 export const metadata: Metadata = {
   title: '2027 Prospectus',
   description:
-    'Certificate, Diploma and Advanced Diploma programmes at PBK Memorial Management and Leadership Institute, grouped by school.',
+    'Certificate, Diploma and Advanced Diploma programmes at PBK Memorial Management and Leadership Institute, with Masters and PhD via Recognition of Prior Learning (RPL) for theology.',
 }
 
 export default function EducationPage() {
@@ -38,7 +38,7 @@ export default function EducationPage() {
             {nqfPathwayIntro.body}
           </p>
           <p className="text-gray-600 text-sm text-center max-w-3xl mx-auto mb-10 leading-relaxed">
-            The prospectus programmes above are offered at Certificate, Diploma and Advanced Diploma level. The pathway below shows how a qualification can lead on to further study.
+            Prospectus programmes are offered at Certificate, Diploma and Advanced Diploma level. Theology & Ministry programmes can also be applied for at Masters and PhD via Recognition of Prior Learning (RPL). The pathway below shows how a qualification can lead on to further study.
           </p>
 
           <NqfPathwayTable rows={nqfPathwayRows} />

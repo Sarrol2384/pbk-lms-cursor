@@ -1,15 +1,20 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { DEFAULT_COUNTRY } from '@/content/countries'
 import {
   findProgramme,
   highestQualifications,
+  programmeOffersRpl,
   prospectusSchools,
+  studyLevelChoiceLabel,
   studyLevels,
+  studyLevelsForProgramme,
   studyModes,
   type StudyLevelId,
 } from '@/content/prospectus'
 import { INSTITUTE_EMAIL, INSTITUTE_NAME } from '@/lib/institute'
+import { CountrySelect } from '@/components/marketing/CountrySelect'
 
 const inputClass = 'w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white'
 const labelClass = 'block text-sm font-medium text-gray-800 mb-1'
@@ -20,6 +25,7 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
   const starting = findProgramme(initialProgrammeId || '')
   const [programmeId, setProgrammeId] = useState(starting?.programme.id ?? '')
   const [level, setLevel] = useState<StudyLevelId | ''>(starting?.programme.levels[0] ?? '')
+  const [country, setCountry] = useState(DEFAULT_COUNTRY)
   const [studyMode, setStudyMode] = useState('')
   const [qualification, setQualification] = useState('')
   const [errors, setErrors] = useState<Errors>({})
@@ -28,8 +34,9 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
   const [loading, setLoading] = useState(false)
 
   const selected = useMemo(() => findProgramme(programmeId), [programmeId])
-  const levelOptions = studyLevels.filter(item => !selected || selected.programme.levels.includes(item.id))
+  const levelOptions = studyLevelsForProgramme(selected?.programme ?? null)
   const levelHint = studyLevels.find(item => item.id === level)
+  const idLabel = country === DEFAULT_COUNTRY ? 'ID number' : 'ID or passport number'
 
   function onProgrammeChange(nextId: string) {
     setProgrammeId(nextId)
@@ -86,8 +93,8 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
   }
 
   return (
-    <form onSubmit={onSubmit} className="relative bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden" noValidate>
-      <div className="h-1.5 bg-blue-700" aria-hidden />
+    <form onSubmit={onSubmit} className="relative bg-white border border-gray-200 rounded-xl shadow-sm" noValidate>
+      <div className="h-1.5 bg-blue-700 rounded-t-xl" aria-hidden />
       <div className="p-6 sm:p-8 space-y-8">
         <p className="text-sm text-gray-500">Fields marked with * are required. This form does not create a student account.</p>
         {message && <div role="alert" className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{message}</div>}
@@ -118,9 +125,10 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
               {errors.phone && <p className="text-xs text-red-600 mt-1">{errors.phone}</p>}
             </div>
           </div>
+          <CountrySelect value={country} onChange={setCountry} error={errors.country} />
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="idNumber" className={labelClass}>ID or passport number</label>
+              <label htmlFor="idNumber" className={labelClass}>{idLabel}</label>
               <input id="idNumber" name="idNumber" autoComplete="off" className={inputClass} />
             </div>
             <div>
@@ -167,9 +175,19 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
             >
               <option value="">Choose a level</option>
               {levelOptions.map(item => (
-                <option key={item.id} value={item.id}>{item.label} ({item.duration})</option>
+                <option key={item.id} value={item.id}>{studyLevelChoiceLabel(item)}</option>
               ))}
             </select>
+            {selected && (
+              <p className="text-xs text-gray-600 mt-1">
+                Available for this programme: {levelOptions.map(item => studyLevelChoiceLabel(item)).join(', ')}.
+              </p>
+            )}
+            {selected && programmeOffersRpl(selected.programme) && (
+              <p className="text-xs text-blue-800 mt-1">
+                This programme can be applied for up to Masters and PhD via Recognition of Prior Learning (RPL).
+              </p>
+            )}
             {levelHint && <p className="text-xs text-gray-500 mt-1">{levelHint.admission}</p>}
             {errors.level && <p className="text-xs text-red-600 mt-1">{errors.level}</p>}
           </div>

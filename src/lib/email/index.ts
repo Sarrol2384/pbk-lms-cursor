@@ -357,6 +357,7 @@ export async function sendProspectusApplicationEmails(input: {
   phone: string
   idNumber: string
   city: string
+  country: string
   schoolName: string
   programmeName: string
   levelLabel: string
@@ -372,8 +373,9 @@ export async function sendProspectusApplicationEmails(input: {
     ['Name', `${input.firstName} ${input.lastName}`],
     ['Email', input.email],
     ['Phone', input.phone],
-    ['ID or passport', input.idNumber || 'Not supplied'],
+    [input.country === 'South Africa' ? 'ID number' : 'ID or passport', input.idNumber || 'Not supplied'],
     ['Town or city', input.city || 'Not supplied'],
+    ['Country', input.country],
     ['School', input.schoolName],
     ['Programme', input.programmeName],
     ['Level', input.levelLabel],

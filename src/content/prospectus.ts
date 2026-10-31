@@ -19,6 +19,20 @@ export const studyLevels = [
     duration: '2 years',
     admission: 'A diploma in a relevant field.',
   },
+  {
+    id: 'masters_rpl',
+    label: 'Masters (via RPL)',
+    duration: 'Individual assessment',
+    admission: 'Recognition of Prior Learning (RPL) on a Theology & Ministry programme.',
+    choiceShowsDuration: false,
+  },
+  {
+    id: 'phd_rpl',
+    label: 'PhD (via RPL)',
+    duration: 'Individual assessment',
+    admission: 'Recognition of Prior Learning (RPL) on a Theology & Ministry programme. Prior learning is assessed for doctoral entry.',
+    choiceShowsDuration: false,
+  },
 ] as const
 
 export type StudyLevelId = (typeof studyLevels)[number]['id']
@@ -42,7 +56,10 @@ export const highestQualifications = [
   'Other',
 ] as const
 
-const allLevels: StudyLevelId[] = ['certificate', 'diploma', 'advanced_diploma']
+const standardLevels: StudyLevelId[] = ['certificate', 'diploma', 'advanced_diploma']
+
+/** Theology & Ministry (the prospectus school for theology and biblical studies). */
+const theologyLevels: StudyLevelId[] = [...standardLevels, 'masters_rpl', 'phd_rpl']
 
 export type ProspectusProgramme = {
   id: string
@@ -68,31 +85,31 @@ export const prospectusSchools: ProspectusSchool[] = [
         id: 'business-administration',
         name: 'Business Administration',
         summary: 'Business operations, finance, marketing and strategic planning.',
-        levels: allLevels,
+        levels: standardLevels,
       },
       {
         id: 'business-management',
         name: 'Business Management',
         summary: 'Managerial skills for effective supervision and corporate leadership.',
-        levels: allLevels,
+        levels: standardLevels,
       },
       {
         id: 'entrepreneurship',
         name: 'Entrepreneurship',
         summary: 'Starting, managing and scaling sustainable businesses and ministries.',
-        levels: allLevels,
+        levels: standardLevels,
       },
       {
         id: 'organisational-leadership',
         name: 'Organisational Leadership',
         summary: 'Transformational leadership, decision-making and team-building.',
-        levels: allLevels,
+        levels: standardLevels,
       },
       {
         id: 'public-administration',
         name: 'Public Administration',
         summary: 'Governance, public policy and service in government and NGOs.',
-        levels: allLevels,
+        levels: standardLevels,
       },
     ],
   },
@@ -104,37 +121,37 @@ export const prospectusSchools: ProspectusSchool[] = [
         id: 'theology',
         name: 'Theology',
         summary: 'Christian doctrines, church history and systematic theology.',
-        levels: allLevels,
+        levels: theologyLevels,
       },
       {
         id: 'biblical-studies',
         name: 'Biblical Studies',
         summary: 'Old and New Testament, exegesis and biblical interpretation.',
-        levels: allLevels,
+        levels: theologyLevels,
       },
       {
         id: 'missiology',
         name: 'Missiology',
         summary: 'World missions, cross-cultural evangelism and church planting.',
-        levels: allLevels,
+        levels: theologyLevels,
       },
       {
         id: 'chaplaincy',
         name: 'Chaplaincy',
         summary: 'Training for chaplains in hospitals, prisons, military, schools.',
-        levels: allLevels,
+        levels: theologyLevels,
       },
       {
         id: 'church-administration',
         name: 'Church Administration',
         summary: 'Management, governance and stewardship in the church.',
-        levels: allLevels,
+        levels: theologyLevels,
       },
       {
         id: 'pastoral-care',
         name: 'Pastoral Care',
         summary: 'Shepherding, visitation and spiritual formation.',
-        levels: allLevels,
+        levels: theologyLevels,
       },
     ],
   },
@@ -146,25 +163,25 @@ export const prospectusSchools: ProspectusSchool[] = [
         id: 'christian-counselling',
         name: 'Christian Counselling',
         summary: 'Biblical counselling for individuals, families and marriages.',
-        levels: allLevels,
+        levels: standardLevels,
       },
       {
         id: 'christian-psychology',
         name: 'Christian Psychology',
         summary: 'Integration of psychology and Christian faith.',
-        levels: allLevels,
+        levels: standardLevels,
       },
       {
         id: 'conflict-management',
         name: 'Conflict Management',
         summary: 'Mediation, peace-building and conflict resolution.',
-        levels: allLevels,
+        levels: standardLevels,
       },
       {
         id: 'risk-management',
         name: 'Risk Management',
         summary: 'Identifying, assessing and mitigating organisational risks.',
-        levels: allLevels,
+        levels: standardLevels,
       },
     ],
   },
@@ -176,13 +193,13 @@ export const prospectusSchools: ProspectusSchool[] = [
         id: 'safety-and-security-management',
         name: 'Safety and Security Management',
         summary: 'Security operations and safety protocols.',
-        levels: allLevels,
+        levels: standardLevels,
       },
       {
         id: 'it-cybersecurity',
         name: 'IT / Cybersecurity',
         summary: 'IT fundamentals, networks and cyber threat protection.',
-        levels: allLevels,
+        levels: standardLevels,
       },
     ],
   },
@@ -212,6 +229,24 @@ export function findProgramme(programmeId: string): { school: ProspectusSchool; 
 
 export function studyLevelById(id: string) {
   return studyLevels.find(level => level.id === id) ?? null
+}
+
+/** Dropdown text. RPL levels keep the label 'Masters (via RPL)' / 'PhD (via RPL)'. */
+export function studyLevelChoiceLabel(level: (typeof studyLevels)[number]): string {
+  if ('choiceShowsDuration' in level && level.choiceShowsDuration === false) return level.label
+  return `${level.label} (${level.duration})`
+}
+
+export function programmeOffersRpl(programme: ProspectusProgramme): boolean {
+  return programme.levels.includes('masters_rpl') || programme.levels.includes('phd_rpl')
+}
+
+/** Levels offered for the selected programme. Before a programme is chosen, only the three standard levels are listed. */
+export function studyLevelsForProgramme(programme: ProspectusProgramme | null) {
+  if (!programme) {
+    return studyLevels.filter(level => level.id === 'certificate' || level.id === 'diploma' || level.id === 'advanced_diploma')
+  }
+  return studyLevels.filter(level => programme.levels.includes(level.id))
 }
 
 export function studyModeById(id: string) {

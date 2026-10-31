@@ -22,7 +22,7 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
   const service = createServiceClient()
   const { data, error } = await service
     .from('prospectus_applications')
-    .select('id, created_at, status, first_name, last_name, email, phone, id_number, city, programme_name, school_name, level, study_mode, highest_qualification, document_path')
+    .select('id, created_at, status, first_name, last_name, email, phone, id_number, city, country, programme_name, school_name, level, study_mode, highest_qualification, document_path')
     .order('created_at', { ascending: false })
     .limit(300)
 
@@ -45,6 +45,7 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
       phone: row.phone,
       id_number: row.id_number,
       city: row.city,
+      country: row.country,
       programme_name: row.programme_name,
       school_name: row.school_name,
       level: row.level,
@@ -77,7 +78,7 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
 
       {error ? (
         <div className="bg-amber-50 border border-amber-200 text-amber-900 text-sm rounded-xl px-4 py-3">
-          Applications could not be loaded. Apply migration <code>00027_prospectus_applications.sql</code> on the database, then refresh this page.
+          Applications could not be loaded. Confirm migrations <code>00027_prospectus_applications.sql</code> and <code>00029_prospectus_application_country_and_rpl_levels.sql</code> are applied, then refresh this page.
         </div>
       ) : (
         <ApplicationsTable rows={rows} />
