@@ -95,10 +95,14 @@ export const teamMembers: TeamMember[] = [
   },
   {
     id: 'patchinwe-ejiogu',
-    name: 'Prof Dr PatChinwe Ejiogu',
+    name: 'Prof Dr Patricia Chinwe O.O. Ejiogu',
     role: 'Head of Health Sciences',
     photoUrl: '/team/patchinwe-ejiogu.jpg',
-    bio: 'Biography to follow.',
+    bio: [
+      'Prof Dr Patricia Chinwe O.O. Ejiogu is a Professor of Public Health with a focus on medical epidemiology and clinical toxicology. She is the President and Founder of Think Plan Execute Global Inc. and the Founder of P&A Health Services in Maryland, USA.',
+      'Her multidisciplinary background spans public health, medical laboratory science, psychology, addiction counselling, divinity, autism support and rehabilitation medicine. She holds master\'s degrees in Addiction Counselling and Divinity, and doctorates in Divinity and Psychology from Charisma University. She is a licensed clinical psychologist and medical laboratory scientist in Nigeria, and a certified chaplain through the International Circle of Faith.',
+      'A committed philanthropist and humanitarian, she supports orphans, widows and disadvantaged communities through education, health promotion, mental health awareness, skills development and disaster relief. Her guiding message: "Think. Plan. Execute. Serve Humanity. Transform Lives."',
+    ].join('\n\n'),
   },
   {
     id: 'sarrol-von-willingh',

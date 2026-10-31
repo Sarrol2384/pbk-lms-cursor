@@ -36,7 +36,13 @@ export function TeamMemberCard({ member }: { member: TeamMember }) {
         </div>
         <h2 className="font-serif text-base font-bold text-blue-950 leading-snug">{member.name}</h2>
         <p className="text-sm text-blue-700 font-medium mt-1 mb-3">{member.role}</p>
-        <p className="text-xs sm:text-sm text-gray-600 leading-relaxed flex-1">{member.bio}</p>
+        <div className="flex flex-col gap-2 flex-1">
+          {member.bio.split(/\n\s*\n/).map(paragraph => (
+            <p key={paragraph} className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+              {paragraph}
+            </p>
+          ))}
+        </div>
         {member.philosophy && (
           <p className="text-xs sm:text-sm text-gray-600 mt-3 pt-3 border-t border-blue-100 italic leading-relaxed bg-blue-50/60 -mx-4 px-4 pb-1 -mb-1">
             <span className="font-semibold not-italic text-blue-800">Personal philosophy: </span>
