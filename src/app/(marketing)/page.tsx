@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { getMarketingBranding } from '@/lib/marketing/branding'
 import { CTABand } from '@/components/marketing/CTABand'
@@ -9,8 +10,21 @@ export default async function HomePage() {
 
   return (
     <>
-      <section className="bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white py-24 px-4">
-        <div className="max-w-4xl mx-auto text-center">
+      <section className="relative isolate overflow-hidden bg-[#041028] text-white py-24 px-4">
+        <Image
+          src="/hero-institute.webp"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
+        {/* Navy scrim keeps the centred emblem visible and the light copy at WCAG AA. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom_right,rgba(4,16,40,0.90),rgba(8,32,78,0.85)_48%,rgba(5,16,42,0.92))]"
+        />
+        <div className="relative z-10 max-w-4xl mx-auto text-center">
           <div className="inline-block bg-white/10 border border-white/20 text-blue-200 text-sm px-4 py-1.5 rounded-full mb-6 font-medium">
             Globally Accredited Programmes
           </div>
