@@ -84,7 +84,8 @@ export async function buildCertificatePdf(
   let y = 32
 
   // ── Logo ──────────────────────────────────────────────────────────
-  // PBK logo is 1:1 (square)
+  // Square slot. This is certificate_settings.logo_url (and seal_url below),
+  // not the static site emblem in /brand.
   const LOGO_W = 42
   const LOGO_H = 42
   if (settings?.logo_url) {

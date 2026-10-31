@@ -1,4 +1,5 @@
 import { INSTITUTE_MOTTO, INSTITUTE_NAME, supportEmail } from '@/lib/institute'
+import { absoluteEmblemUrl } from '@/lib/brand'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const BREVO_API_KEY = process.env.BREVO_API_KEY
@@ -104,6 +105,11 @@ async function sendEmail(to: string, subject: string, html: string, replyTo?: st
   throw lastError ?? new Error('Email send failed')
 }
 
+function emblemImg(size: number): string {
+  const src = absoluteEmblemUrl()
+  return `<img src="${src}" width="${size}" height="${size}" alt="${INSTITUTE_NAME}" style="display:block;border:0;outline:none;text-decoration:none;width:${size}px;height:${size}px;" />`
+}
+
 function baseTemplate(title: string, body: string): string {
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><style>
@@ -123,7 +129,14 @@ function baseTemplate(title: string, body: string): string {
 </style></head>
 <body>
   <div class="container">
-    <div class="header"><h1>${INSTITUTE_NAME}</h1><p>${INSTITUTE_MOTTO}</p></div>
+    <div class="header">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+        <tr>
+          <td style="padding-right:16px;vertical-align:middle">${emblemImg(72)}</td>
+          <td style="vertical-align:middle"><h1>${INSTITUTE_NAME}</h1><p>${INSTITUTE_MOTTO}</p></td>
+        </tr>
+      </table>
+    </div>
     <div class="body"><h2>${title}</h2>${body}</div>
     <div class="footer">
       ${INSTITUTE_NAME} &nbsp;|&nbsp; <a href="mailto:${SUPPORT_EMAIL}" style="color:#6b7280">${SUPPORT_EMAIL}</a>
@@ -228,11 +241,15 @@ export async function sendWelcomeAccessGrantedEmail(
 <body>
   <div class="container">
     <div class="banner">
-      <span class="banner-icon">🎓</span>
-      <div class="banner-text">
-        <h1>Welcome to <span class="highlight">${FROM_NAME}</span>!</h1>
-        <p>Payment Verified – Access Granted</p>
-      </div>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+        <tr>
+          <td style="padding-right:14px;vertical-align:middle">${emblemImg(64)}</td>
+          <td class="banner-text" style="vertical-align:middle">
+            <h1>Welcome to <span class="highlight">${FROM_NAME}</span>!</h1>
+            <p>Payment Verified – Access Granted</p>
+          </td>
+        </tr>
+      </table>
     </div>
     <div class="body">
       <p>Dear ${firstName},</p>

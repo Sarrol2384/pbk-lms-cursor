@@ -39,7 +39,7 @@ export async function updateSession(request: NextRequest) {
     '/login', '/register', '/verify', '/forgot-password',
     '/reset-password', '/api/auth/callback', '/api/auth/signup',
     '/about', '/education', '/team', '/apply', '/contact',
-    '/api/public',
+    '/api/public', '/manifest.webmanifest',
   ]
   const isPublicPath = publicPaths.some(p => pathname.startsWith(p)) || pathname === '/' || pathname === ''
 

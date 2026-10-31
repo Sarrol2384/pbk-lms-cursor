@@ -2,16 +2,16 @@
 
 import { partnerLogos } from '@/content/marketing'
 
-function LogoCircle({ name, src }: { name: string; src: string }) {
+function LogoCircle({ name, src, flush = false }: { name: string; src: string; flush?: boolean }) {
   return (
     <div
-      className="flex shrink-0 items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white border-2 border-blue-100 shadow-sm mx-4"
+      className="flex shrink-0 items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white border-2 border-blue-100 shadow-sm mx-4 overflow-hidden"
       title={name}
     >
       <img
         src={src}
         alt={name}
-        className="w-[70%] h-[70%] object-contain"
+        className={flush ? 'w-full h-full object-cover' : 'w-[70%] h-[70%] object-contain'}
         loading="lazy"
       />
     </div>
@@ -31,7 +31,7 @@ export function PartnerLogoMarquee() {
       <div className="relative motion-reduce:hidden">
         <div className="flex w-max animate-marquee">
           {track.map((logo, i) => (
-            <LogoCircle key={`${logo.id}-${i}`} name={logo.name} src={logo.src} />
+            <LogoCircle key={`${logo.id}-${i}`} name={logo.name} src={logo.src} flush={'flush' in logo && logo.flush} />
           ))}
         </div>
       </div>
@@ -39,7 +39,7 @@ export function PartnerLogoMarquee() {
       {/* Static fallback when user prefers reduced motion */}
       <div className="hidden motion-reduce:flex flex-wrap justify-center gap-4 px-4 max-w-6xl mx-auto">
         {partnerLogos.map(logo => (
-          <LogoCircle key={logo.id} name={logo.name} src={logo.src} />
+          <LogoCircle key={logo.id} name={logo.name} src={logo.src} flush={'flush' in logo && logo.flush} />
         ))}
       </div>
     </section>

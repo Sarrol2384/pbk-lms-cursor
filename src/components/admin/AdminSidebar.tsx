@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { cn, getInitials } from '@/lib/utils'
 import { INSTITUTE_NAME } from '@/lib/institute'
+import { PortalBrandHeader } from '@/components/brand/PortalBrandHeader'
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: '◻' },
@@ -19,12 +20,10 @@ const navItems = [
   { href: '/admin/reports', label: 'Reports', icon: '📊' },
 ]
 
-type Branding = { institution_name: string; logo_url: string | null }
-
 export default function AdminSidebar({ profile }: { profile: { first_name: string; last_name: string; email: string; role: string } }) {
   const pathname = usePathname()
   const router = useRouter()
-  const [branding, setBranding] = useState<Branding>({ institution_name: INSTITUTE_NAME, logo_url: null })
+  const [institutionName, setInstitutionName] = useState(INSTITUTE_NAME)
 
   useEffect(() => {
     let cancelled = false
@@ -32,10 +31,10 @@ export default function AdminSidebar({ profile }: { profile: { first_name: strin
       try {
         const res = await fetch('/api/public/branding', { cache: 'no-store' })
         if (!res.ok) return
-        const data = (await res.json()) as Branding
-        if (!cancelled) setBranding({ institution_name: data.institution_name || INSTITUTE_NAME, logo_url: data.logo_url ?? null })
+        const data = (await res.json()) as { institution_name?: string }
+        if (!cancelled) setInstitutionName(data.institution_name || INSTITUTE_NAME)
       } catch {
-        // ignore and keep defaults
+        // keep the default name; the emblem is a static asset
       }
     }
     loadBranding()
@@ -55,23 +54,9 @@ export default function AdminSidebar({ profile }: { profile: { first_name: strin
 
   return (
     <aside className="w-60 bg-white border-r border-gray-100 flex flex-col shrink-0">
-      <div className="p-5 border-b border-gray-100">
-        <div className="flex items-center gap-3">
-          {branding.logo_url ? (
-            <div className="w-28 h-28 shrink-0 rounded-lg overflow-hidden bg-white border border-gray-200 flex items-center justify-center">
-              <img src={branding.logo_url} alt={branding.institution_name} className="w-full h-full object-contain" />
-            </div>
-          ) : (
-            <div className="w-28 h-28 shrink-0 bg-blue-700 rounded-lg flex items-center justify-center text-white text-2xl font-bold">PBK</div>
-          )}
-          <div className="min-w-0">
-            <p className="font-semibold text-gray-900 text-sm leading-tight">{branding.institution_name}</p>
-            <p className="text-xs text-gray-400">Admin Portal</p>
-          </div>
-        </div>
-      </div>
+      <PortalBrandHeader institutionName={institutionName} portal="Admin Portal" />
 
-      <nav className="flex-1 p-3 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
         {navItems.map(item => (
           <Link
             key={item.href}

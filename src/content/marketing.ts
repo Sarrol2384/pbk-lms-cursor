@@ -247,7 +247,7 @@ export const partnerLogos = [
   { id: 'esms', name: 'ESMS', src: '/logos/partners/esms.jpeg' },
   { id: 'etdp', name: 'ETDP', src: '/logos/partners/etdp.jpeg' },
   { id: 'ibr', name: 'IBR', src: '/logos/partners/ibr.jpeg' },
-  { id: 'pbkmli', name: 'PBK Memorial Leadership Institute', src: '/logos/partners/pbkmli.jpeg' },
+  { id: 'pbkmli', name: 'PBK Memorial Leadership Institute', src: '/brand/emblem-256.webp', flush: true },
   { id: 'qcto', name: 'QCTO', src: '/logos/partners/qcto.jpeg' },
 ] as const
 
