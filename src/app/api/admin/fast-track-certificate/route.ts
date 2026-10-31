@@ -77,14 +77,7 @@ export async function POST(request: NextRequest) {
     .select('id, total_marks')
     .in('module_id', moduleIds)
 
-  if (!assessments?.length) {
-    return NextResponse.json({
-      success: false,
-      error: 'No certificate created: this course has no assessments. Add at least one quiz or assignment to each module, then try Fast-track again.',
-    }, { status: 400 })
-  }
-
-  for (const a of assessments) {
+  for (const a of assessments ?? []) {
     const marks = a.total_marks ?? 100
     const { data: existing } = await service
       .from('submissions')
@@ -153,7 +146,7 @@ export async function POST(request: NextRequest) {
   const details = (modulesWithMeta ?? []).map((m) => {
     const count = countByModule.get(m.id) ?? 0
     const status = progressByModule.get(m.id) ?? 'in_progress'
-    const block = count === 0 ? ' (no assessments — add at least one quiz/assignment)' : status !== 'passed' ? ` (status: ${status})` : ''
+    const block = count === 0 && status !== 'passed' ? ' (no assessments — mark every unit complete, or add an assessment)' : status !== 'passed' ? ` (status: ${status})` : ''
     return `Module ${m.sequence} "${m.title}": ${count} assessment(s), ${status}${block}`
   }).join('. ')
 

@@ -9,6 +9,7 @@ import UploadProofOfPayment from '@/components/student/UploadProofOfPayment'
 import CompletePaymentForm from '@/components/student/CompletePaymentForm'
 import SavedNotice from '@/components/student/SavedNotice'
 import { BANK } from '@/lib/email'
+import { suspendEnrollmentIfOverdue } from '@/lib/enrollment-access'
 
 export default async function EnrollPage({ params }: { params: { courseId: string } }) {
   const supabase = createClient()
@@ -55,12 +56,16 @@ export default async function EnrollPage({ params }: { params: { courseId: strin
   }
 
   const startDate = (existing as { enrolled_at?: string; created_at?: string })?.enrolled_at ?? paymentCreatedAt ?? (existing as { created_at?: string })?.created_at
-  const { deadlineStr: paymentDeadline, isOverdue } = getPaymentDeadline(startDate, totalInstallments)
+  const { deadlineStr: paymentDeadline } = getPaymentDeadline(startDate, totalInstallments)
 
-  if (existing?.status === 'approved' && balance > 0 && isOverdue) {
-    const service = createServiceClient()
-    await service.from('enrollments').update({ status: 'on_hold' }).eq('id', existing.id).eq('status', 'approved')
-    redirect(`/student/enroll/${params.courseId}`)
+  if (existing?.status === 'approved' && balance > 0) {
+    const held = await suspendEnrollmentIfOverdue({
+      id: existing.id,
+      status: existing.status,
+      enrolled_at: (existing as { enrolled_at?: string }).enrolled_at,
+      created_at: (existing as { created_at?: string }).created_at,
+    })
+    if (held) redirect(`/student/enroll/${params.courseId}`)
   }
 
   return (
@@ -132,7 +137,16 @@ export default async function EnrollPage({ params }: { params: { courseId: strin
               )}
             </div>
           )}
-          {((existing.status === 'pending_approval' || existing.status === 'payment_pending') && !hasAnyPayment) && (
+          {existing.status === 'pending_approval' && (
+            <div className="mt-4 p-4 bg-white rounded-lg border border-blue-100">
+              <p className="font-medium text-gray-900 text-sm">Waiting for approval</p>
+              <p className="text-sm text-gray-600 mt-1">An administrator must approve your application before you can choose a payment plan or upload proof of payment. We will email you when that happens.</p>
+            </div>
+          )}
+          {existing.status === 'rejected' && (
+            <p className="mt-4 text-sm text-gray-700">This application was not approved. Contact support if you would like to discuss it.</p>
+          )}
+          {(existing.status === 'payment_pending' && !hasAnyPayment) && (
             <>
               <div className="mt-4 p-4 bg-white rounded-lg border border-blue-100">
                 <p className="font-medium text-gray-900 text-sm mb-3">Banking details for payment</p>
@@ -151,7 +165,7 @@ export default async function EnrollPage({ params }: { params: { courseId: strin
               <UploadProofOfPayment paymentId={paymentId} enrollmentId={existing.id} courseId={params.courseId} />
             </>
           )}
-          {((existing.status === 'payment_pending' || existing.status === 'pending_approval') && hasAnyPayment) && (
+          {(existing.status === 'payment_pending' && hasAnyPayment) && (
             <>
               {(totalDue > 0 || paymentId) && (
                 <div className="mt-4 p-4 bg-white rounded-lg border border-blue-100">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sendAdminProofUploadedEmail } from '@/lib/email'
+import { ownPaymentProofPath } from '@/lib/storage/signed-url'
 
 async function getAdminNotifyEmails(supabase: ReturnType<typeof createServiceClient>): Promise<string[]> {
   const env = process.env.ADMIN_NOTIFY_EMAIL?.trim()
@@ -19,10 +20,15 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'paymentId and proofUrl required' }, { status: 400 })
   }
 
+  const proofPath = ownPaymentProofPath(user.id, proofUrl)
+  if (!proofPath) {
+    return NextResponse.json({ error: 'Proof must be a file you uploaded' }, { status: 400 })
+  }
+
   const service = createServiceClient()
   const { data: payment, error: fetchError } = await service
     .from('payments')
-    .select('id, user_id, course_id, status')
+    .select('id, user_id, course_id, enrollment_id, status')
     .eq('id', paymentId)
     .single()
 
@@ -30,9 +36,20 @@ export async function PATCH(request: NextRequest) {
   if (payment.user_id !== user.id) return NextResponse.json({ error: 'Not your payment' }, { status: 403 })
   if (payment.status !== 'pending') return NextResponse.json({ error: 'Proof can only be added to pending payments' }, { status: 400 })
 
+  if (payment.enrollment_id) {
+    const { data: enrollment } = await service.from('enrollments').select('status').eq('id', payment.enrollment_id).maybeSingle()
+    const enrollmentStatus = enrollment?.status
+    if (enrollmentStatus && !['payment_pending', 'approved', 'on_hold'].includes(enrollmentStatus)) {
+      return NextResponse.json({ error: 'Your application must be approved before you can upload proof of payment' }, { status: 400 })
+    }
+  }
+
+  const { error: fileErr } = await service.storage.from('payments').download(proofPath)
+  if (fileErr) return NextResponse.json({ error: 'Proof file not found. Upload it again.' }, { status: 400 })
+
   const { error: updateError } = await service
     .from('payments')
-    .update({ proof_url: proofUrl })
+    .update({ proof_url: proofPath })
     .eq('id', paymentId)
 
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
@@ -44,11 +61,13 @@ export async function PATCH(request: NextRequest) {
     const studentName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Student'
     const studentEmail = profile?.email ?? ''
     const courseName = course?.title ?? 'Course'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const reviewUrl = `${appUrl}/admin/payment-review/${paymentId}`
     for (const to of adminEmails) {
       try {
-        await sendAdminProofUploadedEmail(to, studentName, studentEmail, courseName, proofUrl)
-      } catch (e) {
-        console.error('[Proof] Admin notification failed for', to, e)
+        await sendAdminProofUploadedEmail(to, studentName, studentEmail, courseName, reviewUrl)
+      } catch {
+        console.error('[Proof] Admin notification failed')
       }
     }
   }

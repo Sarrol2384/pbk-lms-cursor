@@ -1,38 +1,22 @@
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { refreshProgressAndCertificate } from '@/lib/progress'
-import { getPaymentDeadline } from '@/lib/utils'
+import { requireActiveEnrollment } from '@/lib/enrollment-access'
 
-export default async function StudentCoursePage({ params }: { params: { courseId: string } }) {
+export default async function StudentCoursePage({
+  params,
+  searchParams,
+}: {
+  params: { courseId: string }
+  searchParams?: { locked?: string }
+}) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: enrollment } = await supabase
-    .from('enrollments')
-    .select('id, status, enrolled_at, created_at')
-    .eq('user_id', user.id)
-    .eq('course_id', params.courseId)
-    .single()
-
-  if (!enrollment || enrollment.status !== 'approved') {
-    redirect(`/student/enroll/${params.courseId}`)
-  }
-
-  const service = createServiceClient()
-  const { data: payments } = await service.from('payments').select('id, amount, amount_paid, created_at, total_installments').eq('enrollment_id', enrollment.id)
-  const total = (payments ?? []).reduce((s: number, p: { amount?: number }) => s + (p.amount ?? 0), 0)
-  const paid = (payments ?? []).reduce((s: number, p: { amount_paid?: number }) => s + (p.amount_paid ?? 0), 0)
-  const balance = total - paid
-  const totalInstallments = Math.max(1, (payments?.[0] as { total_installments?: number })?.total_installments ?? 1)
-  const startDate = (enrollment as { enrolled_at?: string }).enrolled_at ?? (payments?.[0] as { created_at?: string })?.created_at ?? (enrollment as { created_at?: string }).created_at
-  const { isOverdue } = getPaymentDeadline(startDate, totalInstallments)
-
-  if (balance > 0 && isOverdue) {
-    await service.from('enrollments').update({ status: 'on_hold' }).eq('id', enrollment.id).eq('status', 'approved')
-    redirect(`/student/enroll/${params.courseId}`)
-  }
+  const access = await requireActiveEnrollment(user.id, params.courseId)
+  if (!access.ok) redirect(`/student/enroll/${params.courseId}`)
 
   const { data: course } = await supabase
     .from('courses')
@@ -78,6 +62,12 @@ export default async function StudentCoursePage({ params }: { params: { courseId
         <h1 className="text-2xl font-bold text-gray-900">{course.title}</h1>
         <p className="text-gray-500 text-sm mt-1">{course.code} • NQF {course.nqf_level} • {course.credits} credits</p>
       </div>
+
+      {searchParams?.locked === '1' && (
+        <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-900 text-sm rounded-xl px-4 py-3">
+          Finish and pass the previous module before opening the next one.
+        </div>
+      )}
 
       {course.description && (
         <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">

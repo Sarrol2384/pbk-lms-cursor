@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
-/** POST: student creates payment row (choose plan) when enrollment is payment_pending. */
+/** POST: student creates a payment row after an admin has approved the application (payment_pending). */
 export async function POST(request: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -21,21 +21,24 @@ export async function POST(request: NextRequest) {
   const service = createServiceClient()
   const { data: enrollment, error: enrollErr } = await service
     .from('enrollments')
-    .select('id, user_id, status')
+    .select('id, user_id, course_id, status')
     .eq('id', enrollmentId)
     .single()
 
   if (enrollErr || !enrollment || enrollment.user_id !== user.id) {
     return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
   }
-  if (!['payment_pending', 'pending_approval'].includes(enrollment.status || '')) {
-    return NextResponse.json({ error: 'Enrollment is not awaiting payment' }, { status: 400 })
+  if (enrollment.course_id !== courseId) {
+    return NextResponse.json({ error: 'Course does not match this enrolment' }, { status: 400 })
+  }
+  if (enrollment.status !== 'payment_pending') {
+    return NextResponse.json({ error: 'Your application must be approved before you can choose a payment plan' }, { status: 400 })
   }
 
   const { data: existing } = await service.from('payments').select('id').eq('enrollment_id', enrollmentId).limit(1).maybeSingle()
   if (existing) return NextResponse.json({ error: 'Payment plan already submitted', paymentId: existing.id }, { status: 400 })
 
-  const { data: course } = await service.from('courses').select('fee').eq('id', courseId).single()
+  const { data: course } = await service.from('courses').select('fee').eq('id', enrollment.course_id).single()
   const fee = course?.fee ?? 0
   const installmentAmount = totalInstallments > 1 ? Math.ceil(fee / totalInstallments) : fee
 
@@ -43,7 +46,7 @@ export async function POST(request: NextRequest) {
     .from('payments')
     .insert({
       user_id: user.id,
-      course_id: courseId,
+      course_id: enrollment.course_id,
       enrollment_id: enrollmentId,
       amount: fee,
       status: 'pending',
@@ -56,8 +59,5 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (payErr) return NextResponse.json({ error: payErr.message }, { status: 500 })
-  if (enrollment.status === 'pending_approval') {
-    await service.from('enrollments').update({ status: 'payment_pending' }).eq('id', enrollmentId)
-  }
   return NextResponse.json({ success: true, paymentId: payment.id })
 }

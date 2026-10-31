@@ -36,23 +36,5 @@ export async function POST() {
     }
   }
 
-  const { data: paidEnrollments } = await service
-    .from('payments')
-    .select('enrollment_id')
-    .not('enrollment_id', 'is', null)
-  const enrollmentIdsWithPayment = Array.from(new Set((paidEnrollments ?? []).map((p: any) => p.enrollment_id).filter(Boolean)))
-
-  let accessGranted = 0
-  for (const eid of enrollmentIdsWithPayment) {
-    const { data: paid } = await service.from('payments').select('amount_paid').eq('enrollment_id', eid)
-    const totalPaid = (paid ?? []).reduce((s, p) => s + ((p as any).amount_paid ?? 0), 0)
-    if (totalPaid <= 0) continue
-    const { data: enrollment } = await service.from('enrollments').select('id, status').eq('id', eid).single()
-    if (enrollment?.status !== 'approved') {
-      const { error } = await service.from('enrollments').update({ status: 'approved', enrolled_at: new Date().toISOString() }).eq('id', eid)
-      if (!error) accessGranted++
-    }
-  }
-
-  return NextResponse.json({ synced, total: orphanPayments?.length ?? 0, accessGranted })
+  return NextResponse.json({ synced, total: orphanPayments?.length ?? 0 })
 }

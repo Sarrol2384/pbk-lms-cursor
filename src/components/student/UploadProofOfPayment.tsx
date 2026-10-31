@@ -49,11 +49,16 @@ export default function UploadProofOfPayment({
         setLoading(false)
         return
       }
-      const proofUrl = uploadData.url
+      const proofPath = uploadData.path
+      if (!proofPath) {
+        setMessage({ type: 'error', text: 'Upload did not return a file path.' })
+        setLoading(false)
+        return
+      }
       const patchRes = await fetch('/api/payments/proof', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId, proofUrl }),
+        body: JSON.stringify({ paymentId, proofUrl: proofPath }),
       })
       const patchData = await patchRes.json().catch(() => ({}))
       if (!patchRes.ok) {
@@ -61,7 +66,7 @@ export default function UploadProofOfPayment({
         setLoading(false)
         return
       }
-      setUploadedUrl(proofUrl)
+      setUploadedUrl(typeof uploadData.url === 'string' ? uploadData.url : null)
       setMessage({ type: 'success', text: 'Proof of payment uploaded. Admin will review and approve your enrollment.' })
       if (inputRef.current) inputRef.current.value = ''
     } catch {

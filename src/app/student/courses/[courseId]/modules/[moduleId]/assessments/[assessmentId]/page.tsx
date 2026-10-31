@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { SubmitAssignmentForm } from './SubmitAssignmentForm'
 import { TakeQuiz } from '@/components/student/TakeQuiz'
+import { assertAllUnitsComplete, assertPreviousModulePassed, requireActiveEnrollment } from '@/lib/enrollment-access'
+import { updateModuleProgress } from '@/lib/progress'
 
 export default async function StudentAssessmentPage({
   params,
@@ -11,14 +13,20 @@ export default async function StudentAssessmentPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: enrollment } = await supabase
-    .from('enrollments')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('course_id', params.courseId)
-    .eq('status', 'approved')
-    .single()
-  if (!enrollment) redirect(`/student/enroll/${params.courseId}`)
+  const access = await requireActiveEnrollment(user.id, params.courseId)
+  if (!access.ok) redirect(`/student/enroll/${params.courseId}`)
+
+  const unlocked = await assertPreviousModulePassed(user.id, params.courseId, params.moduleId)
+  if (!unlocked.ok) {
+    if (unlocked.error === 'Module not found') notFound()
+    redirect(`/student/courses/${params.courseId}?locked=1`)
+  }
+
+  const unitsDone = await assertAllUnitsComplete(user.id, params.moduleId)
+  if (!unitsDone.ok) redirect(`/student/courses/${params.courseId}/modules/${params.moduleId}`)
+
+  const moduleStatus = await updateModuleProgress(user.id, params.moduleId)
+  const modulePassed = moduleStatus === 'passed'
 
   const { data: assessment } = await supabase
     .from('assessments')
@@ -69,7 +77,7 @@ export default async function StudentAssessmentPage({
         <h1 className="text-xl font-bold text-gray-900 mt-0.5">{assessment.title}</h1>
         <p className="text-sm text-gray-500 mt-1">{assessment.total_marks} marks • Weight {assessment.weight}%</p>
 
-        {existing?.status === 'graded' && existing.marks_obtained != null && (
+        {existing?.status === 'graded' && existing.marks_obtained != null && !isQuiz && (
           <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-sm font-medium text-green-800">Graded: {existing.marks_obtained} / {assessment.total_marks}</p>
           </div>
@@ -109,10 +117,12 @@ export default async function StudentAssessmentPage({
                 <p className="text-xs text-gray-500 mt-2">Total: {rubrics.reduce((s, r) => s + (r.marks ?? 0), 0)} marks</p>
               </div>
             )}
-            {existing?.status !== 'graded' && (
+            {(!modulePassed) && (
               <>
                 <p className="mt-4 text-sm text-gray-600">
-                  Submit your work directly here: upload your file (Word, PDF, or image) and click Submit. You do not leave the portal — everything is done on this page.
+                  {existing?.status === 'graded'
+                    ? 'This module is not passed yet. Upload a new file to resubmit. Your lecturer will grade the new file, which replaces the previous mark.'
+                    : 'Submit your work directly here: upload your file (Word, PDF, or image) and click Submit. You do not leave the portal — everything is done on this page.'}
                 </p>
                 <SubmitAssignmentForm assessmentId={params.assessmentId} existingSubmissionId={existing?.id} />
               </>
@@ -122,16 +132,22 @@ export default async function StudentAssessmentPage({
 
         {isQuiz && (
           <>
-            {existing?.status === 'graded' && existing.marks_obtained != null ? (
+            {existing?.status === 'graded' && existing.marks_obtained != null && (
               <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm font-medium text-green-800">Your score: {existing.marks_obtained} / {assessment.total_marks}</p>
+                {!modulePassed && (
+                  <p className="text-sm text-green-800 mt-1">This module is not passed yet. You can retake the quiz. The new score replaces this one.</p>
+                )}
               </div>
-            ) : quizQuestions.length > 0 ? (
-              <TakeQuiz questions={quizQuestions} totalMarks={assessment.total_marks ?? 0} assessmentId={params.assessmentId} />
-            ) : (
-              <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-sm text-amber-800">No questions in this quiz yet.</p>
-              </div>
+            )}
+            {!modulePassed && (
+              quizQuestions.length > 0 ? (
+                <TakeQuiz questions={quizQuestions} totalMarks={assessment.total_marks ?? 0} assessmentId={params.assessmentId} />
+              ) : (
+                <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-800">No questions in this quiz yet.</p>
+                </div>
+              )
             )}
           </>
         )}

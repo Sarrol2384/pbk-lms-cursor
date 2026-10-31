@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { UnitCompleteAtBottom } from '@/components/student/UnitCompleteAtBottom'
+import { assertPreviousModulePassed, requireActiveEnrollment } from '@/lib/enrollment-access'
 
 export default async function StudentUnitPage({
   params,
@@ -10,15 +11,14 @@ export default async function StudentUnitPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: enrollment } = await supabase
-    .from('enrollments')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('course_id', params.courseId)
-    .eq('status', 'approved')
-    .single()
+  const access = await requireActiveEnrollment(user.id, params.courseId)
+  if (!access.ok) redirect(`/student/enroll/${params.courseId}`)
 
-  if (!enrollment) redirect(`/student/enroll/${params.courseId}`)
+  const unlocked = await assertPreviousModulePassed(user.id, params.courseId, params.moduleId)
+  if (!unlocked.ok) {
+    if (unlocked.error === 'Module not found') notFound()
+    redirect(`/student/courses/${params.courseId}?locked=1`)
+  }
 
   const { data: unit } = await supabase
     .from('units')

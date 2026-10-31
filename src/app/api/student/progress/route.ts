@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { requireActiveEnrollment } from '@/lib/enrollment-access'
 
 /**
  * GET ?courseId=... - returns { moduleProgress: { [moduleId]: 'in_progress' | 'passed' }, completedUnitIds: string[] }
@@ -12,9 +13,10 @@ export async function GET(request: NextRequest) {
   const courseId = request.nextUrl.searchParams.get('courseId')
   if (!courseId) return NextResponse.json({ error: 'courseId required' }, { status: 400 })
 
+  const access = await requireActiveEnrollment(user.id, courseId)
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.httpStatus })
+
   const service = createServiceClient()
-  const { data: enrollment } = await service.from('enrollments').select('id').eq('user_id', user.id).eq('course_id', courseId).eq('status', 'approved').single()
-  if (!enrollment) return NextResponse.json({ error: 'Not enrolled' }, { status: 403 })
 
   const { data: modules } = await service.from('modules').select('id').eq('course_id', courseId).order('sequence', { ascending: true })
   const moduleIds = (modules ?? []).map(m => m.id)

@@ -17,6 +17,7 @@ export default function RegisterPage() {
     first_name: '', last_name: '', email: '', password: '', confirm_password: '',
     phone: '', id_number: '', address: '',
   })
+  const [popiaConsent, setPopiaConsent] = useState(false)
 
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }))
@@ -37,6 +38,10 @@ export default function RegisterPage() {
       setError('Please enter a valid phone number (e.g. 0821234567). Do not use an email address.')
       return
     }
+    if (!popiaConsent) {
+      setError('Please consent to the processing of your personal information under POPIA.')
+      return
+    }
     setLoading(true)
     setError(null)
 
@@ -51,6 +56,7 @@ export default function RegisterPage() {
           last_name: form.last_name,
           phone: form.phone,
           id_number: form.id_number,
+          popia_consent: true,
         }),
       })
       const text = await res.text()
@@ -148,6 +154,18 @@ export default function RegisterPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Confirm password *</label>
             <input type="password" value={form.confirm_password} onChange={e => set('confirm_password', e.target.value)} className={inputClass} placeholder="Repeat your password" />
           </div>
+          <label className="flex items-start gap-3 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={popiaConsent}
+              onChange={e => setPopiaConsent(e.target.checked)}
+              className="mt-1 accent-blue-600"
+              required
+            />
+            <span>
+              I consent to PBK University collecting and processing my personal information to create this account and process programme applications, as required by the Protection of Personal Information Act (POPIA). *
+            </span>
+          </label>
           <div className="flex gap-3">
             <button onClick={() => { setError(null); setStep(1) }}
               className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-sm">

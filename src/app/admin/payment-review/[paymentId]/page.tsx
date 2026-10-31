@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import PaymentReviewCard from '@/components/admin/PaymentReviewCard'
 import { getPaymentDeadline } from '@/lib/utils'
+import { signedUrlForStoredFile } from '@/lib/storage/signed-url'
 
 export const dynamic = 'force-dynamic'
 
@@ -190,7 +191,7 @@ export default async function PaymentReviewPage({
 
           <PaymentReviewCard
             paymentId={payment.id}
-            proofUrl={p.proof_url}
+            proofUrl={await signedUrlForStoredFile('payments', p.proof_url)}
             balance={balance}
             total={total}
             totalInstallments={(p as any).total_installments ?? 1}

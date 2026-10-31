@@ -138,29 +138,11 @@ export async function sendAccountCreatedEmail(to: string, firstName: string) {
   await sendEmail(to, `Account created – ${FROM_NAME}`, baseTemplate('Account created', body))
 }
 
-export async function sendApplicationReceivedEmail(to: string, firstName: string, courseName: string, applicationOnly?: boolean, courseId?: string) {
-  const enrollLink = courseId ? `${appUrl()}/student/enroll/${courseId}` : null
-  const body = applicationOnly
-    ? `
+export async function sendApplicationReceivedEmail(to: string, firstName: string, courseName: string, _applicationOnly?: boolean, _courseId?: string) {
+  const body = `
     <p>Dear ${firstName},</p>
-    <p>Thank you for applying to <strong>${courseName}</strong>. We have received your application.</p>
-    <p>To complete your registration, choose your payment plan (pay in full, or 3, 6 or 12 months) and upload your proof of payment:</p>
-    ${enrollLink ? `<p><a href="${enrollLink}" class="btn">Choose payment plan &amp; upload proof</a></p>` : '<p>Log in to the student portal and go to My Courses to choose your payment plan and upload proof.</p>'}
-    <p>You can start the course as soon as your first payment is verified. If you have questions, contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>.</p>
-    <p>Warm regards,<br>${FROM_NAME} Admissions</p>`
-    : `
-    <p>Dear ${firstName},</p>
-    <p>Thank you for applying to <strong>${courseName}</strong>. We have received your application and it is currently under review.</p>
-    <p>To complete your registration, please submit your proof of payment to the following banking details:</p>
-    <div class="bank-box">
-      <div class="bank-row"><span>Bank</span><span>${BANK.name}</span></div>
-      <div class="bank-row"><span>Account Name</span><span>${BANK.accountName}</span></div>
-      <div class="bank-row"><span>Account Number</span><span>${BANK.accountNumber}</span></div>
-      <div class="bank-row"><span>Branch Code</span><span>${BANK.branchCode}</span></div>
-      <div class="bank-row"><span>Account Type</span><span>${BANK.accountType}</span></div>
-      <div class="bank-row"><span>Reference</span><span>${BANK.reference}</span></div>
-    </div>
-    <p>After you have paid, log in to the student portal and upload your proof of payment on the course application page. Once we verify it, we will activate your account and send you access details.</p>
+    <p>Thank you for applying to <strong>${courseName}</strong>. We have received your application and it is under review.</p>
+    <p>An administrator must approve your application before you can choose a payment plan or upload proof of payment. We will email you when that happens.</p>
     <p>If you have any questions, please contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>.</p>
     <p>Warm regards,<br>${FROM_NAME} Admissions</p>`
   await sendEmail(to, 'Application Received – ' + FROM_NAME, baseTemplate('Application Received', body))
@@ -323,20 +305,18 @@ export async function sendAdminApplicationSubmittedEmail(
   await sendEmail(to, `New application: ${studentName} – ${courseName}`, baseTemplate('Admin notification', body))
 }
 
-/** Admin notification: student uploaded proof of payment */
+/** Admin notification: student uploaded proof of payment. Link is the review page, not the file. */
 export async function sendAdminProofUploadedEmail(
   to: string,
   studentName: string,
   studentEmail: string,
   courseName: string,
-  proofUrl: string
+  reviewUrl: string
 ) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const body = `
     <p>A student has uploaded proof of payment.</p>
     <p><strong>Student:</strong> ${studentName} (${studentEmail})</p>
     <p><strong>Course:</strong> ${courseName}</p>
-    <p><a href="${proofUrl}" target="_blank" rel="noopener noreferrer">View proof</a></p>
-    <p><a href="${appUrl}/admin/students" class="btn">Review & approve</a></p>`
+    <p><a href="${reviewUrl}" class="btn">Review payment</a></p>`
   await sendEmail(to, `Proof uploaded: ${studentName} – ${courseName}`, baseTemplate('Admin notification', body))
 }

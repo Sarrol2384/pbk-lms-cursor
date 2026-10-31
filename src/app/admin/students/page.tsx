@@ -165,10 +165,10 @@ export default async function AdminStudentsPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Students</h1>
-        <p className="text-gray-500 text-sm mt-1">Manage student applications and enrollments. When a student applies, they receive one email with a link to choose a payment plan and upload proof (no further emails until payment is verified). They appear under <strong>Pending</strong> until payment is verified. Approved = current approved enrollments. All Students = users with the student role (remove from Users to clear).</p>
+        <p className="text-gray-500 text-sm mt-1">Manage student applications and enrollments. Approve an application before the student can choose a payment plan or upload proof. They then appear under Payment pending. Course access starts when you record the first payment. Approved = current approved enrollments. All Students = users with the student role (remove from Users to clear).</p>
         <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
           <p className="font-medium text-amber-900">Where to approve payments</p>
-          <p className="text-amber-800 mt-1">Go to the <strong>Pending</strong> tab → find the student under &quot;Payment pending&quot; → click <strong>Record payment</strong> to enter the amount received, or <strong>Approve full</strong> to approve without recording. Access is granted only after payment is recorded or approved.</p>
+          <p className="text-amber-800 mt-1">Approve the application first. After the student uploads proof, open <strong>Pending</strong> → <strong>Payment pending</strong> → <strong>Record payment</strong>. The first recorded amount grants course access. Later instalments do not send the welcome email again.</p>
           <SyncPaymentsButton />
         </div>
       </div>

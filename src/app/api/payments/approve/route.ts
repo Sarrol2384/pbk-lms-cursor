@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sendWelcomeAccessGrantedEmail } from '@/lib/email'
+import { approveEnrollmentFirstTime } from '@/lib/enrollment-access'
 
 export async function POST(request: NextRequest) {
   const supabase = createClient()
@@ -31,19 +32,30 @@ export async function POST(request: NextRequest) {
   const amountPaid = payment.amount_paid ?? 0
   const markFullyPaid = amountPaid < amount
 
-  await Promise.all([
-    service.from('payments').update({
-      status: 'approved',
-      ...(markFullyPaid ? { amount_paid: amount } : {}),
-    }).eq('id', paymentId),
-    service.from('enrollments').update({ status: 'approved', enrolled_at: new Date().toISOString() }).eq('id', payment.enrollment_id),
-  ])
+  const { error: payErr } = await service.from('payments').update({
+    status: 'approved',
+    ...(markFullyPaid ? { amount_paid: amount } : {}),
+  }).eq('id', paymentId)
+  if (payErr) return NextResponse.json({ error: payErr.message }, { status: 500 })
+
+  let firstApproval = false
+  try {
+    const result = await approveEnrollmentFirstTime(payment.enrollment_id)
+    firstApproval = result.firstApproval
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Could not approve enrolment'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 
   const { data: studentProfile } = await service.from('profiles').select('first_name, email').eq('id', payment.user_id).single()
   const { data: course } = await service.from('courses').select('title').eq('id', payment.course_id).single()
 
-  if (studentProfile && course) {
-    await sendWelcomeAccessGrantedEmail(studentProfile.email, studentProfile.first_name, course.title)
+  if (firstApproval && studentProfile?.email && course?.title) {
+    try {
+      await sendWelcomeAccessGrantedEmail(studentProfile.email, studentProfile.first_name, course.title)
+    } catch {
+      console.error('[Approve payment] Welcome email failed')
+    }
   }
 
   return NextResponse.json({ success: true })
