@@ -16,7 +16,7 @@ export default async function AboutPage() {
     <>
       <PageHero
         title="About us"
-        subtitle={`${institutionName} is committed to developing ethical, capable leaders.`}
+        subtitle={`${institutionName}. Empowering Leaders for Service.`}
       />
 
       <section className="py-16 px-4">

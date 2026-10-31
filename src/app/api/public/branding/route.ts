@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { INSTITUTE_NAME } from '@/lib/institute'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,13 +21,13 @@ export async function GET() {
   if (error) {
     // Fail gracefully – just fall back to defaults.
     return NextResponse.json({
-      institution_name: 'PBK University',
+      institution_name: INSTITUTE_NAME,
       logo_url: null,
     })
   }
 
   return NextResponse.json({
-    institution_name: data?.institution_name || 'PBK University',
+    institution_name: data?.institution_name || INSTITUTE_NAME,
     logo_url: data?.logo_url ?? null,
   })
 }

@@ -14,7 +14,7 @@ export default async function CertificateSettingsPage() {
   const { data: settings } = await supabase.from('certificate_settings').select('*').limit(1).maybeSingle()
 
   const initial = {
-    institution_name: settings?.institution_name ?? 'PBK Management and Leadership Institute',
+    institution_name: settings?.institution_name ?? 'PBK Memorial Management and Leadership Institute',
     logo_url: settings?.logo_url ?? '',
     seal_url: settings?.seal_url ?? '',
     signature1_url: settings?.signature1_url ?? '',

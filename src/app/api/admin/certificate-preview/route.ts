@@ -13,7 +13,7 @@ export async function GET() {
   const service = createServiceClient()
   const { data: settingsRow } = await service.from('certificate_settings').select('*').limit(1).maybeSingle()
   const settings = settingsRow ? {
-    institution_name: settingsRow.institution_name ?? 'PBK University',
+    institution_name: settingsRow.institution_name ?? 'PBK Memorial Management and Leadership Institute',
     logo_url: settingsRow.logo_url ?? null,
     seal_url: settingsRow.seal_url ?? null,
     signature1_url: settingsRow.signature1_url ?? null,

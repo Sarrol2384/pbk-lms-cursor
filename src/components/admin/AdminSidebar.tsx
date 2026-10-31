@@ -5,12 +5,14 @@ import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { cn, getInitials } from '@/lib/utils'
+import { INSTITUTE_NAME } from '@/lib/institute'
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: '◻' },
   { href: '/admin/users', label: 'Users', icon: '👤' },
   { href: '/admin/students', label: 'Students', icon: '👥' },
   { href: '/admin/enrollments', label: 'Enrollments', icon: '📋' },
+  { href: '/admin/applications', label: 'Applications', icon: '✉' },
   { href: '/admin/courses', label: 'Courses', icon: '📚' },
   { href: '/admin/certificates', label: 'Certificates', icon: '🏆' },
   { href: '/admin/certificate-settings', label: 'Certificate design', icon: '📄' },
@@ -22,7 +24,7 @@ type Branding = { institution_name: string; logo_url: string | null }
 export default function AdminSidebar({ profile }: { profile: { first_name: string; last_name: string; email: string; role: string } }) {
   const pathname = usePathname()
   const router = useRouter()
-  const [branding, setBranding] = useState<Branding>({ institution_name: 'PBK University', logo_url: null })
+  const [branding, setBranding] = useState<Branding>({ institution_name: INSTITUTE_NAME, logo_url: null })
 
   useEffect(() => {
     let cancelled = false
@@ -31,7 +33,7 @@ export default function AdminSidebar({ profile }: { profile: { first_name: strin
         const res = await fetch('/api/public/branding', { cache: 'no-store' })
         if (!res.ok) return
         const data = (await res.json()) as Branding
-        if (!cancelled) setBranding({ institution_name: data.institution_name || 'PBK University', logo_url: data.logo_url ?? null })
+        if (!cancelled) setBranding({ institution_name: data.institution_name || INSTITUTE_NAME, logo_url: data.logo_url ?? null })
       } catch {
         // ignore and keep defaults
       }

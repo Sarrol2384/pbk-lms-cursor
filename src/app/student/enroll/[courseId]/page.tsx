@@ -152,7 +152,7 @@ export default async function EnrollPage({ params }: { params: { courseId: strin
                 <p className="font-medium text-gray-900 text-sm mb-3">Banking details for payment</p>
                 <dl className="space-y-2 text-sm">
                   <div className="flex justify-between gap-4"><dt className="text-gray-500">Bank</dt><dd className="font-medium text-gray-900">{BANK.name}</dd></div>
-                  <div className="flex justify-between gap-4"><dt className="text-gray-500">Account name</dt><dd className="font-medium text-gray-900">{BANK.accountName}</dd></div>
+                  <div className="flex justify-between gap-4"><dt className="text-gray-500">Account holder</dt><dd className="font-medium text-gray-900">{BANK.accountName}</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-gray-500">Account number</dt><dd className="font-medium text-gray-900">{BANK.accountNumber}</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-gray-500">Branch code</dt><dd className="font-medium text-gray-900">{BANK.branchCode}</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-gray-500">Account type</dt><dd className="font-medium text-gray-900">{BANK.accountType}</dd></div>
@@ -195,7 +195,7 @@ export default async function EnrollPage({ params }: { params: { courseId: strin
                 <p className="font-medium text-gray-900 text-sm mb-3">Banking details for payment</p>
                 <dl className="space-y-2 text-sm">
                   <div className="flex justify-between gap-4"><dt className="text-gray-500">Bank</dt><dd className="font-medium text-gray-900">{BANK.name}</dd></div>
-                  <div className="flex justify-between gap-4"><dt className="text-gray-500">Account name</dt><dd className="font-medium text-gray-900">{BANK.accountName}</dd></div>
+                  <div className="flex justify-between gap-4"><dt className="text-gray-500">Account holder</dt><dd className="font-medium text-gray-900">{BANK.accountName}</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-gray-500">Account number</dt><dd className="font-medium text-gray-900">{BANK.accountNumber}</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-gray-500">Branch code</dt><dd className="font-medium text-gray-900">{BANK.branchCode}</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-gray-500">Account type</dt><dd className="font-medium text-gray-900">{BANK.accountType}</dd></div>

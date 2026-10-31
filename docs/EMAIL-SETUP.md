@@ -50,8 +50,8 @@ EMAIL_FROM_NAME=PBK Memorial Leadership Institute
 
 # --- Optional: fallback and support ---
 RESEND_API_KEY=
-SUPPORT_EMAIL=support@pbkleadership.org.za
-ADMIN_NOTIFY_EMAIL=ceesproductions@gmail.com
+SUPPORT_EMAIL=info@pbkleadership.org.za
+ADMIN_NOTIFY_EMAIL=info@pbkleadership.org.za
 
 # --- App URL (used in links in emails) ---
 NEXT_PUBLIC_APP_URL=https://your-pbk-lms-domain.com
@@ -60,7 +60,8 @@ NEXT_PUBLIC_APP_URL=https://your-pbk-lms-domain.com
 - **BREVO_API_KEY:** from step 1.1.  
 - **BREVO_FROM_EMAIL:** same address you added as sender in 1.2.  
 - **EMAIL_FROM_NAME:** appears as “From” name in all app emails.  
-- **ADMIN_NOTIFY_EMAIL:** where admin notifications (new application, proof uploaded) are sent.  
+- **SUPPORT_EMAIL:** public contact address. Defaults to `info@pbkleadership.org.za` when unset.
+- **ADMIN_NOTIFY_EMAIL:** where staff notifications (new portal application, proof uploaded, prospectus application, contact form) are sent. Defaults to `info@pbkleadership.org.za` when unset. A comma-separated list is allowed.  
 - **NEXT_PUBLIC_APP_URL:** your live site URL (e.g. `https://pbkleadership.org.za`); use `http://localhost:3000` only for local testing.
 
 Restart the dev server after changing `.env.local`.

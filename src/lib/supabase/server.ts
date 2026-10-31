@@ -22,6 +22,21 @@ export function createClient() {
   )
 }
 
+/** Anonymous server client. Used so public form inserts are checked by RLS, not a logged-in session. */
+export function createAnonClient() {
+  return _createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    }
+  )
+}
+
 export function createServiceClient() {
   return _createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

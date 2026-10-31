@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { cn, getInitials } from '@/lib/utils'
+import { INSTITUTE_NAME } from '@/lib/institute'
 
 const navItems = [
   { href: '/student/dashboard', label: 'Dashboard', icon: '◻' },
@@ -20,7 +21,7 @@ export default function StudentSidebar({ profile }: { profile: { first_name?: st
   const firstName = profile?.first_name ?? ''
   const lastName = profile?.last_name ?? ''
   const email = profile?.email ?? ''
-  const [branding, setBranding] = useState<Branding>({ institution_name: 'PBK University', logo_url: null })
+  const [branding, setBranding] = useState<Branding>({ institution_name: INSTITUTE_NAME, logo_url: null })
 
   useEffect(() => {
     let cancelled = false
@@ -29,7 +30,7 @@ export default function StudentSidebar({ profile }: { profile: { first_name?: st
         const res = await fetch('/api/public/branding', { cache: 'no-store' })
         if (!res.ok) return
         const data = (await res.json()) as Branding
-        if (!cancelled) setBranding({ institution_name: data.institution_name || 'PBK University', logo_url: data.logo_url ?? null })
+        if (!cancelled) setBranding({ institution_name: data.institution_name || INSTITUTE_NAME, logo_url: data.logo_url ?? null })
       } catch {
         // ignore – fall back to defaults
       }

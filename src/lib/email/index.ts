@@ -1,26 +1,33 @@
+import { INSTITUTE_MOTTO, INSTITUTE_NAME, supportEmail } from '@/lib/institute'
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const BREVO_API_KEY = process.env.BREVO_API_KEY
 const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || process.env.EMAIL_FROM || 'noreply@pbkleadership.org.za'
-const FROM_NAME = process.env.EMAIL_FROM_NAME || 'PBK University'
-const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'support@pbkleadership.org.za'
+const FROM_NAME = process.env.EMAIL_FROM_NAME || INSTITUTE_NAME
+const SUPPORT_EMAIL = supportEmail()
 
-/** Shared banking details (used in emails and on enroll page). */
+/**
+ * Official student banking details (enrol page and payment emails).
+ * Matches the Capitec Business notice: account 105 554 2612, branch 450105.
+ * Remove or update BANK_* env vars if a host still has the previous Absa values.
+ */
 export const BANK = {
-  name: process.env.BANK_NAME || 'Absa',
-  accountName: process.env.BANK_ACCOUNT_NAME || 'PBK Memorial t/a Kriska Solutions',
-  accountNumber: process.env.BANK_ACCOUNT_NUMBER || '4109771651',
-  branchCode: process.env.BANK_BRANCH_CODE || '632005',
-  accountType: process.env.BANK_ACCOUNT_TYPE || 'Current Account',
+  name: process.env.BANK_NAME || 'Capitec Business',
+  accountName: process.env.BANK_ACCOUNT_NAME || 'PBK Memorial Management and Leadership Institute',
+  accountNumber: process.env.BANK_ACCOUNT_NUMBER || '105 554 2612',
+  branchCode: process.env.BANK_BRANCH_CODE || '450105',
+  accountType: process.env.BANK_ACCOUNT_TYPE || 'Current',
   reference: process.env.BANK_REFERENCE || 'Student Name',
 }
 
-async function sendViaBrevo(to: string, subject: string, html: string): Promise<void> {
+async function sendViaBrevo(to: string, subject: string, html: string, replyTo?: string): Promise<void> {
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: { 'api-key': BREVO_API_KEY!, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       sender: { name: FROM_NAME, email: FROM_EMAIL },
       to: [{ email: to }],
+      replyTo: replyTo ? { email: replyTo } : undefined,
       subject,
       htmlContent: html,
     }),
@@ -38,7 +45,7 @@ async function sendViaBrevo(to: string, subject: string, html: string): Promise<
   }
 }
 
-async function sendViaResend(to: string, subject: string, html: string): Promise<void> {
+async function sendViaResend(to: string, subject: string, html: string, replyTo?: string): Promise<void> {
   const resendFrom = process.env.EMAIL_FROM || 'onboarding@resend.dev'
   const from = `${FROM_NAME} <${resendFrom}>`
   const res = await fetch('https://api.resend.com/emails', {
@@ -47,7 +54,7 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
       Authorization: `Bearer ${RESEND_API_KEY!}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ from, to: [to], subject, html }),
+    body: JSON.stringify({ from, to: [to], subject, html, reply_to: replyTo }),
   })
   if (!res.ok) {
     const err = await res.text()
@@ -65,14 +72,14 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
   }
 }
 
-async function sendEmail(to: string, subject: string, html: string) {
+async function sendEmail(to: string, subject: string, html: string, replyTo?: string) {
   const providers: { name: string; send: () => Promise<void> }[] = []
 
   if (BREVO_API_KEY) {
-    providers.push({ name: 'Brevo', send: () => sendViaBrevo(to, subject, html) })
+    providers.push({ name: 'Brevo', send: () => sendViaBrevo(to, subject, html, replyTo) })
   }
   if (RESEND_API_KEY) {
-    providers.push({ name: 'Resend', send: () => sendViaResend(to, subject, html) })
+    providers.push({ name: 'Resend', send: () => sendViaResend(to, subject, html, replyTo) })
   }
 
   if (providers.length === 0) {
@@ -116,10 +123,10 @@ function baseTemplate(title: string, body: string): string {
 </style></head>
 <body>
   <div class="container">
-    <div class="header"><h1>PBK University</h1><p>Learning Management System</p></div>
+    <div class="header"><h1>${INSTITUTE_NAME}</h1><p>${INSTITUTE_MOTTO}</p></div>
     <div class="body"><h2>${title}</h2>${body}</div>
     <div class="footer">
-      PBK University LMS &nbsp;|&nbsp; <a href="mailto:${SUPPORT_EMAIL}" style="color:#6b7280">${SUPPORT_EMAIL}</a>
+      ${INSTITUTE_NAME} &nbsp;|&nbsp; <a href="mailto:${SUPPORT_EMAIL}" style="color:#6b7280">${SUPPORT_EMAIL}</a>
     </div>
   </div>
 </body></html>`
@@ -256,8 +263,8 @@ export async function sendRegistrationRejectedEmail(to: string, firstName: strin
     <p>Unfortunately, we were unable to approve your application at this time.</p>
     <p><strong>Reason:</strong> ${reason}</p>
     <p>If you believe this is an error or would like to reapply, please contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>.</p>
-    <p>Warm regards,<br>PBK University Admissions</p>`
-  await sendEmail(to, 'Application Update – PBK University', baseTemplate('Application Update', body))
+    <p>Warm regards,<br>${FROM_NAME} Admissions</p>`
+  await sendEmail(to, `Application Update – ${FROM_NAME}`, baseTemplate('Application Update', body))
 }
 
 export async function sendAssignmentGradedEmail(to: string, firstName: string, assessmentTitle: string, marks: number, total: number) {
@@ -319,4 +326,127 @@ export async function sendAdminProofUploadedEmail(
     <p><strong>Course:</strong> ${courseName}</p>
     <p><a href="${reviewUrl}" class="btn">Review payment</a></p>`
   await sendEmail(to, `Proof uploaded: ${studentName} – ${courseName}`, baseTemplate('Admin notification', body))
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+export type PublicMailResult = { inboxSent: boolean; applicantSent: boolean }
+
+async function sendOne(to: string, subject: string, html: string, replyTo?: string): Promise<boolean> {
+  try {
+    await sendEmail(to, subject, html, replyTo)
+    return true
+  } catch {
+    console.error('[Email] Public form send failed')
+    return false
+  }
+}
+
+/** Notifies the institute inbox and acknowledges the applicant. Does not throw. */
+export async function sendProspectusApplicationEmails(input: {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  idNumber: string
+  city: string
+  schoolName: string
+  programmeName: string
+  levelLabel: string
+  studyModeLabel: string
+  qualificationLabel: string
+  hasDocument: boolean
+}): Promise<PublicMailResult> {
+  const inbox = SUPPORT_EMAIL
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const ref = input.id.slice(0, 8).toUpperCase()
+  const detail = [
+    ['Reference', ref],
+    ['Name', `${input.firstName} ${input.lastName}`],
+    ['Email', input.email],
+    ['Phone', input.phone],
+    ['ID or passport', input.idNumber || 'Not supplied'],
+    ['Town or city', input.city || 'Not supplied'],
+    ['School', input.schoolName],
+    ['Programme', input.programmeName],
+    ['Level', input.levelLabel],
+    ['Study mode', input.studyModeLabel],
+    ['Highest qualification', input.qualificationLabel],
+    ['Supporting document', input.hasDocument ? 'Uploaded. Open the admin page to view it.' : 'None'],
+  ].map(([label, value]) => `<p><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</p>`).join('')
+
+  const inboxSent = await sendOne(
+    inbox,
+    `New application: ${input.firstName} ${input.lastName} – ${input.programmeName}`,
+    baseTemplate(
+      'New prospectus application',
+      `<p>A new application was submitted on the public website. Reply to the applicant from your own email.</p>${detail}<p><a href="${appUrl}/admin/applications" class="btn">Open applications</a></p>`
+    ),
+    input.email
+  )
+
+  const applicantSent = await sendOne(
+    input.email,
+    `Application received – ${input.programmeName}`,
+    baseTemplate(
+      'Application received',
+      `<p>Dear ${escapeHtml(input.firstName)},</p>
+      <p>Thank you for applying for <strong>${escapeHtml(input.programmeName)}</strong> (${escapeHtml(input.levelLabel)}) at ${INSTITUTE_NAME}.</p>
+      <p>We have received your application. Your reference is <strong>${escapeHtml(ref)}</strong>. Admissions will contact you at this email address. You do not need an account for this step.</p>
+      <p>If you need to add anything, write to <a href="mailto:${inbox}">${inbox}</a> and quote your reference.</p>
+      <p>Warm regards,<br>${escapeHtml(FROM_NAME)} Admissions</p>`
+    )
+  )
+
+  return { inboxSent, applicantSent }
+}
+
+/** Notifies the institute inbox and acknowledges the person who wrote in. Does not throw. */
+export async function sendContactEnquiryEmails(input: {
+  id: string
+  name: string
+  email: string
+  phone: string
+  subject: string
+  message: string
+}): Promise<PublicMailResult> {
+  const inbox = SUPPORT_EMAIL
+  const ref = input.id.slice(0, 8).toUpperCase()
+  const inboxSent = await sendOne(
+    inbox,
+    `Website enquiry: ${input.subject}`,
+    baseTemplate(
+      'New website enquiry',
+      `<p>Someone used the contact form. Reply from your own email.</p>
+      <p><strong>Reference:</strong> ${escapeHtml(ref)}</p>
+      <p><strong>Name:</strong> ${escapeHtml(input.name)}</p>
+      <p><strong>Email:</strong> ${escapeHtml(input.email)}</p>
+      <p><strong>Phone:</strong> ${escapeHtml(input.phone)}</p>
+      <p><strong>Subject:</strong> ${escapeHtml(input.subject)}</p>
+      <p><strong>Message:</strong></p>
+      <p>${escapeHtml(input.message).replace(/\n/g, '<br>')}</p>`
+    ),
+    input.email
+  )
+
+  const applicantSent = await sendOne(
+    input.email,
+    `We received your message – ${INSTITUTE_NAME}`,
+    baseTemplate(
+      'Message received',
+      `<p>Dear ${escapeHtml(input.name)},</p>
+      <p>Thank you for writing to ${INSTITUTE_NAME}. We have received your message about <strong>${escapeHtml(input.subject)}</strong>.</p>
+      <p>Your reference is <strong>${escapeHtml(ref)}</strong>. We will reply to this email address.</p>
+      <p>Warm regards,<br>${escapeHtml(FROM_NAME)}</p>`
+    )
+  )
+
+  return { inboxSent, applicantSent }
 }

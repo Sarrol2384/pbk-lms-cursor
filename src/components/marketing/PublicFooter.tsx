@@ -1,9 +1,10 @@
 import Link from 'next/link'
 import type { MarketingBranding } from '@/lib/marketing/branding'
 import { navLinks } from '@/content/marketing'
+import { supportEmail as instituteEmail } from '@/lib/institute'
 
 export function PublicFooter({ branding }: { branding: MarketingBranding }) {
-  const supportEmail = process.env.SUPPORT_EMAIL || 'support@pbkleadership.org.za'
+  const supportEmail = instituteEmail()
   const year = new Date().getFullYear()
 
   return (

@@ -3,11 +3,9 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sendAdminProofUploadedEmail } from '@/lib/email'
 import { ownPaymentProofPath } from '@/lib/storage/signed-url'
 
-async function getAdminNotifyEmails(supabase: ReturnType<typeof createServiceClient>): Promise<string[]> {
-  const env = process.env.ADMIN_NOTIFY_EMAIL?.trim()
-  if (env) return env.split(',').map((e) => e.trim()).filter(Boolean)
-  const { data } = await supabase.from('profiles').select('email').in('role', ['super_admin', 'admin'])
-  return (data ?? []).map((p) => p.email).filter((e): e is string => !!e)
+async function getAdminNotifyEmails(_supabase: ReturnType<typeof createServiceClient>): Promise<string[]> {
+  const raw = process.env.ADMIN_NOTIFY_EMAIL?.trim() || 'info@pbkleadership.org.za'
+  return Array.from(new Set(raw.split(',').map((part) => part.trim()).filter(Boolean)))
 }
 
 export async function PATCH(request: NextRequest) {
