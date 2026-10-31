@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { studyLevelById, studyModeById } from '@/content/prospectus'
 import { INSTITUTE_NAME } from '@/lib/institute'
 
 export type ApplicationRow = {
@@ -13,6 +14,7 @@ export type ApplicationRow = {
   phone: string
   id_number: string | null
   city: string | null
+  country: string | null
   programme_name: string
   school_name: string
   level: string
@@ -26,19 +28,6 @@ const STATUS_LABELS: Record<ApplicationRow['status'], string> = {
   contacted: 'Contacted',
   accepted: 'Accepted',
   declined: 'Declined',
-}
-
-const LEVEL_LABELS: Record<string, string> = {
-  certificate: 'Certificate',
-  diploma: 'Diploma',
-  advanced_diploma: 'Advanced Diploma',
-}
-
-const MODE_LABELS: Record<string, string> = {
-  full_time: 'Full-time',
-  part_time: 'Part-time',
-  evening: 'Evening',
-  online: 'Online distance learning',
 }
 
 export function ApplicationsTable({ rows }: { rows: ApplicationRow[] }) {
@@ -102,14 +91,19 @@ export function ApplicationsTable({ rows }: { rows: ApplicationRow[] }) {
                     <p className="text-gray-600">{row.email}</p>
                     <p className="text-gray-600">{row.phone}</p>
                     {row.city && <p className="text-gray-500">{row.city}</p>}
-                    {row.id_number && <p className="text-gray-500">ID: {row.id_number}</p>}
+                    <p className="text-gray-500">Country: {row.country || '—'}</p>
+                    {row.id_number && (
+                      <p className="text-gray-500">
+                        {row.country && row.country !== 'South Africa' ? 'ID or passport' : 'ID'}: {row.id_number}
+                      </p>
+                    )}
                     <p className="text-gray-500 mt-1">Highest qualification: {row.highest_qualification}</p>
                   </td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-gray-900">{row.programme_name}</p>
                     <p className="text-gray-500">{row.school_name}</p>
-                    <p className="text-gray-600 mt-1">{LEVEL_LABELS[row.level] || row.level}</p>
-                    <p className="text-gray-600">{MODE_LABELS[row.study_mode] || row.study_mode}</p>
+                    <p className="text-gray-600 mt-1">{studyLevelById(row.level)?.label || row.level}</p>
+                    <p className="text-gray-600">{studyModeById(row.study_mode)?.label || row.study_mode}</p>
                     {row.document_url && (
                       <a href={row.document_url} className="text-blue-700 hover:underline text-xs mt-1 inline-block" target="_blank" rel="noreferrer">
                         View document

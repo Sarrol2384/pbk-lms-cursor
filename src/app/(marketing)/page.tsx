@@ -35,7 +35,7 @@ export default async function HomePage() {
           </h1>
           <p className="text-blue-200 font-medium mb-3">{INSTITUTE_MOTTO}</p>
           <p className="text-blue-100 text-lg sm:text-xl mb-10 max-w-2xl mx-auto">
-            Certificate, Diploma and Advanced Diploma programmes across five schools. Study full-time, part-time, in the evening, or by online distance learning.
+            Certificate, Diploma and Advanced Diploma programmes across five schools, with Masters and PhD via Recognition of Prior Learning (RPL) for theology. Study full-time, part-time, in the evening, or by online distance learning.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/apply" className="bg-white text-blue-900 font-semibold px-8 py-3.5 rounded-xl hover:bg-blue-50 transition-colors text-sm">
@@ -55,7 +55,7 @@ export default async function HomePage() {
         <div className="max-w-4xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center justify-items-center">
           {[
             { value: '5 schools', label: 'Programmes grouped by school' },
-            { value: '3 levels', label: 'Certificate, Diploma and Advanced Diploma' },
+            { value: 'Up to PhD', label: 'Certificate, Diploma and Advanced Diploma, and Masters and PhD via RPL for theology' },
             { value: '4 modes', label: 'Full-time, part-time, evening and online' },
           ].map(s => (
             <div key={s.label}>

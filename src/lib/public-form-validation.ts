@@ -1,3 +1,4 @@
+import { canonicalCountry } from '@/content/countries'
 import {
   findProgramme,
   highestQualifications,
@@ -27,6 +28,7 @@ export type ApplicationInput = {
   phone: string
   idNumber: string
   city: string
+  country: string
   programmeId: string
   level: StudyLevelId
   studyMode: StudyModeId
@@ -47,6 +49,7 @@ export function validateApplication(raw: {
   phone?: unknown
   idNumber?: unknown
   city?: unknown
+  country?: unknown
   programmeId?: unknown
   level?: unknown
   studyMode?: unknown
@@ -61,6 +64,7 @@ export function validateApplication(raw: {
   const phone = clean(raw.phone, 30)
   const idNumber = clean(raw.idNumber, 32)
   const city = clean(raw.city, 80)
+  const country = canonicalCountry(clean(raw.country, 80))
   const programmeId = clean(raw.programmeId, 80)
   const level = clean(raw.level, 40)
   const studyMode = clean(raw.studyMode, 40)
@@ -72,14 +76,16 @@ export function validateApplication(raw: {
   if (lastName.length < 2) errors.lastName = 'Enter your surname.'
   if (!EMAIL_RE.test(email)) errors.email = 'Enter a valid email address.'
   if (digits(phone).length < 7) errors.phone = 'Enter a phone number we can reach you on.'
+  if (!country) errors.country = 'Choose your country.'
 
   const match = findProgramme(programmeId)
   if (!match) errors.programmeId = 'Choose a programme from the 2027 prospectus.'
 
   const levelInfo = studyLevelById(level)
-  if (!levelInfo) errors.level = 'Choose Certificate, Diploma or Advanced Diploma.'
+  if (!levelInfo) errors.level = 'Choose a level offered for this programme.'
   else if (match && !match.programme.levels.includes(levelInfo.id)) {
-    errors.level = `${match.programme.name} is offered at ${match.programme.levels.map(id => studyLevelById(id)?.label).filter(Boolean).join(', ')} level.`
+    const offered = match.programme.levels.map(id => studyLevelById(id)?.label).filter(Boolean).join(', ')
+    errors.level = `${match.programme.name} can be applied for at ${offered}.`
   }
 
   const modeInfo = studyModeById(studyMode)
@@ -93,7 +99,7 @@ export function validateApplication(raw: {
 
   if (!popiaConsent) errors.popiaConsent = 'POPIA consent is required before we can accept your application.'
 
-  if (Object.keys(errors).length > 0 || !match || !levelInfo || !modeInfo) {
+  if (Object.keys(errors).length > 0 || !match || !levelInfo || !modeInfo || !country) {
     return { ok: false, errors }
   }
 
@@ -110,6 +116,7 @@ export function validateApplication(raw: {
       phone,
       idNumber,
       city,
+      country,
       programmeId,
       level: levelInfo.id,
       studyMode: modeInfo.id,

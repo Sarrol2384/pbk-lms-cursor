@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PageHero } from '@/components/marketing/PageHero'
 import { PublicApplicationForm } from '@/components/marketing/PublicApplicationForm'
-import { findProgramme } from '@/content/prospectus'
+import { findProgramme, programmeOffersRpl } from '@/content/prospectus'
 import { supportEmail } from '@/lib/institute'
 
 export const metadata: Metadata = {
@@ -19,7 +19,9 @@ export default function ApplyPage({ searchParams }: { searchParams: { programme?
       <PageHero
         title="Apply"
         subtitle={programme
-          ? `Apply for ${programme.programme.name}. You do not need an account.`
+          ? programmeOffersRpl(programme.programme)
+            ? `Apply for ${programme.programme.name}. Masters and PhD are available via Recognition of Prior Learning (RPL). You do not need an account.`
+            : `Apply for ${programme.programme.name}. You do not need an account.`
           : 'Submit a prospectus application. You do not need an account.'}
       />
       <section className="py-12 sm:py-16 px-4 bg-gray-50">
