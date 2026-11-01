@@ -204,7 +204,7 @@ export const nqfPathwayRows: NqfPathwayRow[] = [
 
 export const nqfProgressionNotes = [
   'Entry requirements: Successful completion of the previous NQF level is generally required. Some postgraduate programmes require a minimum average of 60–65%.',
-  'Recognition of Prior Learning (RPL): Relevant work experience may allow entry at a higher level without formal prior qualifications.',
+  'Recognition of Prior Learning (RPL) applies only to the Masters and PhD levels on the six Theology & Ministry programmes. Certificate, Higher Certificate, Diploma and Advanced Diploma are not available via RPL.',
   'Bridging courses: PBK offers bridging programmes for learners who do not meet direct entry requirements for their chosen qualification.',
   'Accreditation: All PBK programmes are aligned with SAQA and the NQF for national and international recognition.',
 ]

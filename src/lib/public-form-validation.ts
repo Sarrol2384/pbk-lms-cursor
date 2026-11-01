@@ -85,7 +85,10 @@ export function validateApplication(raw: {
   if (!levelInfo) errors.level = 'Choose a level offered for this programme.'
   else if (match && !match.programme.levels.includes(levelInfo.id)) {
     const offered = match.programme.levels.map(id => studyLevelById(id)?.label).filter(Boolean).join(', ')
-    errors.level = `${match.programme.name} can be applied for at ${offered}.`
+    const rplOnly = levelInfo.id === 'masters_rpl' || levelInfo.id === 'phd_rpl'
+    errors.level = rplOnly
+      ? `${match.programme.name} is offered at ${offered}. Recognition of Prior Learning (RPL) applies only to Masters and PhD on Theology & Ministry programmes.`
+      : `${match.programme.name} is offered at ${offered}.`
   }
 
   const modeInfo = studyModeById(studyMode)

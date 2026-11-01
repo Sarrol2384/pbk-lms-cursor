@@ -397,7 +397,7 @@ export async function sendProspectusApplicationEmails(input: {
     `New application: ${input.firstName} ${input.lastName} – ${input.programmeName}`,
     baseTemplate(
       'New prospectus application',
-      `<p>A new application was submitted on the public website. Reply to the applicant from your own email.</p>${detail}<p><a href="${appUrl}/admin/applications" class="btn">Open applications</a></p>`
+      `<p>A new application was submitted on the public website. Reply to the applicant from your own email.</p>${detail}<p>Recognition of Prior Learning (RPL) applies only to Masters and PhD on the six Theology &amp; Ministry programmes. Certificate, Higher Certificate, Diploma and Advanced Diploma are not offered via RPL.</p><p><a href="${appUrl}/admin/applications" class="btn">Open applications</a></p>`
     ),
     input.email
   )
@@ -409,6 +409,7 @@ export async function sendProspectusApplicationEmails(input: {
       'Application received',
       `<p>Dear ${escapeHtml(input.firstName)},</p>
       <p>Thank you for applying for <strong>${escapeHtml(input.programmeName)}</strong> (${escapeHtml(input.levelLabel)}) at ${INSTITUTE_NAME}.</p>
+      <p>Recognition of Prior Learning (RPL) applies only to Masters and PhD on the six Theology &amp; Ministry programmes. Certificate, Higher Certificate, Diploma and Advanced Diploma are not offered via RPL.</p>
       <p>We have received your application. Your reference is <strong>${escapeHtml(ref)}</strong>. Admissions will contact you at this email address. You do not need an account for this step.</p>
       <p>If you need to add anything, write to <a href="mailto:${inbox}">${inbox}</a> and quote your reference.</p>
       <p>Warm regards,<br>${escapeHtml(FROM_NAME)} Admissions</p>`

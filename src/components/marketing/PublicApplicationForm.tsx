@@ -185,7 +185,7 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
             )}
             {selected && programmeOffersRpl(selected.programme) && (
               <p className="text-xs text-blue-800 mt-1">
-                This programme can be applied for up to Masters and PhD via Recognition of Prior Learning (RPL).
+                Recognition of Prior Learning (RPL) applies only to Masters and PhD on this programme. Certificate, Diploma and Advanced Diploma are not offered via RPL.
               </p>
             )}
             {levelHint && <p className="text-xs text-gray-500 mt-1">{levelHint.admission}</p>}
