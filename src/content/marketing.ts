@@ -257,6 +257,7 @@ export const mainNavLinks = [
   { href: '/about', label: 'About' },
   { href: '/education', label: 'Education' },
   { href: '/team', label: 'Our Team' },
+  { href: '/events', label: 'Events' },
   { href: '/contact', label: 'Contact' },
 ] as const
 

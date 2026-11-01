@@ -1,12 +1,18 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { unstable_noStore as noStore } from 'next/cache'
+import { events } from '@/content/events'
 import { getMarketingBranding } from '@/lib/marketing/branding'
 import { CTABand } from '@/components/marketing/CTABand'
 import { PartnerLogoMarquee } from '@/components/marketing/PartnerLogoMarquee'
+import { UpcomingEventStrip } from '@/components/marketing/UpcomingEventStrip'
 import { INSTITUTE_MOTTO } from '@/lib/institute'
+import { nextUpcomingEvent } from '@/lib/events'
 
 export default async function HomePage() {
+  noStore()
   const { institutionName } = await getMarketingBranding()
+  const nextEvent = nextUpcomingEvent(events, new Date())
 
   return (
     <>
@@ -66,14 +72,17 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {nextEvent ? <UpcomingEventStrip event={nextEvent} /> : null}
+
       <section className="py-20 px-4 bg-gray-50">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">Everything you need to succeed</h2>
           <p className="text-center text-gray-500 text-sm mb-12 max-w-2xl mx-auto">
             Learn more about our{' '}
             <Link href="/about" className="text-blue-700 hover:underline">mission</Link>,{' '}
-            <Link href="/education" className="text-blue-700 hover:underline">programmes</Link>, and{' '}
-            <Link href="/team" className="text-blue-700 hover:underline">leadership team</Link>.
+            <Link href="/education" className="text-blue-700 hover:underline">programmes</Link>,{' '}
+            <Link href="/team" className="text-blue-700 hover:underline">leadership team</Link>, and{' '}
+            <Link href="/events" className="text-blue-700 hover:underline">events</Link>.
           </p>
           <div className="grid sm:grid-cols-3 gap-6">
             {[
