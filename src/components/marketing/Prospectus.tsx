@@ -20,7 +20,7 @@ export function Prospectus() {
         <p className="text-lg text-blue-800 font-medium mb-4">&ldquo;{INSTITUTE_MOTTO}&rdquo;</p>
         <p className="text-gray-600 leading-relaxed">
           Programmes are offered at Certificate, Diploma and Advanced Diploma level, grouped into five schools.
-          Theology & Ministry programmes can also be applied for at Masters and PhD via Recognition of Prior Learning (RPL).
+          Recognition of Prior Learning (RPL) applies only to Masters and PhD on the six Theology & Ministry programmes. Certificate, Higher Certificate, Diploma and Advanced Diploma are not offered via RPL.
           There are {programmeCount()} programmes in this prospectus. Choose a programme below, then apply online. You do not need an account to submit an application.
         </p>
       </section>
@@ -55,7 +55,7 @@ export function Prospectus() {
           ))}
         </div>
         <p className="text-center text-sm text-gray-600 mt-4 max-w-3xl mx-auto leading-relaxed">
-          Masters (via RPL) and PhD (via RPL) are available on Theology & Ministry programmes.
+          Masters (via RPL) and PhD (via RPL) are available only on Theology & Ministry programmes. Certificate, Higher Certificate, Diploma and Advanced Diploma are not offered via RPL.
           Every programme can be studied full-time, part-time, in the evening, or by online distance learning.
         </p>
       </section>
@@ -67,7 +67,7 @@ export function Prospectus() {
             <h3 className="text-xl font-bold text-gray-900 mt-1 mb-6">{school.name}</h3>
             {school.programmes.some(programme => programmeOffersRpl(programme)) && (
               <p className="text-sm text-blue-900 bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 mb-6">
-                Programmes in this school can be applied for up to Masters and PhD via Recognition of Prior Learning (RPL).
+                Recognition of Prior Learning (RPL) applies only to Masters and PhD on these programmes. Certificate, Diploma and Advanced Diploma are not offered via RPL.
               </p>
             )}
             <ul className="space-y-5">
@@ -87,7 +87,7 @@ export function Prospectus() {
                   </p>
                   {programmeOffersRpl(programme) && (
                     <p className="text-xs text-blue-900 mt-1">
-                      Masters and PhD are available for this programme via Recognition of Prior Learning (RPL).
+                      Only Masters and PhD on this programme are available via Recognition of Prior Learning (RPL).
                     </p>
                   )}
                   <Link
