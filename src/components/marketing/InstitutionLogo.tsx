@@ -1,31 +1,43 @@
+import Image from 'next/image'
+import { INSTITUTE_LOGO_SRC } from '@/lib/brand'
+
+type LogoSize = 'nav' | 'footer' | 'auth' | 'sidebar'
+
+const frame: Record<LogoSize, string> = {
+  // Seal stays readable beside the long institute name without crowding the bar.
+  nav: 'h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16',
+  footer: 'h-12 w-12 sm:h-14 sm:w-14',
+  auth: 'h-24 w-24 sm:h-28 sm:w-28',
+  sidebar: 'h-12 w-12 sm:h-14 sm:w-14',
+}
+
+const sizes: Record<LogoSize, string> = {
+  nav: '(min-width: 1024px) 64px, (min-width: 640px) 56px, 48px',
+  footer: '(min-width: 640px) 56px, 48px',
+  auth: '(min-width: 640px) 112px, 96px',
+  sidebar: '(min-width: 640px) 56px, 48px',
+}
+
 export function InstitutionLogo({
-  logoUrl,
-  institutionName,
-  size = 'md',
+  size = 'nav',
+  priority = false,
+  className = '',
 }: {
-  logoUrl: string | null
-  institutionName: string
-  size?: 'sm' | 'md' | 'nav'
+  size?: LogoSize
+  priority?: boolean
+  className?: string
 }) {
-  const box =
-    size === 'nav' ? 'w-28 h-28' : size === 'sm' ? 'w-8 h-8' : 'w-9 h-9'
-  const icon =
-    size === 'nav' ? 'w-14 h-14' : size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'
-
-  if (logoUrl) {
-    return (
-      <div className={`${box} rounded-lg overflow-hidden bg-white border border-gray-200 flex items-center justify-center shrink-0`}>
-        <img src={logoUrl} alt={institutionName} className="w-full h-full object-contain" />
-      </div>
-    )
-  }
-
   return (
-    <div className={`${box} bg-blue-700 rounded-lg flex items-center justify-center shrink-0`}>
-      <svg className={`${icon} text-white`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422A12.083 12.083 0 0121 12c0 6.075-4.925 11-11 11S1 18.075 1 12a12.08 12.08 0 012.84-7.757L12 14z" />
-      </svg>
-    </div>
+    <span className={`relative block shrink-0 ${frame[size]} ${className}`}>
+      <Image
+        src={INSTITUTE_LOGO_SRC}
+        alt=""
+        fill
+        sizes={sizes[size]}
+        priority={priority}
+        quality={92}
+        className="object-contain drop-shadow-md"
+      />
+    </span>
   )
 }

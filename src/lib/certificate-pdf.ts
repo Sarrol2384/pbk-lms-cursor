@@ -1,4 +1,16 @@
+import { readFileSync } from 'fs'
+import path from 'path'
 import jsPDF from 'jspdf'
+
+/** Official emblem. Read from disk so certificates do not depend on certificate_settings.logo_url. */
+let cachedEmblem: string | null = null
+function officialEmblem(): string {
+  if (!cachedEmblem) {
+    const file = path.join(process.cwd(), 'public', 'brand', 'pbk-emblem.png')
+    cachedEmblem = readFileSync(file).toString('base64')
+  }
+  return cachedEmblem
+}
 
 const DARK_BLUE = { r: 13,  g: 35,  b: 94  }
 const GOLD      = { r: 178, g: 138, b: 46  }
@@ -84,13 +96,14 @@ export async function buildCertificatePdf(
   let y = 32
 
   // ── Logo ──────────────────────────────────────────────────────────
-  // PBK logo is 1:1 (square)
+  // Round official emblem, drawn square. Stored certificate_settings.logo_url
+  // is left untouched; the template always prints the emblem shipped with the app.
   const LOGO_W = 42
   const LOGO_H = 42
-  if (settings?.logo_url) {
-    await tryImage(doc, settings.logo_url, (W - LOGO_W) / 2, y, LOGO_W, LOGO_H)
+  try {
+    doc.addImage(officialEmblem(), 'PNG', (W - LOGO_W) / 2, y, LOGO_W, LOGO_H, undefined, 'NONE')
     y += LOGO_H + 7
-  } else {
+  } catch {
     y += 10
   }
 

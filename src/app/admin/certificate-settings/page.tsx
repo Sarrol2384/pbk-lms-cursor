@@ -15,7 +15,6 @@ export default async function CertificateSettingsPage() {
 
   const initial = {
     institution_name: settings?.institution_name ?? 'PBK Memorial Management and Leadership Institute',
-    logo_url: settings?.logo_url ?? '',
     seal_url: settings?.seal_url ?? '',
     signature1_url: settings?.signature1_url ?? '',
     signature1_name: settings?.signature1_name ?? '',
@@ -30,14 +29,14 @@ export default async function CertificateSettingsPage() {
       <div className="mb-8">
         <Link href="/admin/certificates" className="text-sm text-blue-600 hover:underline">← Certificates</Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-2">Certificate design</h1>
-        <p className="text-sm text-gray-500 mt-1">Set the logo and signatures used on issued certificates. Preview to confirm before students download.</p>
+        <p className="text-sm text-gray-500 mt-1">Certificates print the official PBK emblem. Set the signatures and seal, then preview before students download.</p>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <CertificateSettingsForm initial={initial} />
         <div className="mt-6 pt-6 border-t border-gray-100">
           <p className="text-sm font-medium text-gray-700 mb-2">Preview certificate</p>
-          <p className="text-xs text-gray-500 mb-2">Opens a sample PDF with the current logo and signatures so you can verify they look correct.</p>
+          <p className="text-xs text-gray-500 mb-2">Opens a sample PDF with the official emblem and the current signatures so you can verify they look correct.</p>
           <a
             href="/api/admin/certificate-preview"
             target="_blank"

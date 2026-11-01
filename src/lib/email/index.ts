@@ -1,4 +1,12 @@
+import { INSTITUTE_LOGO_PNG } from '@/lib/brand'
 import { INSTITUTE_MOTTO, INSTITUTE_NAME, supportEmail } from '@/lib/institute'
+import { siteUrl } from '@/lib/site-url'
+
+/** Absolute URL so Brevo (and other clients) can fetch the hosted emblem. */
+function emblemImg(size = 72, margin = '0 0 12px'): string {
+  const src = `${siteUrl()}${INSTITUTE_LOGO_PNG}`
+  return `<img src="${src}" width="${size}" height="${size}" alt="${INSTITUTE_NAME}" style="display:block;margin:${margin};border:0;outline:none;text-decoration:none;width:${size}px;height:${size}px;" />`
+}
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const BREVO_API_KEY = process.env.BREVO_API_KEY
@@ -123,7 +131,7 @@ function baseTemplate(title: string, body: string): string {
 </style></head>
 <body>
   <div class="container">
-    <div class="header"><h1>${INSTITUTE_NAME}</h1><p>${INSTITUTE_MOTTO}</p></div>
+    <div class="header">${emblemImg()}<h1>${INSTITUTE_NAME}</h1><p>${INSTITUTE_MOTTO}</p></div>
     <div class="body"><h2>${title}</h2>${body}</div>
     <div class="footer">
       ${INSTITUTE_NAME} &nbsp;|&nbsp; <a href="mailto:${SUPPORT_EMAIL}" style="color:#6b7280">${SUPPORT_EMAIL}</a>
@@ -228,7 +236,7 @@ export async function sendWelcomeAccessGrantedEmail(
 <body>
   <div class="container">
     <div class="banner">
-      <span class="banner-icon">🎓</span>
+      ${emblemImg(56, '0')}
       <div class="banner-text">
         <h1>Welcome to <span class="highlight">${FROM_NAME}</span>!</h1>
         <p>Payment Verified – Access Granted</p>

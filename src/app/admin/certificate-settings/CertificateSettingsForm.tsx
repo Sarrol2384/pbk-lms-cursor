@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { INSTITUTE_LOGO_SRC } from '@/lib/brand'
 
 type Initial = {
   institution_name: string
-  logo_url: string
   seal_url: string
   signature1_url: string
   signature1_name: string
@@ -18,7 +19,6 @@ type Initial = {
 export function CertificateSettingsForm({ initial }: { initial: Initial }) {
   const router = useRouter()
   const [institutionName, setInstitutionName] = useState(initial.institution_name)
-  const [logoUrl, setLogoUrl] = useState(initial.logo_url)
   const [sealUrl, setSealUrl] = useState(initial.seal_url)
   const [sig1Url, setSig1Url] = useState(initial.signature1_url)
   const [sig1Name, setSig1Name] = useState(initial.signature1_name)
@@ -30,7 +30,7 @@ export function CertificateSettingsForm({ initial }: { initial: Initial }) {
   const [uploading, setUploading] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  async function uploadFile(type: 'logo' | 'signature1' | 'signature2' | 'seal', e: React.ChangeEvent<HTMLInputElement>) {
+  async function uploadFile(type: 'signature1' | 'signature2' | 'seal', e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(type)
@@ -45,8 +45,7 @@ export function CertificateSettingsForm({ initial }: { initial: Initial }) {
         throw new Error(d.error || 'Upload failed')
       }
       const { url } = await res.json()
-      if (type === 'logo') setLogoUrl(url)
-      else if (type === 'seal') setSealUrl(url)
+      if (type === 'seal') setSealUrl(url)
       else if (type === 'signature1') setSig1Url(url)
       else setSig2Url(url)
     } catch (err) {
@@ -67,7 +66,6 @@ export function CertificateSettingsForm({ initial }: { initial: Initial }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           institution_name: institutionName.trim() || 'PBK Memorial Management and Leadership Institute',
-          logo_url: logoUrl.trim() || null,
           seal_url: sealUrl.trim() || null,
           signature1_url: sig1Url.trim() || null,
           signature1_name: sig1Name.trim() || null,
@@ -90,7 +88,7 @@ export function CertificateSettingsForm({ initial }: { initial: Initial }) {
     }
   }
 
-  const fileInput = (type: 'logo' | 'signature1' | 'signature2' | 'seal') => (
+  const fileInput = (type: 'signature1' | 'signature2' | 'seal') => (
     <input
       type="file"
       accept=".png,.jpg,.jpeg"
@@ -116,17 +114,13 @@ export function CertificateSettingsForm({ initial }: { initial: Initial }) {
         />
       </div>
 
-      {/* Logo */}
+      {/* Logo — official emblem. certificate_settings.logo_url is not written from this form. */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
-        <p className="text-xs text-gray-500 mb-2">Centred below the institution name. PNG or JPG, max 2MB. Use a transparent PNG for best results.</p>
-        {logoUrl && (
-          <div className="mb-2 p-2 bg-gray-50 rounded border inline-block">
-            <img src={logoUrl} alt="Logo" className="h-16 object-contain" />
-          </div>
-        )}
-        {fileInput('logo')}
-        {uploading === 'logo' && <p className="text-xs text-blue-500 mt-1">Uploading…</p>}
+        <p className="text-xs text-gray-500 mb-2">The official PBK emblem is printed in the centre of every certificate.</p>
+        <div className="relative h-20 w-20 p-2 bg-gray-50 rounded border">
+          <Image src={INSTITUTE_LOGO_SRC} alt="PBK emblem" fill sizes="80px" className="object-contain p-2" />
+        </div>
       </div>
 
       {/* Seal */}

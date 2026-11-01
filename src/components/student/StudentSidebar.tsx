@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { cn, getInitials } from '@/lib/utils'
 import { INSTITUTE_NAME } from '@/lib/institute'
+import { InstitutionLogo } from '@/components/marketing/InstitutionLogo'
 
 const navItems = [
   { href: '/student/dashboard', label: 'Dashboard', icon: '◻' },
@@ -13,7 +14,7 @@ const navItems = [
   { href: '/student/certificates', label: 'Certificates', icon: '🏆' },
 ]
 
-type Branding = { institution_name: string; logo_url: string | null }
+type Branding = { institution_name: string }
 
 export default function StudentSidebar({ profile }: { profile: { first_name?: string | null; last_name?: string | null; email?: string | null } }) {
   const pathname = usePathname()
@@ -21,7 +22,7 @@ export default function StudentSidebar({ profile }: { profile: { first_name?: st
   const firstName = profile?.first_name ?? ''
   const lastName = profile?.last_name ?? ''
   const email = profile?.email ?? ''
-  const [branding, setBranding] = useState<Branding>({ institution_name: INSTITUTE_NAME, logo_url: null })
+  const [branding, setBranding] = useState<Branding>({ institution_name: INSTITUTE_NAME })
 
   useEffect(() => {
     let cancelled = false
@@ -30,7 +31,7 @@ export default function StudentSidebar({ profile }: { profile: { first_name?: st
         const res = await fetch('/api/public/branding', { cache: 'no-store' })
         if (!res.ok) return
         const data = (await res.json()) as Branding
-        if (!cancelled) setBranding({ institution_name: data.institution_name || INSTITUTE_NAME, logo_url: data.logo_url ?? null })
+        if (!cancelled) setBranding({ institution_name: data.institution_name || INSTITUTE_NAME })
       } catch {
         // ignore – fall back to defaults
       }
@@ -54,15 +55,9 @@ export default function StudentSidebar({ profile }: { profile: { first_name?: st
     <aside className="w-60 bg-white border-r border-gray-100 flex flex-col shrink-0">
       <div className="p-5 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          {branding.logo_url ? (
-            <div className="w-28 h-28 shrink-0 rounded-lg overflow-hidden bg-white border border-gray-200 flex items-center justify-center">
-              <img src={branding.logo_url} alt={branding.institution_name} className="w-full h-full object-contain" />
-            </div>
-          ) : (
-            <div className="w-28 h-28 shrink-0 bg-blue-700 rounded-lg flex items-center justify-center text-white text-2xl font-bold">PBK</div>
-          )}
+          <InstitutionLogo size="sidebar" />
           <div className="min-w-0">
-            <p className="font-semibold text-gray-900 text-sm leading-tight">{branding.institution_name}</p>
+            <p className="font-semibold text-gray-900 text-sm leading-tight line-clamp-3">{branding.institution_name}</p>
             <p className="text-xs text-gray-400">Student Portal</p>
           </div>
         </div>
