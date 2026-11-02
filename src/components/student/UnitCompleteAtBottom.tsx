@@ -7,7 +7,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
  * view, the unit is marked complete. Resources are optional and do not need
  * to be clicked. Includes a manual button as fallback.
  */
-export function UnitCompleteAtBottom({ unitId }: { unitId: string }) {
+export function UnitCompleteAtBottom({
+  unitId,
+  hasResources,
+}: {
+  unitId: string
+  hasResources: boolean
+}) {
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [completed, setCompleted] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -53,7 +59,11 @@ export function UnitCompleteAtBottom({ unitId }: { unitId: string }) {
         <p className="text-sm text-green-700 font-medium">Unit marked complete. You can continue to the next unit or assessments.</p>
       ) : (
         <div className="space-y-2">
-          <p className="text-sm text-gray-600">You&apos;ve reached the end of this unit. Scroll here to mark it complete (you don&apos;t need to click the suggested reading).</p>
+          <p className="text-sm text-gray-600">
+            {hasResources
+              ? "You've reached the end of this unit. Scroll here to mark it complete (you don't need to click the suggested reading)."
+              : "You've reached the end of this unit. Scroll here to mark it complete."}
+          </p>
           <button
             type="button"
             onClick={markComplete}
