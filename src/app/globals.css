@@ -25,3 +25,19 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Keep form fields readable when the phone is in dark mode:
+   the dark-mode text colour was being inherited by inputs on white backgrounds. */
+@layer base {
+  input,
+  textarea,
+  select {
+    color-scheme: light;
+    color: #111827; /* gray-900 */
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #6b7280; /* gray-500 */
+    opacity: 1;
+  }
+}
