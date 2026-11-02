@@ -42,6 +42,7 @@ export default async function StudentUnitPage({
     .single()
 
   const resources = Array.isArray(unit.resources) ? (unit.resources as { title?: string; url?: string; type?: string; author?: string; publisher?: string; year?: string }[]) : []
+  const hasResources = resources.length > 0
 
   return (
     <div className="max-w-3xl">
@@ -61,7 +62,11 @@ export default async function StudentUnitPage({
         <div className="p-5 border-b border-gray-100">
           <p className="text-xs font-medium text-blue-600">Unit {unit.sequence}</p>
           <h1 className="text-xl font-bold text-gray-900 mt-0.5">{unit.title}</h1>
-          <p className="text-xs text-gray-500 mt-2">Scroll to the bottom of this unit to mark it complete. You don&apos;t need to open the suggested reading links.</p>
+          <p className="text-xs text-gray-500 mt-2">
+            {hasResources
+              ? "Scroll to the bottom of this unit to mark it complete. You don't need to open the suggested reading links."
+              : 'Scroll to the bottom of this unit to mark it complete.'}
+          </p>
         </div>
 
         <div className="p-5 space-y-6">
@@ -120,7 +125,7 @@ export default async function StudentUnitPage({
             </div>
           )}
 
-          <UnitCompleteAtBottom unitId={params.unitId} />
+          <UnitCompleteAtBottom unitId={params.unitId} hasResources={hasResources} />
         </div>
       </div>
 
