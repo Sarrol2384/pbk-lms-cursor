@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { PasswordInput } from '@/components/auth/PasswordInput'
 import { cn } from '@/lib/utils'
 
 export default function LoginPage() {
@@ -72,7 +73,7 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-gray-700">Password</label>
             <Link href="/forgot-password" className="text-xs text-blue-600 hover:underline">Forgot password?</Link>
           </div>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className={inputClass} placeholder="••••••••" autoComplete={preventAutofill ? 'new-password' : 'current-password'} />
+          <PasswordInput value={password} onChange={e => setPassword(e.target.value)} required className={inputClass} placeholder="••••••••" autoComplete={preventAutofill ? 'new-password' : 'current-password'} />
         </div>
         <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm">
           {loading ? 'Signing in...' : 'Sign in'}

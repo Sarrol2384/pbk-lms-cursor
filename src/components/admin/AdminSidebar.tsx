@@ -55,7 +55,7 @@ export default function AdminSidebar({ profile }: { profile: { first_name: strin
   }
 
   return (
-    <aside className="w-60 bg-white border-r border-gray-100 flex flex-col shrink-0">
+    <aside className="flex h-full w-full flex-col overflow-y-auto border-r border-gray-100 bg-white">
       <div className="p-5 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <InstitutionLogo size="sidebar" />

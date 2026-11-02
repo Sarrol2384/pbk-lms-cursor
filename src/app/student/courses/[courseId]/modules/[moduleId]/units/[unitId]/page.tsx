@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { UnitCompleteAtBottom } from '@/components/student/UnitCompleteAtBottom'
+import { LessonContent } from '@/components/student/LessonContent'
 import { assertPreviousModulePassed, requireActiveEnrollment } from '@/lib/enrollment-access'
 
 export default async function StudentUnitPage({
@@ -44,7 +45,7 @@ export default async function StudentUnitPage({
   const resources = Array.isArray(unit.resources) ? (unit.resources as { title?: string; url?: string; type?: string; author?: string; publisher?: string; year?: string }[]) : []
 
   return (
-    <div className="max-w-3xl">
+    <div className="w-full min-w-0 max-w-3xl">
       <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">
         <Link href={`/student/courses/${params.courseId}`} className="text-blue-600 hover:underline">
           {course?.title}
@@ -57,14 +58,14 @@ export default async function StudentUnitPage({
         <span className="text-gray-700 font-medium">{unit.title}</span>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="min-w-0 max-w-full overflow-hidden rounded-xl border border-gray-200 bg-white">
         <div className="p-5 border-b border-gray-100">
           <p className="text-xs font-medium text-blue-600">Unit {unit.sequence}</p>
           <h1 className="text-xl font-bold text-gray-900 mt-0.5">{unit.title}</h1>
           <p className="text-xs text-gray-500 mt-2">Scroll to the bottom of this unit to mark it complete. You don&apos;t need to open the suggested reading links.</p>
         </div>
 
-        <div className="p-5 space-y-6">
+        <div className="min-w-0 space-y-6 p-4 sm:p-5">
           {unit.video_url && (
             <div className="rounded-lg overflow-hidden bg-gray-900 aspect-video">
               <iframe
@@ -77,16 +78,7 @@ export default async function StudentUnitPage({
             </div>
           )}
 
-          {unit.content && (
-            unit.content.includes('<') ? (
-              <div
-                className="prose prose-sm max-w-none text-gray-700 prose-headings:text-gray-900 prose-p:leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: unit.content }}
-              />
-            ) : (
-              <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{unit.content}</div>
-            )
-          )}
+          {unit.content && <LessonContent content={unit.content} />}
 
           {!unit.content && !unit.video_url && (
             <p className="text-gray-500 text-sm">No content available for this unit yet.</p>
