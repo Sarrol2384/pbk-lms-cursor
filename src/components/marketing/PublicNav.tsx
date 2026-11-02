@@ -1,11 +1,17 @@
 import Link from 'next/link'
 import type { MarketingBranding } from '@/lib/marketing/branding'
+import { HotlineLink } from './HotlineLink'
 import { InstitutionLogo } from './InstitutionLogo'
 import { PublicNavChips, PublicNavLinks } from './PublicNavLinks'
 
 export function PublicNav({ branding }: { branding: MarketingBranding }) {
   return (
     <nav className="border-b border-gray-100 bg-white/80 backdrop-blur sticky top-0 z-50">
+      <div className="bg-blue-900 text-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <HotlineLink className="flex w-full items-center justify-center sm:justify-end min-h-11 py-2 text-sm font-semibold tracking-wide hover:underline underline-offset-4" />
+        </div>
+      </div>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 min-h-20 py-2 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2.5 sm:gap-3 min-w-0 shrink">
           <InstitutionLogo size="nav" />

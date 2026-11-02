@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { MarketingBranding } from '@/lib/marketing/branding'
 import { navLinks } from '@/content/marketing'
 import { supportEmail as instituteEmail } from '@/lib/institute'
+import { HotlineLink } from './HotlineLink'
 import { InstitutionLogo } from './InstitutionLogo'
 
 export function PublicFooter({ branding }: { branding: MarketingBranding }) {
@@ -16,7 +17,10 @@ export function PublicFooter({ branding }: { branding: MarketingBranding }) {
             <InstitutionLogo size="footer" />
             <div className="min-w-0">
               <p className="font-semibold text-gray-900 leading-tight">{branding.institutionName}</p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm mt-2">
+                <HotlineLink className="inline-flex items-center min-h-11 font-semibold text-blue-800 hover:underline" />
+              </p>
+              <p className="text-sm text-gray-500">
                 Questions?{' '}
                 <a href={`mailto:${supportEmail}`} className="text-blue-700 hover:underline">
                   {supportEmail}

@@ -20,7 +20,7 @@ export default function ApplyPage({ searchParams }: { searchParams: { programme?
         title="Apply"
         subtitle={programme
           ? programmeOffersRpl(programme.programme)
-            ? `Apply for ${programme.programme.name}. Masters and PhD are available via Recognition of Prior Learning (RPL). You do not need an account.`
+            ? `Apply for ${programme.programme.name}. Recognition of Prior Learning (RPL) applies only to Masters and PhD. You do not need an account.`
             : `Apply for ${programme.programme.name}. You do not need an account.`
           : 'Submit a prospectus application. You do not need an account.'}
       />

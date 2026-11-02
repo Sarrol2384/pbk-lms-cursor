@@ -1,6 +1,6 @@
 import type { InstituteEvent } from '@/content/events'
 import { events } from '@/content/events'
-import { INSTITUTE_NAME } from '@/lib/institute'
+import { INSTITUTE_HOTLINE_SCHEMA, INSTITUTE_NAME } from '@/lib/institute'
 import { siteUrl } from '@/lib/site-url'
 
 export const SA_TIMEZONE = 'Africa/Johannesburg'
@@ -122,6 +122,7 @@ export function eventJsonLd(event: InstituteEvent) {
       '@type': 'EducationalOrganization',
       name: INSTITUTE_NAME,
       email: event.contactEmail,
+      telephone: INSTITUTE_HOTLINE_SCHEMA,
       url: origin,
     },
   }
