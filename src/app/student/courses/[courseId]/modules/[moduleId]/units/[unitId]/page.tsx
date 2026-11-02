@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { UnitCompleteAtBottom } from '@/components/student/UnitCompleteAtBottom'
 import { LessonContent } from '@/components/student/LessonContent'
+import TutorPanel from '@/components/student/TutorPanel'
 import { assertPreviousModulePassed, requireActiveEnrollment } from '@/lib/enrollment-access'
 
 export default async function StudentUnitPage({
@@ -68,6 +69,14 @@ export default async function StudentUnitPage({
               ? "Scroll to the bottom of this unit to mark it complete. You don't need to open the suggested reading links."
               : 'Scroll to the bottom of this unit to mark it complete.'}
           </p>
+          <div className="mt-4">
+            <TutorPanel
+              courseId={params.courseId}
+              moduleId={params.moduleId}
+              unitId={params.unitId}
+              available={Boolean(process.env.ANTHROPIC_API_KEY?.trim())}
+            />
+          </div>
         </div>
 
         <div className="min-w-0 space-y-6 p-4 sm:p-5">
