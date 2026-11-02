@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { PasswordInput } from '@/components/auth/PasswordInput'
 import { cn } from '@/lib/utils'
 
 type Step = 1 | 2
@@ -148,11 +149,11 @@ export default function RegisterPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
-            <input type="password" value={form.password} onChange={e => set('password', e.target.value)} className={inputClass} placeholder="At least 8 characters" />
+            <PasswordInput value={form.password} onChange={e => set('password', e.target.value)} className={inputClass} placeholder="At least 8 characters" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Confirm password *</label>
-            <input type="password" value={form.confirm_password} onChange={e => set('confirm_password', e.target.value)} className={inputClass} placeholder="Repeat your password" />
+            <PasswordInput value={form.confirm_password} onChange={e => set('confirm_password', e.target.value)} className={inputClass} placeholder="Repeat your password" />
           </div>
           <label className="flex items-start gap-3 text-sm text-gray-700">
             <input
