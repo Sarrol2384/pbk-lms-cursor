@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import StudentSidebar from '@/components/student/StudentSidebar'
+import AppShell from '@/components/shell/AppShell'
 
 export default async function StudentLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
@@ -14,11 +15,8 @@ export default async function StudentLayout({ children }: { children: React.Reac
   if (profile.role === 'lecturer') redirect('/lecturer/dashboard')
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <StudentSidebar profile={profile} />
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-6 lg:p-8">{children}</div>
-      </main>
-    </div>
+    <AppShell sidebar={<StudentSidebar profile={profile} />}>
+      {children}
+    </AppShell>
   )
 }
