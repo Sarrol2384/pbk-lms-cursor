@@ -2,12 +2,17 @@
 -- Do not run this from the app, and do not run it against a database you have not backed up.
 -- The whole change is one statement: if the preflight rejects it, nothing is altered.
 --
--- What this replaces, from migrations in this repo only:
+-- What this replaces, by exact policy name only:
 --   00009 unit_completions_own / unit_completions_service (FOR ALL, applies to PUBLIC)
 --   00009 module_progress_own / module_progress_service (FOR ALL, applies to PUBLIC)
--- This repo never created policies on modules, units, or assessments. Any policy found
--- there, or any other policy on the progress tables, stops this script. It does not
--- drop policies by guessing from their expressions.
+--   Staging preflight reported these six names and no others on the content tables:
+--     assessments: assessments_manage, assessments_select
+--     modules:     modules_manage_admin, modules_select
+--     units:       units_manage_admin, units_select
+-- Their expressions were not visible. This script does not infer them. It drops those
+-- six names after the allowlist check, in this same statement, and installs
+-- course_content_staff_all / course_content_student_select instead.
+-- Any other policy name on these tables stops the statement. Nothing is changed.
 --
 -- Staff (super_admin, admin, lecturer) can read and write every module, unit, and
 -- assessment without an enrolment. Students can read that content only when their
@@ -53,8 +58,17 @@ BEGIN
     WHERE n.nspname = 'public'
       AND c.relname IN ('modules', 'units', 'assessments', 'unit_completions', 'module_progress')
   LOOP
-    allowed := (r.table_name IN ('modules', 'units', 'assessments') AND r.policy_name IN (
-        'course_content_staff_all', 'course_content_student_select'
+    allowed := (r.table_name = 'modules' AND r.policy_name IN (
+        'course_content_staff_all', 'course_content_student_select',
+        'modules_manage_admin', 'modules_select'
+      ))
+      OR (r.table_name = 'units' AND r.policy_name IN (
+        'course_content_staff_all', 'course_content_student_select',
+        'units_manage_admin', 'units_select'
+      ))
+      OR (r.table_name = 'assessments' AND r.policy_name IN (
+        'course_content_staff_all', 'course_content_student_select',
+        'assessments_manage', 'assessments_select'
       ))
       OR (r.table_name = 'unit_completions' AND r.policy_name IN (
         'unit_completions_own', 'unit_completions_service', 'unit_completions_select_own',
@@ -70,7 +84,7 @@ BEGIN
   END LOOP;
 
   IF unexpected <> '' THEN
-    RAISE EXCEPTION 'Refusing to change course-content RLS. These policies are not declared by the repo migrations and were left untouched:% Nothing was changed. Review them in a separate script. Do not delete them from a name or expression guess.', unexpected;
+    RAISE EXCEPTION 'Refusing to change course-content RLS. These policies are not on the allowlist and were left untouched:% Nothing was changed. The allowlist is the 00009 progress policies, the policies this script installs, and the six names reported by the staging preflight. Do not delete anything else from a name or expression guess.', unexpected;
   END IF;
 
   EXECUTE 'CREATE SCHEMA IF NOT EXISTS private';
@@ -205,6 +219,14 @@ BEGIN
   EXECUTE 'DROP POLICY IF EXISTS module_progress_own ON public.module_progress';
   EXECUTE 'DROP POLICY IF EXISTS module_progress_service ON public.module_progress';
   EXECUTE 'DROP POLICY IF EXISTS module_progress_select_own ON public.module_progress';
+
+  -- Exact names reported by the staging preflight. Dropped only after that allowlist check.
+  EXECUTE 'DROP POLICY IF EXISTS modules_manage_admin ON public.modules';
+  EXECUTE 'DROP POLICY IF EXISTS modules_select ON public.modules';
+  EXECUTE 'DROP POLICY IF EXISTS units_manage_admin ON public.units';
+  EXECUTE 'DROP POLICY IF EXISTS units_select ON public.units';
+  EXECUTE 'DROP POLICY IF EXISTS assessments_manage ON public.assessments';
+  EXECUTE 'DROP POLICY IF EXISTS assessments_select ON public.assessments';
 
   EXECUTE 'ALTER TABLE public.modules ENABLE ROW LEVEL SECURITY';
   EXECUTE 'ALTER TABLE public.units ENABLE ROW LEVEL SECURITY';

@@ -372,6 +372,34 @@ BEGIN
     RAISE EXCEPTION 'broad own-row policies are still installed';
   END IF;
 
+  IF EXISTS (
+    SELECT 1 FROM pg_policy pol
+    JOIN pg_class c ON c.oid = pol.polrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public'
+      AND (c.relname, pol.polname) IN (
+        ('modules', 'modules_manage_admin'),
+        ('modules', 'modules_select'),
+        ('units', 'units_manage_admin'),
+        ('units', 'units_select'),
+        ('assessments', 'assessments_manage'),
+        ('assessments', 'assessments_select')
+      )
+  ) THEN
+    RAISE EXCEPTION 'staging policy names were not replaced';
+  END IF;
+
+  IF (
+    SELECT count(*) FROM pg_policy pol
+    JOIN pg_class c ON c.oid = pol.polrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public'
+      AND c.relname IN ('modules', 'units', 'assessments')
+      AND pol.polname IN ('course_content_staff_all', 'course_content_student_select')
+  ) <> 6 THEN
+    RAISE EXCEPTION 'expected staff_all and student_select on modules, units, and assessments';
+  END IF;
+
   IF NOT has_table_privilege('authenticated', 'public.modules', 'SELECT') THEN
     RAISE EXCEPTION 'authenticated lost SELECT, so the app session cannot read';
   END IF;

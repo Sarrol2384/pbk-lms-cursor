@@ -38,16 +38,19 @@ PSQL=("${PG_BIN}/psql" -v ON_ERROR_STOP=1 -X -q)
 "${PSQL[@]}" -d postgres -c 'CREATE DATABASE pbk_rls_main'
 "${PSQL[@]}" -d postgres -c 'CREATE DATABASE pbk_rls_preflight'
 
-echo 'Applying 00031 and 00032 twice on a database that matches the repo policies'
+echo 'Applying 00031 and 00032 twice over the six staging policy names'
 "${PSQL[@]}" -d pbk_rls_main -f "${ROOT}/supabase/tests/course-content-rls/01_harness.sql"
 "${PSQL[@]}" -d pbk_rls_main -f "${ROOT}/supabase/migrations/00031_enrollment_access_override.sql"
+"${PSQL[@]}" -d pbk_rls_main -f "${ROOT}/supabase/tests/course-content-rls/04_staging_policies.sql"
+"${PSQL[@]}" -d pbk_rls_main -f "${ROOT}/supabase/tests/course-content-rls/05_assert_broad_before.sql"
 "${PSQL[@]}" -d pbk_rls_main -f "${ROOT}/supabase/migrations/00032_course_content_access_rls.sql"
 "${PSQL[@]}" -d pbk_rls_main -f "${ROOT}/supabase/migrations/00032_course_content_access_rls.sql"
 "${PSQL[@]}" -d pbk_rls_main -f "${ROOT}/supabase/tests/course-content-rls/02_assert.sql"
 
-echo 'Unknown policy must abort 00032 without installing the new policies'
+echo 'Unknown policy must abort 00032 and leave the staging policies in place'
 "${PSQL[@]}" -d pbk_rls_preflight -f "${ROOT}/supabase/tests/course-content-rls/01_harness.sql"
 "${PSQL[@]}" -d pbk_rls_preflight -f "${ROOT}/supabase/migrations/00031_enrollment_access_override.sql"
+"${PSQL[@]}" -d pbk_rls_preflight -f "${ROOT}/supabase/tests/course-content-rls/04_staging_policies.sql"
 "${PSQL[@]}" -d pbk_rls_preflight -f "${ROOT}/supabase/tests/course-content-rls/03_rogue_policy.sql"
 set +e
 "${PSQL[@]}" -d pbk_rls_preflight -f "${ROOT}/supabase/migrations/00032_course_content_access_rls.sql" >"${WORKDIR}/preflight.out" 2>&1
@@ -63,7 +66,10 @@ if ! grep -q 'Refusing to change course-content RLS' "${WORKDIR}/preflight.out";
   cat "${WORKDIR}/preflight.out" >&2
   exit 1
 fi
-"${PSQL[@]}" -d pbk_rls_preflight -c "SELECT polname FROM pg_policy WHERE polname = 'modules_dashboard_read'" | grep -q modules_dashboard_read
-"${PSQL[@]}" -d pbk_rls_preflight -c "SELECT count(*) FROM pg_policy WHERE polname = 'course_content_staff_all'" | grep -q ' 0$'
+"${PSQL[@]}" -d pbk_rls_preflight -tA -c "SELECT polname FROM pg_policy WHERE polname = 'modules_dashboard_read'" | grep -qx modules_dashboard_read
+"${PSQL[@]}" -d pbk_rls_preflight -tA -c "SELECT count(*) FROM pg_policy WHERE polname = 'course_content_staff_all'" | grep -qx 0
+for name in modules_manage_admin modules_select units_manage_admin units_select assessments_manage assessments_select unit_completions_own; do
+  "${PSQL[@]}" -d pbk_rls_preflight -tA -c "SELECT count(*) FROM pg_policy WHERE polname = '${name}'" | grep -qx 1
+done
 
 echo 'RLS fixture passed, including the unknown-policy preflight'
