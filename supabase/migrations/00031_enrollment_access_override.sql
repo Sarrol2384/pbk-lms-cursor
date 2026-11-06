@@ -12,6 +12,8 @@
 --
 -- Currency: the integers already stored are now read as US dollars. This file does
 -- not convert, multiply, or rewrite any fee or amount_paid value.
+-- access_override_by uses ON DELETE SET NULL so deleting an auth user keeps the
+-- override timestamp and reason.
 
 ALTER TABLE public.enrollments
   ADD COLUMN IF NOT EXISTS access_override boolean NOT NULL DEFAULT false;
@@ -20,7 +22,7 @@ ALTER TABLE public.enrollments
   ADD COLUMN IF NOT EXISTS access_override_at timestamptz;
 
 ALTER TABLE public.enrollments
-  ADD COLUMN IF NOT EXISTS access_override_by uuid REFERENCES auth.users(id);
+  ADD COLUMN IF NOT EXISTS access_override_by uuid REFERENCES auth.users(id) ON DELETE SET NULL;
 
 ALTER TABLE public.enrollments
   ADD COLUMN IF NOT EXISTS access_override_reason text;
