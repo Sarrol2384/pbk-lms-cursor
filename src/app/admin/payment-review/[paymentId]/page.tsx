@@ -3,12 +3,9 @@ import Link from 'next/link'
 import PaymentReviewCard from '@/components/admin/PaymentReviewCard'
 import { getPaymentDeadline } from '@/lib/utils'
 import { signedUrlForStoredFile } from '@/lib/storage/signed-url'
+import { firstInstallmentDue, formatUsd } from '@/lib/tuition'
 
 export const dynamic = 'force-dynamic'
-
-function formatAmount(n: number) {
-  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-}
 
 export default async function PaymentReviewPage({
   params,
@@ -20,7 +17,7 @@ export default async function PaymentReviewPage({
 
   let payment: { id: string; amount?: number; amount_paid?: number; status?: string; proof_url?: string; user_id?: string; course_id?: string; enrollment_id?: string } | null = null
 
-  const baseSelect = 'id, amount, amount_paid, status, proof_url, created_at, user_id, course_id, enrollment_id, total_installments'
+  const baseSelect = 'id, amount, amount_paid, status, proof_url, created_at, user_id, course_id, enrollment_id, total_installments, installment_amount'
   const byId = await supabase.from('payments').select(baseSelect).eq('id', paymentId).single()
 
   if (byId.data) {
@@ -105,6 +102,7 @@ export default async function PaymentReviewPage({
   const paid = p.amount_paid ?? 0
   const balance = total - paid
   const totalInstallments = (p as any).total_installments ?? 1
+  const firstInstallment = firstInstallmentDue(total, totalInstallments, (p as any).installment_amount)
 
   const { data: transactions } = await supabase
     .from('payment_transactions')
@@ -136,7 +134,7 @@ export default async function PaymentReviewPage({
 
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Review payment</h1>
       <p className="text-gray-500 text-sm mb-6">
-        Record amount received, approve full payment, or reject.
+        Record the US dollar amount actually received. Access opens at the first instalment, not on a smaller payment.
       </p>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -154,16 +152,21 @@ export default async function PaymentReviewPage({
                 <p className="text-sm text-gray-400 mt-1">
                   {courses?.title} • {courses?.code}
                   {totalInstallments > 1 && <span> • {totalInstallments} installments</span>}
-                  {' • '}Total R{formatAmount(total)}
-                  {paid > 0 && <span> • Paid R{formatAmount(paid)}</span>}
-                  {balance > 0 && <span> • Balance R{formatAmount(balance)}</span>}
+                  {' • '}Total {formatUsd(total)}
+                  {paid > 0 && <span> • Paid {formatUsd(paid)}</span>}
+                  {balance > 0 && <span> • Balance {formatUsd(balance)}</span>}
                 </p>
+                {firstInstallment > 0 && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    Course access opens when {formatUsd(firstInstallment)} is recorded. A smaller amount stays payment pending and does not send the welcome email.
+                  </p>
+                )}
                 {total <= 0 && totalInstallments > 1 && (
                   <p className="text-xs text-amber-600 mt-1">Course fee not set. Record the first payment amount — it will set the total, or set the fee in Admin → Courses.</p>
                 )}
                 {totalInstallments > 1 && nextMonthlyAmount > 0 && (
                   <p className="text-xs text-blue-600 mt-1 font-medium">
-                    Student&apos;s next instalment: R{formatAmount(nextMonthlyAmount)} (balance ÷ {monthsLeft} months left). They should stick to this amount.
+                    Student&apos;s next instalment: {formatUsd(nextMonthlyAmount)} (balance ÷ {monthsLeft} months left). They should stick to this amount.
                   </p>
                 )}
                 {paymentDeadline && paymentDeadline !== '—' && (
@@ -181,7 +184,7 @@ export default async function PaymentReviewPage({
               <ul className="space-y-1.5 text-sm">
                 {txList.map((tx, i) => (
                   <li key={i} className="flex justify-between items-center text-gray-700">
-                    <span>R{tx.amount.toLocaleString()}</span>
+                    <span>{formatUsd(tx.amount)}</span>
                     <span className="text-gray-500 text-xs">{new Date(tx.recorded_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                   </li>
                 ))}

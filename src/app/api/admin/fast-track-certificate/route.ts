@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { refreshProgressAndCertificate } from '@/lib/progress'
+import { canIssueCompletionDocument } from '@/lib/tuition'
+import { tuitionForUserCourse } from '@/lib/tuition-lookup'
 
 /**
  * POST body: { userId: string, courseId: string }
@@ -37,11 +39,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
   }
 
-  if (enrollment.status !== 'approved') {
-    await service
-      .from('enrollments')
-      .update({ status: 'approved', enrolled_at: new Date().toISOString() })
-      .eq('id', enrollment.id)
+  const tuition = await tuitionForUserCourse(userId, courseId)
+  if (!canIssueCompletionDocument(tuition.position, tuition.status)) {
+    return NextResponse.json({
+      error: 'A Certificate of Completion can be issued only for an approved enrolment with full tuition recorded. Fast-track does not grant access or mark the fee as paid.',
+    }, { status: 403 })
   }
 
   const { data: modules } = await service
@@ -114,7 +116,7 @@ export async function POST(request: NextRequest) {
   if (cert) {
     return NextResponse.json({
       success: true,
-      message: `Certificate issued (${cert.certificate_number}). View under Admin → Certificates or have the student open their course / Certificates page.`,
+      message: `Certificate of Completion issued (${cert.certificate_number}). This is not the graduation certificate. View it under Admin → Certificates or on the student's Certificates page.`,
     })
   }
 

@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import UploadProofOfPayment from '@/components/student/UploadProofOfPayment'
 import { formatDate, getPaymentDeadline } from '@/lib/utils'
 import { suspendEnrollmentIfOverdue } from '@/lib/enrollment-access'
+import { assessTuition, firstInstallmentDue, formatUsd, type PaymentSlice } from '@/lib/tuition'
 
 export default async function StudentDashboardPage() {
   const supabase = createClient()
@@ -16,7 +17,7 @@ export default async function StudentDashboardPage() {
     supabase.from('enrollments').select('id, status, course_id, enrolled_at, created_at, courses:course_id(title, code, nqf_level, credits)').eq('user_id', user.id),
     supabase.from('certificates').select('id, certificate_number, issued_at, courses:course_id(title)').eq('user_id', user.id).order('issued_at', { ascending: false }),
     supabase.from('payments').select('id, status, enrollment_id').eq('user_id', user.id).eq('status', 'pending'),
-    createServiceClient().from('payments').select('id, amount, amount_paid, enrollment_id, course_id, total_installments, created_at, courses:course_id(title, code)').eq('user_id', user.id).eq('status', 'pending'),
+    createServiceClient().from('payments').select('id, amount, amount_paid, enrollment_id, course_id, total_installments, installment_amount, created_at, courses:course_id(title, code)').eq('user_id', user.id).eq('status', 'pending'),
     createServiceClient().from('enrollments').select('id, enrolled_at, created_at').eq('user_id', user.id),
   ])
 
@@ -50,6 +51,7 @@ export default async function StudentDashboardPage() {
         balance: (p.amount ?? 0) - (p.amount_paid ?? 0),
         enrollmentId: p.enrollment_id,
         totalInstallments: p.total_installments ?? 1,
+        installmentAmount: p.installment_amount ?? null,
         paymentDeadline: deadlineStr,
         isOverdue,
       }
@@ -120,8 +122,8 @@ export default async function StudentDashboardPage() {
 
       {pendingCount > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-          <p className="text-sm font-medium text-amber-800">You have {pendingCount} pending payment{pendingCount > 1 ? 's' : ''} awaiting approval.</p>
-          <p className="text-xs text-amber-600 mt-1">You will receive an email once approved.</p>
+          <p className="text-sm font-medium text-amber-800">You have {pendingCount} pending payment{pendingCount > 1 ? 's' : ''}.</p>
+          <p className="text-xs text-amber-600 mt-1">Course access opens when the recorded amount reaches the first instalment. A smaller payment stays payment pending and does not send the welcome email.</p>
           <Link href="/student/courses" className="text-xs font-medium text-amber-800 underline mt-2 inline-block">View your applications</Link>
         </div>
       )}
@@ -134,10 +136,12 @@ export default async function StudentDashboardPage() {
           </div>
           <div className="divide-y divide-gray-100">
             {applicationEnrollments.map((e: any) => {
+              const slices = outstandingPayments.filter((p: any) => p.enrollment_id === e.id) as PaymentSlice[]
+              const tuition = assessTuition(slices)
               const label = e.status === 'pending_approval' || e.status === 'pending'
                 ? 'Awaiting approval'
                 : e.status === 'payment_pending'
-                  ? 'Choose payment plan'
+                  ? (tuition.totalPaid > 0 && tuition.belowFirstInstallment ? 'Partial payment — course closed' : 'Choose payment plan')
                   : e.status === 'on_hold'
                     ? 'On hold'
                     : e.status === 'rejected'
@@ -148,6 +152,9 @@ export default async function StudentDashboardPage() {
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900">{e.courses?.title}</p>
                     <p className="text-xs text-gray-500">{e.courses?.code} • {label}</p>
+                    {e.status === 'payment_pending' && tuition.totalPaid > 0 && tuition.belowFirstInstallment && (
+                      <p className="text-xs text-amber-700 mt-1">Paid {formatUsd(tuition.totalPaid)} of the {formatUsd(tuition.firstInstallment)} first instalment. The course stays closed.</p>
+                    )}
                   </div>
                   <span className="ml-auto text-xs text-blue-600 font-medium shrink-0">View →</span>
                 </Link>
@@ -164,7 +171,8 @@ export default async function StudentDashboardPage() {
             <p className="text-xs text-gray-500 mt-0.5">Outstanding balance for your enrolled programme{withBalanceAndNext.length > 1 ? 's' : ''}. Upload proof when you make a payment.</p>
           </div>
           <div className="divide-y divide-gray-100">
-            {withBalanceAndNext.map((item: { id: string; courseId: string; courseTitle?: string; courseCode?: string; total: number; paid: number; balance: number; enrollmentId: string; totalInstallments: number; nextMonthly: number; monthsLeft: number; paymentDeadline?: string }) => {
+            {withBalanceAndNext.map((item: { id: string; courseId: string; courseTitle?: string; courseCode?: string; total: number; paid: number; balance: number; enrollmentId: string; totalInstallments: number; installmentAmount?: number | null; nextMonthly: number; monthsLeft: number; paymentDeadline?: string }) => {
+              const firstInstallment = firstInstallmentDue(item.total, item.totalInstallments, item.installmentAmount)
               const transactions = transactionsByPayment[item.id] ?? []
               return (
                 <div key={item.id} className="p-5">
@@ -172,13 +180,18 @@ export default async function StudentDashboardPage() {
                     <div>
                       <p className="font-medium text-gray-900">{item.courseTitle || item.courseCode || 'Course'}</p>
                       <p className="text-sm text-gray-600 mt-1">
-                        Total R{item.total.toLocaleString()}
-                        {item.paid > 0 && <span> • Paid R{item.paid.toLocaleString()}</span>}
-                        {' • '}<span className="font-semibold text-amber-700">Balance R{item.balance.toLocaleString()}</span>
+                        Total {formatUsd(item.total)}
+                        {item.paid > 0 && <span> • Paid {formatUsd(item.paid)}</span>}
+                        {' • '}<span className="font-semibold text-amber-700">Balance {formatUsd(item.balance)}</span>
                       </p>
+                      {item.paid >= firstInstallment && firstInstallment > 0 && item.balance > 0 && (
+                        <p className="text-xs text-green-700 font-medium mt-1">
+                          First instalment of {formatUsd(firstInstallment)} received. Recorded {formatUsd(item.paid)} of {formatUsd(item.total)}.
+                        </p>
+                      )}
                       {item.totalInstallments > 1 && item.nextMonthly > 0 && (
                         <p className="text-xs text-amber-700 font-medium mt-1">
-                          Next instalment: R{item.nextMonthly.toLocaleString()} (balance ÷ {item.monthsLeft} months left). Stick to this amount.
+                          Next instalment: {formatUsd(item.nextMonthly)} (balance ÷ {item.monthsLeft} months left). Stick to this amount.
                         </p>
                       )}
                       {item.paymentDeadline && item.paymentDeadline !== '—' && (
@@ -194,7 +207,7 @@ export default async function StudentDashboardPage() {
                       <ul className="space-y-1.5 text-sm">
                         {transactions.map((tx, i) => (
                           <li key={i} className="flex justify-between items-center text-gray-700">
-                            <span>R{tx.amount.toLocaleString()}</span>
+                            <span>{formatUsd(tx.amount)}</span>
                             <span className="text-gray-500 text-xs">{formatDate(tx.recorded_at)}</span>
                           </li>
                         ))}

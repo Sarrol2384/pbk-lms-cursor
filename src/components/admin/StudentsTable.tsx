@@ -1,11 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { formatUsd } from '@/lib/tuition'
 import { formatDateShort } from '@/lib/utils'
-
-function formatAmount(n: number) {
-  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-}
 
 type Payment = {
   id: string
@@ -107,13 +104,33 @@ export default function StudentsTable({
 
   async function setEnrollmentStatus(enrollmentId: string, status: 'on_hold' | 'approved') {
     setLoading(true)
-    const res = await fetch(`/api/admin/enrollments/${enrollmentId}/status`, {
+    let res = await fetch(`/api/admin/enrollments/${enrollmentId}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     })
-    const data = await res.json().catch(() => ({}))
-    setMessage(res.ok ? (status === 'on_hold' ? 'Course put on hold' : 'Application approved. Student can access the course.') : (data.error || 'Failed'))
+    let data = await res.json().catch(() => ({}))
+    if (!res.ok && status === 'approved' && /first instalment/i.test(data.error || '')) {
+      const reason = window.prompt('The first instalment is not recorded. Enter a reason to grant access as an explicit admin override. Cancel to leave the enrolment unchanged.')
+      if (!reason?.trim()) {
+        setMessage('Course access was not changed. The first instalment is still required.')
+        setLoading(false)
+        return
+      }
+      res = await fetch(`/api/admin/enrollments/${enrollmentId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, override: true, reason: reason.trim() }),
+      })
+      data = await res.json().catch(() => ({}))
+    }
+    setMessage(res.ok
+      ? (status === 'on_hold'
+        ? 'Course put on hold'
+        : data.override
+          ? 'Course access granted with an admin override. The reason is stored on the enrolment.'
+          : 'Course access granted.')
+      : (data.error || 'Failed'))
     setLoading(false)
     if (res.ok) setTimeout(() => window.location.reload(), 800)
   }
@@ -156,7 +173,10 @@ export default function StudentsTable({
     message.toLowerCase().includes('network error') ||
     message.toLowerCase().includes("couldn't send") ||
     message.toLowerCase().includes('not found') ||
-    message.toLowerCase().includes('not linked')
+    message.toLowerCase().includes('not linked') ||
+    message.toLowerCase().includes('instalment') ||
+    message.toLowerCase().includes('was not') ||
+    message.toLowerCase().includes('could not')
   )
   return (
     <div>
@@ -196,9 +216,9 @@ export default function StudentsTable({
                           <p className="text-xs text-gray-400">
                             {e.courses?.title} • {e.courses?.code} • Enrolled {e.enrolled_at ? formatDateShort(e.enrolled_at) : '—'}
                             {e.paymentForRecord && e.paymentForRecord.balance > 0 && (
-                              <span> • Total R{formatAmount(e.paymentForRecord.total)}
-                                {e.paymentForRecord.paid > 0 && <span> • Paid R{formatAmount(e.paymentForRecord.paid)}</span>}
-                                {' • '}Balance R{formatAmount(e.paymentForRecord.balance)}</span>
+                              <span> • Total {formatUsd(e.paymentForRecord.total)}
+                                {e.paymentForRecord.paid > 0 && <span> • Paid {formatUsd(e.paymentForRecord.paid)}</span>}
+                                {' • '}Balance {formatUsd(e.paymentForRecord.balance)}</span>
                             )}
                           </p>
                         </div>
@@ -246,7 +266,7 @@ export default function StudentsTable({
             (pendingApplications.length === 0 && pendingGroups.length === 0) ? (
               <div className="p-8 text-center">
                 <p className="text-gray-400 text-sm mb-2">No pending applications</p>
-                <p className="text-gray-400 text-xs max-w-sm mx-auto">When a student applies, they appear here. Approve the application before they can choose a payment plan. Course access is granted only after you record a payment.</p>
+                <p className="text-gray-400 text-xs max-w-sm mx-auto">When a student applies, they appear here. Approve the application before they can choose a payment plan. Course access opens when the recorded amount reaches the first instalment.</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
@@ -303,9 +323,9 @@ export default function StudentsTable({
                             <p className="text-xs text-gray-400">
                               {p.courses?.title} • {p.courses?.code}
                               {g.totalInstallments > 1 && <span> • {g.totalInstallments} installments</span>}
-                              {' • '}Total R{formatAmount(g.total)}
-                              {g.paid > 0 && <span> • Paid R{formatAmount(g.paid)}</span>}
-                              {g.balance > 0 && <span> • Balance R{formatAmount(g.balance)}</span>}
+                              {' • '}Total {formatUsd(g.total)}
+                              {g.paid > 0 && <span> • Paid {formatUsd(g.paid)}</span>}
+                              {g.balance > 0 && <span> • Balance {formatUsd(g.balance)}</span>}
                               {' • '}{formatDateShort(p?.created_at)}
                             </p>
                           </div>
@@ -336,7 +356,7 @@ export default function StudentsTable({
                       <div>
                         <p className="text-sm font-medium text-gray-900">{p.profiles?.first_name} {p.profiles?.last_name}</p>
                         <p className="text-xs text-gray-500">{p.profiles?.email}</p>
-                        <p className="text-xs text-gray-400">{p.courses?.title} • {p.courses?.code} • R{formatAmount(p.amount)} • {formatDateShort(p?.created_at)}</p>
+                        <p className="text-xs text-gray-400">{p.courses?.title} • {p.courses?.code} • {formatUsd(p.amount)} • {formatDateShort(p?.created_at)}</p>
                       </div>
                     </div>
                     <span className="text-xs font-medium text-red-700">rejected</span>

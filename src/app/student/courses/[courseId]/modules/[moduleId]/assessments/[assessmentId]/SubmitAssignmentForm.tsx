@@ -18,6 +18,7 @@ export function SubmitAssignmentForm({ assessmentId, existingSubmissionId }: { a
     try {
       const formData = new FormData()
       formData.append('file', file)
+      formData.append('assessmentId', assessmentId)
       const uploadRes = await fetch('/api/upload/submission', { method: 'POST', body: formData })
       if (!uploadRes.ok) {
         const d = await uploadRes.json().catch(() => ({}))

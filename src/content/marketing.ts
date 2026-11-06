@@ -217,7 +217,7 @@ export const educationProgrammes = [
     highlights: [
       'Modular structure with formative and summative assessments',
       'Progress tracking through the student portal',
-      'Certificates upon successful completion',
+      'Certificate of Completion after the programme and full tuition; the formal certificate is presented at graduation',
     ],
   },
   {
@@ -225,7 +225,7 @@ export const educationProgrammes = [
     levels: 'Self-paced within programme guidelines',
     delivery: 'Access materials from any device',
     highlights: [
-      'Pay course fees in 3, 6, or 12 monthly instalments',
+      'Pay course fees in US dollars, in 3, 6, or 12 monthly instalments',
       'Proof-of-payment workflow for bank transfers',
       'Admin-reviewed applications before full access',
     ],
@@ -236,7 +236,7 @@ export const applySteps = [
   { step: 1, title: 'Create your account', desc: 'Register with your email and set a secure password.' },
   { step: 2, title: 'Choose a programme', desc: 'Browse available qualifications and select the one that fits your goals.' },
   { step: 3, title: 'Submit your application', desc: 'Complete the enrolment form for your chosen programme.' },
-  { step: 4, title: 'Approval, then payment', desc: 'After an administrator approves your application, choose a payment plan and upload proof of payment. Course access opens once the first payment is verified.' },
+  { step: 4, title: 'Approval, then payment', desc: 'After an administrator approves your application, choose a payment plan and upload proof of payment. Fees are in US dollars. Course access opens once the first instalment is verified.' },
 ]
 
 export const partnerLogos = [

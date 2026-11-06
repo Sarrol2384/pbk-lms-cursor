@@ -4,31 +4,29 @@ Two ways to test the full flow.
 
 ---
 
-## Option 1: Fast-track (recommended)
+## Option 1: Fast-track API
 
-Use this to get from “enrolled” to “certificate issued” in one click.
+The students page does not show a fast-track button. `POST /api/admin/fast-track-certificate` is admin-only and issues a **Certificate of Completion** only when the enrolment is already approved and full tuition is recorded. It does not grant course access and it does not mark the fee as paid. The download is not the formal certificate presented on graduation day.
 
 1. **Apply as student**
    - Log in as a **student**.
    - Go to **My courses** (or **Courses**).
    - Click **Enroll** on a course (creates application + pending payment).
 
-2. **Approve as admin**
+2. **Approve the application, then record full tuition**
    - Log in as **admin** or **super_admin**.
-   - Go to **Students**.
-   - In **Pending**, find the payment and click **Approve**.
+   - Go to **Students** and approve the application.
+   - Record the amount received. The course opens at the first instalment. A Certificate of Completion requires the full fee, in US dollars, with no conversion.
 
-3. **Fast-track certificate**
-   - Stay in **Students**.
-   - Open the **Approved** tab.
-   - Find the same student/course row and click **Fast-track cert**.
-   - This marks all units complete and all assessments as graded (full marks), then runs certificate logic.
+3. **Call the fast-track API**
+   - `POST /api/admin/fast-track-certificate` with `{ "userId", "courseId" }` while signed in as admin.
+   - If tuition is not fully recorded, the API returns 403 and does not change the enrolment.
+   - On success it marks units complete and assessments graded, then issues the completion document.
 
-4. **See the certificate**
+4. **See the completion document**
    - Log in again as the **student**.
-   - Go to **My courses** → open that course (or **Dashboard** → the course).
-   - You should see **Your certificate is ready** with **View** / **Download**.
-   - Or go to **Certificates** to see it in the list.
+   - Open the course. You should see **Your Certificate of Completion is ready**.
+   - The formal certificate is presented on graduation day and is not this download.
 
 **Requirements:** The course must have at least one module and, for each module, at least one assessment (quiz or assignment). Units are optional for fast-track (they are all marked complete).
 
@@ -59,6 +57,6 @@ Use this to test the real student journey.
 
 6. **Certificate**
    - When **all** modules are passed, the certificate is created automatically (on next course page load or after the last grading).
-   - Student: **My courses** → course → **Your certificate is ready** or **Certificates**.
+   - Student: **My courses** → course → **Your Certificate of Completion is ready**, after full tuition is recorded.
 
-**Pass rule:** Per module, the weighted average of assessment marks must be ≥ module pass mark (default 50%). Certificate is issued only when every module is **passed**.
+**Pass rule:** Per module, the weighted average of assessment marks must be ≥ module pass mark (default 50%). A Certificate of Completion is issued only when every module is **passed** and full tuition is recorded. The formal certificate is presented on graduation day.

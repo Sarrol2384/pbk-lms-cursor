@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { refreshProgressAndCertificate } from '@/lib/progress'
 import { requireActiveEnrollment } from '@/lib/enrollment-access'
+import { CompletionNotice } from '@/components/student/CompletionNotice'
+import { completionDocumentAllowed } from '@/lib/tuition-lookup'
 
 export default async function StudentCoursePage({
   params,
@@ -55,6 +57,8 @@ export default async function StudentCoursePage({
   const previousPassed = (idx: number) => idx === 0 || (progressByModule[sortedModules[idx - 1]?.id] === 'passed')
   const allPassed = moduleIds.length > 0 && moduleIds.every(id => progressByModule[id] === 'passed')
   const { data: cert } = allPassed ? await supabase.from('certificates').select('id').eq('user_id', user.id).eq('course_id', params.courseId).maybeSingle() : { data: null }
+  const downloadable = cert ? await completionDocumentAllowed(user.id, params.courseId) : false
+  const passedCount = moduleIds.filter(id => progressByModule[id] === 'passed').length
 
   return (
     <div className="max-w-3xl">
@@ -75,54 +79,14 @@ export default async function StudentCoursePage({
         </div>
       )}
 
-      {/* Certificate progress / eligibility */}
       {sortedModules.length > 0 && (
-        <div className={`rounded-xl border p-5 mb-6 ${cert ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
-          <div className="flex items-start gap-3">
-            <span className="text-2xl shrink-0">🏆</span>
-            <div>
-              <h3 className="font-semibold text-gray-900">
-                {cert ? 'Your certificate is ready' : 'Certificate progress'}
-              </h3>
-              {cert ? (
-                <p className="text-sm text-gray-700 mt-1">
-                  You have passed all {sortedModules.length} module{sortedModules.length !== 1 ? 's' : ''}. Your certificate has been issued.
-                </p>
-              ) : (
-                <p className="text-sm text-gray-700 mt-1">
-                  {(() => {
-                    const passedCount = moduleIds.filter(id => progressByModule[id] === 'passed').length
-                    return (
-                      <>
-                        {passedCount} of {sortedModules.length} module{sortedModules.length !== 1 ? 's' : ''} passed.
-                        Pass every module at its required pass mark to receive your certificate automatically.
-                      </>
-                    )
-                  })()}
-                </p>
-              )}
-              <div className="mt-3 flex flex-wrap gap-2">
-                {cert ? (
-                  <>
-                    <a href={`/api/certificates/${cert.id}/pdf`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-green-700 hover:text-green-800 underline">
-                      View certificate
-                    </a>
-                    <a href={`/api/certificates/${cert.id}/pdf`} download className="text-sm font-medium text-green-700 hover:text-green-800 underline">
-                      Download PDF
-                    </a>
-                    <Link href="/student/certificates" className="text-sm font-medium text-green-700 hover:text-green-800 underline">
-                      All certificates
-                    </Link>
-                  </>
-                ) : (
-                  <Link href="/student/certificates" className="text-sm font-medium text-amber-800 hover:text-amber-900 underline">
-                    How certificates work
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <CompletionNotice
+          moduleCount={sortedModules.length}
+          passedCount={passedCount}
+          issued={!!cert}
+          downloadable={downloadable}
+          certificateId={cert?.id}
+        />
       )}
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -198,7 +162,7 @@ export default async function StudentCoursePage({
         </Link>
         {cert && (
           <Link href="/student/certificates" className="text-sm text-green-600 hover:underline font-medium">
-            View certificate →
+            View Certificate of Completion →
           </Link>
         )}
       </div>

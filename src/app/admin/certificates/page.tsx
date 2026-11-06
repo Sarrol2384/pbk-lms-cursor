@@ -14,7 +14,7 @@ export default async function AdminCertificatesPage() {
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Certificates</h1>
-          <p className="text-gray-500 text-sm mt-1">View and edit issued certificates</p>
+          <p className="text-gray-500 text-sm mt-1">Certificates of Completion issued after full tuition is confirmed. The formal certificate is presented on graduation day and is not generated here.</p>
         </div>
         <Link href="/admin/certificate-settings" className="text-sm font-medium text-blue-600 hover:underline">
           Certificate design (logo & signatures) →
