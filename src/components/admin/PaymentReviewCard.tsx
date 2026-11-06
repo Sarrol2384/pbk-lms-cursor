@@ -41,13 +41,23 @@ export default function PaymentReviewCard({
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
+        if (data.certificateError) {
+          setMessage({
+            type: 'error',
+            text: `Payment was saved. ${data.certificateError} Do not record this payment again.`,
+          })
+          setRecordAmount('')
+          return
+        }
         const text = data.partial
           ? 'Partial payment recorded. The enrolment stays payment pending until the first instalment is reached. No welcome email was sent.'
-          : data.fullyPaid
-            ? 'Full tuition recorded. Enrolment approved.'
-            : data.openedAccess
-              ? 'First instalment recorded. Course access is open.'
-              : 'Payment recorded'
+          : data.fullyPaid && data.completionDocumentCreated
+            ? 'Full tuition recorded. Enrolment approved. Certificate of Completion issued.'
+            : data.fullyPaid
+              ? 'Full tuition recorded. Enrolment approved.'
+              : data.openedAccess
+                ? 'First instalment recorded. Course access is open.'
+                : 'Payment recorded'
         setMessage({ type: 'success', text })
         setRecordAmount('')
         setTimeout(() => router.push('/admin/students'), 1000)

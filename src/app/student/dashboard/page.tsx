@@ -5,6 +5,7 @@ import UploadProofOfPayment from '@/components/student/UploadProofOfPayment'
 import { formatDate, getPaymentDeadline } from '@/lib/utils'
 import { suspendEnrollmentIfOverdue } from '@/lib/enrollment-access'
 import { assessTuition, firstInstallmentDue, formatUsd, type PaymentSlice } from '@/lib/tuition'
+import { enrolledCourseVisible, UNPUBLISHED_ENROLLMENT_MESSAGE } from '@/lib/enrolled-course'
 
 export default async function StudentDashboardPage() {
   const supabase = createClient()
@@ -147,6 +148,15 @@ export default async function StudentDashboardPage() {
                     : e.status === 'rejected'
                       ? 'Not approved'
                       : e.status
+              if (!enrolledCourseVisible(e.courses)) {
+                return (
+                  <div key={e.id} className="p-4">
+                    <p className="text-sm font-medium text-gray-900">Programme not available yet</p>
+                    <p className="text-xs text-gray-500">{UNPUBLISHED_ENROLLMENT_MESSAGE}</p>
+                    <p className="text-xs text-gray-500 mt-1">{label}</p>
+                  </div>
+                )
+              }
               return (
                 <Link key={e.id} href={`/student/enroll/${e.course_id}`} className="block p-4 flex items-center gap-3 hover:bg-gray-50 transition-colors">
                   <div className="min-w-0">
@@ -241,7 +251,12 @@ export default async function StudentDashboardPage() {
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
-              {enrollments.slice(0, 4).map((e: any) => (
+              {enrollments.slice(0, 4).map((e: any) => !enrolledCourseVisible(e.courses) ? (
+                <div key={e.id} className="p-4">
+                  <p className="text-sm font-medium text-gray-900">Programme not available yet</p>
+                  <p className="text-xs text-gray-500">{UNPUBLISHED_ENROLLMENT_MESSAGE}</p>
+                </div>
+              ) : (
                 <Link key={e.id} href={`/student/courses/${e.course_id}`} className="block p-4 flex items-center gap-3 hover:bg-gray-50 transition-colors">
                   <div className="w-9 h-9 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center text-sm font-bold shrink-0">
                     {e.courses?.code?.substring(0, 2)}
@@ -273,7 +288,7 @@ export default async function StudentDashboardPage() {
                 <div key={c.id} className="p-4 flex items-center gap-3">
                   <div className="w-9 h-9 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg shrink-0">🏆</div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{c.courses?.title}</p>
+                    <p className="text-sm font-medium text-gray-900">{c.courses?.title || 'Certificate of Completion'}</p>
                     <p className="text-xs text-gray-400">{c.certificate_number}</p>
                   </div>
                 </div>

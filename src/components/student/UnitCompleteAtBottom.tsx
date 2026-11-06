@@ -11,6 +11,7 @@ export function UnitCompleteAtBottom({ unitId }: { unitId: string }) {
   const sentinelRef = useRef<HTMLDivElement>(null)
   const [completed, setCompleted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [certificateError, setCertificateError] = useState<string | null>(null)
   const recordedRef = useRef(false)
 
   const markComplete = useCallback(() => {
@@ -22,7 +23,17 @@ export function UnitCompleteAtBottom({ unitId }: { unitId: string }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ unitId }),
     })
-      .then((res) => res.ok && setCompleted(true))
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          recordedRef.current = false
+          return
+        }
+        setCompleted(true)
+        if (typeof data.certificateError === 'string' && data.certificateError) {
+          setCertificateError(data.certificateError)
+        }
+      })
       .catch(() => { recordedRef.current = false })
       .finally(() => setLoading(false))
   }, [unitId])
@@ -50,7 +61,10 @@ export function UnitCompleteAtBottom({ unitId }: { unitId: string }) {
       className="mt-6 pt-4 border-t border-gray-200 rounded-lg bg-gray-50 px-4 py-3 text-center"
     >
       {completed ? (
-        <p className="text-sm text-green-700 font-medium">Unit marked complete. You can continue to the next unit or assessments.</p>
+        <div className="space-y-2">
+          <p className="text-sm text-green-700 font-medium">Unit marked complete. You can continue to the next unit or assessments.</p>
+          {certificateError && <p className="text-sm text-red-800">{certificateError}</p>}
+        </div>
       ) : (
         <div className="space-y-2">
           <p className="text-sm text-gray-600">You&apos;ve reached the end of this unit. Scroll here to mark it complete (you don&apos;t need to click the suggested reading).</p>

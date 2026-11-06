@@ -1,11 +1,26 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
 import { assessTuition, canIssueCompletionDocument } from '@/lib/tuition'
+import { refreshProgressAndCertificate } from '@/lib/progress'
+import { CertificateIssueRetry } from '@/components/student/CertificateIssueRetry'
 
 export default async function StudentCertificatesPage() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
+
+  const serviceForIssue = createServiceClient()
+  const { data: approvedEnrollments } = await serviceForIssue
+    .from('enrollments')
+    .select('course_id, status')
+    .eq('user_id', user.id)
+    .eq('status', 'approved')
+  const issueFailures: { courseId: string; message: string }[] = []
+  for (const enrollment of approvedEnrollments ?? []) {
+    if (!enrollment.course_id) continue
+    const result = await refreshProgressAndCertificate(user.id, enrollment.course_id)
+    if (!result.ok && result.error) issueFailures.push({ courseId: enrollment.course_id, message: result.error })
+  }
 
   const { data: certificates } = await supabase
     .from('certificates')
@@ -38,22 +53,32 @@ export default async function StudentCertificatesPage() {
         </p>
       </div>
 
-      {!certificates || certificates.length === 0 ? (
+      {issueFailures.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-5 mb-6">
+          <p className="font-semibold text-red-950">Certificate of Completion could not be saved</p>
+          <p className="text-sm text-red-900 mt-1">{issueFailures[0].message}</p>
+          <CertificateIssueRetry courseId={issueFailures[0].courseId} />
+        </div>
+      )}
+
+      {(!certificates || certificates.length === 0) && issueFailures.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <p className="text-5xl mb-4">🏆</p>
           <p className="font-semibold text-gray-900 mb-1">No completion documents yet</p>
           <p className="text-sm text-gray-500 mb-4">Pass every module and finish full tuition to receive a Certificate of Completion.</p>
           <p className="text-xs text-gray-400">The formal certificate is presented on graduation day.</p>
         </div>
-      ) : (
+      ) : certificates && certificates.length > 0 ? (
         <div className="grid sm:grid-cols-2 gap-4">
           {(certificates as any[]).map(c => (
             <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-5">
               <div className="flex items-start gap-3">
                 <div className="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-xl flex items-center justify-center text-2xl shrink-0">🏆</div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 text-sm">{(c.courses as any)?.title}</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">{(c.courses as any)?.code} • NQF {(c.courses as any)?.nqf_level}</p>
+                  <h3 className="font-semibold text-gray-900 text-sm">{(c.courses as any)?.title || 'Certificate of Completion'}</h3>
+                  {(c.courses as any)?.code ? (
+                    <p className="text-xs text-gray-500 mt-0.5">{(c.courses as any)?.code} • NQF {(c.courses as any)?.nqf_level}</p>
+                  ) : null}
                   <p className="text-xs text-gray-400 mt-1">Certificate of Completion No: <span className="font-medium text-gray-600">{c.certificate_number}</span></p>
                   <p className="text-xs text-gray-400">Issued: {formatDate(c.issued_at)}</p>
                 </div>
@@ -72,7 +97,7 @@ export default async function StudentCertificatesPage() {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

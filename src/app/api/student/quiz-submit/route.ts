@@ -63,6 +63,10 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  await refreshProgressAndCertificate(user.id, module.course_id)
-  return NextResponse.json({ marks_obtained: marksObtained, total_marks: totalMarks })
+  const completion = await refreshProgressAndCertificate(user.id, module.course_id)
+  return NextResponse.json({
+    marks_obtained: marksObtained,
+    total_marks: totalMarks,
+    certificateError: completion.ok ? null : completion.error ?? null,
+  })
 }

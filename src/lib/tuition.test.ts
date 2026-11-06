@@ -4,6 +4,7 @@ import {
   accumulatedAmountPaid,
   assessTuition,
   canIssueCompletionDocument,
+  completionIssueDecision,
   courseAccessAllowed,
   firstInstallmentDue,
   formatUsd,
@@ -127,6 +128,95 @@ describe('explicit admin override', () => {
       hadLegitimateAccess: true,
     })
     assert.deepEqual(lifted, { ok: true, recordOverride: false })
+  })
+})
+
+describe('completion document gate', () => {
+  const paidInFull = assessTuition([{
+    amount: 300,
+    amount_paid: 300,
+    total_installments: 3,
+    installment_amount: 100,
+  }])
+  const belowFirst = assessTuition([{
+    amount: 300,
+    amount_paid: 50,
+    total_installments: 3,
+    installment_amount: 100,
+  }])
+  const firstOnly = assessTuition([{
+    amount: 300,
+    amount_paid: 100,
+    total_installments: 3,
+    installment_amount: 100,
+  }])
+
+  it('issues only when every module passed, the enrolment is approved, and tuition is fully paid', () => {
+    assert.equal(paidInFull.fullyPaid, true)
+    assert.deepEqual(completionIssueDecision({
+      moduleCount: 1,
+      allPassed: true,
+      position: paidInFull,
+      enrollmentStatus: 'approved',
+      accessOverride: false,
+    }), { action: 'insert' })
+  })
+
+  it('keeps a payment below the first instalment from opening the course or issuing a document, even with an override request recorded as false', () => {
+    assert.equal(belowFirst.meetsFirstInstallment, false)
+    assert.equal(courseAccessAllowed('approved', belowFirst, false), false)
+    assert.equal(canIssueCompletionDocument(belowFirst, 'approved'), false)
+    assert.deepEqual(completionIssueDecision({
+      moduleCount: 1,
+      allPassed: true,
+      position: belowFirst,
+      enrollmentStatus: 'approved',
+      accessOverride: false,
+    }), { action: 'skip', reason: 'tuition_incomplete' })
+  })
+
+  it('does not let an admin access override grant a completion document', () => {
+    assert.equal(courseAccessAllowed('approved', belowFirst, true), true)
+    assert.deepEqual(completionIssueDecision({
+      moduleCount: 1,
+      allPassed: true,
+      position: belowFirst,
+      enrollmentStatus: 'approved',
+      accessOverride: true,
+    }), { action: 'skip', reason: 'tuition_incomplete' })
+    assert.deepEqual(completionIssueDecision({
+      moduleCount: 1,
+      allPassed: true,
+      position: firstOnly,
+      enrollmentStatus: 'approved',
+      accessOverride: true,
+    }), { action: 'skip', reason: 'tuition_incomplete' })
+    assert.equal(firstOnly.meetsFirstInstallment, true)
+    assert.equal(firstOnly.fullyPaid, false)
+  })
+
+  it('does not issue when modules are missing or not all passed', () => {
+    assert.deepEqual(completionIssueDecision({
+      moduleCount: 0,
+      allPassed: false,
+      position: paidInFull,
+      enrollmentStatus: 'approved',
+      accessOverride: false,
+    }), { action: 'skip', reason: 'no_modules' })
+    assert.deepEqual(completionIssueDecision({
+      moduleCount: 2,
+      allPassed: false,
+      position: paidInFull,
+      enrollmentStatus: 'approved',
+      accessOverride: false,
+    }), { action: 'skip', reason: 'incomplete' })
+    assert.deepEqual(completionIssueDecision({
+      moduleCount: 1,
+      allPassed: true,
+      position: paidInFull,
+      enrollmentStatus: 'payment_pending',
+      accessOverride: false,
+    }), { action: 'skip', reason: 'tuition_incomplete' })
   })
 })
 

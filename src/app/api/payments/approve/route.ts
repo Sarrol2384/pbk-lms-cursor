@@ -41,5 +41,8 @@ export async function POST(request: NextRequest) {
     firstInstallment: result.firstInstallment,
     totalPaid: result.totalPaid,
     balance: result.balance,
+    completionDocumentCreated: result.completionDocumentCreated,
+    completionDocumentIssued: result.completionDocumentIssued,
+    certificateError: result.certificateError ?? null,
   })
 }

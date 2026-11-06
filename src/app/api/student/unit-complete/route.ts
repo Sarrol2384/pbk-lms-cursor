@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { assertPreviousModulePassed, requireActiveEnrollment } from '@/lib/enrollment-access'
-import { updateModuleProgress } from '@/lib/progress'
+import { refreshProgressAndCertificate, updateModuleProgress } from '@/lib/progress'
 
 export async function POST(request: NextRequest) {
   const supabase = createClient()
@@ -30,6 +30,10 @@ export async function POST(request: NextRequest) {
   )
 
   await updateModuleProgress(user.id, unit.module_id)
+  const completion = await refreshProgressAndCertificate(user.id, module.course_id)
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({
+    success: true,
+    certificateError: completion.ok ? null : completion.error ?? null,
+  })
 }

@@ -4,17 +4,18 @@ import { assessTuition, canIssueCompletionDocument, type TuitionPosition } from 
 export async function tuitionForUserCourse(userId: string, courseId: string): Promise<{
   enrollmentId: string | null
   status: string | null
+  accessOverride: boolean
   position: TuitionPosition
 }> {
   const service = createServiceClient()
   const { data: enrollment } = await service
     .from('enrollments')
-    .select('id, status')
+    .select('id, status, access_override')
     .eq('user_id', userId)
     .eq('course_id', courseId)
     .maybeSingle()
   if (!enrollment) {
-    return { enrollmentId: null, status: null, position: assessTuition([]) }
+    return { enrollmentId: null, status: null, accessOverride: false, position: assessTuition([]) }
   }
   const { data: payments } = await service
     .from('payments')
@@ -24,6 +25,7 @@ export async function tuitionForUserCourse(userId: string, courseId: string): Pr
   return {
     enrollmentId: enrollment.id,
     status: enrollment.status,
+    accessOverride: enrollment.access_override === true,
     position: assessTuition(payments ?? []),
   }
 }

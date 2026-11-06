@@ -36,6 +36,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }).eq('id', params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  await refreshProgressAndCertificate(sub.user_id, courseId)
-  return NextResponse.json({ success: true })
+  const completion = await refreshProgressAndCertificate(sub.user_id, courseId)
+  return NextResponse.json({
+    success: true,
+    certificateError: completion.ok ? null : completion.error ?? null,
+  })
 }

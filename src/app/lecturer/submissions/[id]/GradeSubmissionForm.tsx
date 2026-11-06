@@ -13,6 +13,7 @@ export function GradeSubmissionForm({
   const [feedback, setFeedback] = useState(currentFeedback ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [savedWarning, setSavedWarning] = useState('')
   const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -30,9 +31,13 @@ export function GradeSubmissionForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ marks_obtained: m, feedback: feedback.trim() || null }),
       })
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}))
-        throw new Error(d.error || res.statusText)
+        throw new Error(data.error || res.statusText)
+      }
+      if (typeof data.certificateError === 'string' && data.certificateError) {
+        setSavedWarning(`Grade saved. ${data.certificateError}`)
+        return
       }
       router.push('/lecturer/dashboard')
       router.refresh()
@@ -67,6 +72,14 @@ export function GradeSubmissionForm({
         />
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
+      {savedWarning && (
+        <p className="text-sm text-red-800">
+          {savedWarning}{' '}
+          <button type="button" onClick={() => router.push('/lecturer/dashboard')} className="underline font-medium">
+            Back to dashboard
+          </button>
+        </p>
+      )}
       <button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg text-sm">
         {loading ? 'Saving...' : 'Save grade'}
       </button>

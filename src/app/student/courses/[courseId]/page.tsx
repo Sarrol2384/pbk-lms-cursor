@@ -41,7 +41,7 @@ export default async function StudentCoursePage({
   }))
 
   const moduleIds = sortedModules.map((m: any) => m.id)
-  await refreshProgressAndCertificate(user.id, params.courseId)
+  const completion = await refreshProgressAndCertificate(user.id, params.courseId)
   const { data: progressRows } = await supabase
     .from('module_progress')
     .select('module_id, status')
@@ -57,7 +57,8 @@ export default async function StudentCoursePage({
   const previousPassed = (idx: number) => idx === 0 || (progressByModule[sortedModules[idx - 1]?.id] === 'passed')
   const allPassed = moduleIds.length > 0 && moduleIds.every(id => progressByModule[id] === 'passed')
   const { data: cert } = allPassed ? await supabase.from('certificates').select('id').eq('user_id', user.id).eq('course_id', params.courseId).maybeSingle() : { data: null }
-  const downloadable = cert ? await completionDocumentAllowed(user.id, params.courseId) : false
+  const certificateId = cert?.id ?? completion.certificateId ?? undefined
+  const downloadable = certificateId ? await completionDocumentAllowed(user.id, params.courseId) : false
   const passedCount = moduleIds.filter(id => progressByModule[id] === 'passed').length
 
   return (
@@ -83,9 +84,11 @@ export default async function StudentCoursePage({
         <CompletionNotice
           moduleCount={sortedModules.length}
           passedCount={passedCount}
-          issued={!!cert}
+          issued={!!certificateId}
           downloadable={downloadable}
-          certificateId={cert?.id}
+          certificateId={certificateId}
+          issueError={completion.ok ? null : completion.error}
+          courseId={params.courseId}
         />
       )}
 
@@ -160,7 +163,7 @@ export default async function StudentCoursePage({
         <Link href="/student/courses" className="text-sm text-blue-600 hover:underline font-medium">
           ← Back to My Courses
         </Link>
-        {cert && (
+        {certificateId && (
           <Link href="/student/certificates" className="text-sm text-green-600 hover:underline font-medium">
             View Certificate of Completion →
           </Link>

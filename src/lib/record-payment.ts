@@ -1,6 +1,8 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { sendPaymentReceivedEmail, sendWelcomeAccessGrantedEmail } from '@/lib/email'
 import { approveEnrollmentFirstTime } from '@/lib/enrollment-access'
+import { refreshProgressAndCertificate } from '@/lib/progress'
+import { CERTIFICATE_SAVE_ERROR } from '@/lib/certificate-issue'
 import {
   accumulatedAmountPaid,
   assessTuition,
@@ -20,6 +22,9 @@ export type RecordTuitionResult =
       balance: number
       totalPaid: number
       firstInstallment: number
+      completionDocumentCreated: boolean
+      completionDocumentIssued: boolean
+      certificateError?: string
     }
   | { ok: false; status: number; error: string }
 
@@ -184,6 +189,21 @@ export async function recordTuitionReceived(
     }
   }
 
+  let completionDocumentCreated = false
+  let completionDocumentIssued = false
+  let certificateError: string | undefined
+  if (position.fullyPaid && payment.user_id && payment.course_id) {
+    try {
+      const completion = await refreshProgressAndCertificate(payment.user_id, payment.course_id)
+      completionDocumentCreated = completion.created
+      completionDocumentIssued = !!completion.certificateId
+      if (!completion.ok) certificateError = completion.error ?? CERTIFICATE_SAVE_ERROR
+    } catch {
+      console.error('[certificate] refresh failed')
+      certificateError = CERTIFICATE_SAVE_ERROR
+    }
+  }
+
   return {
     ok: true,
     fullyPaid: position.fullyPaid,
@@ -193,5 +213,8 @@ export async function recordTuitionReceived(
     balance: balanceAfter,
     totalPaid: position.totalPaid,
     firstInstallment: position.firstInstallment,
+    completionDocumentCreated,
+    completionDocumentIssued,
+    certificateError,
   }
 }

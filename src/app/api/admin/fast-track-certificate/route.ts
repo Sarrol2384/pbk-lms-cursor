@@ -104,7 +104,14 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  await refreshProgressAndCertificate(userId, courseId)
+  const issued = await refreshProgressAndCertificate(userId, courseId)
+  if (!issued.ok) {
+    return NextResponse.json({
+      success: false,
+      error: issued.error ?? 'The Certificate of Completion could not be saved.',
+      detail: issued.detail ?? null,
+    }, { status: 500 })
+  }
 
   const { data: cert } = await service
     .from('certificates')
