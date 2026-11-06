@@ -1,0 +1,220 @@
+-- Ephemeral fixture for 00031/00032. No live data and no secrets.
+-- Shapes the tables and the 00009 policies this repo actually created.
+-- auth.uid() reads request.jwt.claim.sub, which is what Supabase uses.
+-- Roles are NOSUPERUSER and, except service_role, do not bypass RLS.
+
+CREATE SCHEMA IF NOT EXISTS auth;
+
+CREATE TABLE auth.users (
+  id uuid PRIMARY KEY
+);
+
+CREATE OR REPLACE FUNCTION auth.uid()
+RETURNS uuid
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid;
+$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    CREATE ROLE anon NOLOGIN NOINHERIT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    CREATE ROLE authenticated NOLOGIN NOINHERIT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
+    CREATE ROLE service_role NOLOGIN NOINHERIT BYPASSRLS;
+  END IF;
+END $$;
+
+GRANT anon TO CURRENT_USER;
+GRANT authenticated TO CURRENT_USER;
+GRANT service_role TO CURRENT_USER;
+GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION auth.uid() TO anon, authenticated, service_role;
+
+CREATE TABLE public.profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  role text NOT NULL
+);
+
+CREATE TABLE public.courses (
+  id uuid PRIMARY KEY,
+  title text NOT NULL,
+  fee integer
+);
+
+CREATE TABLE public.modules (
+  id uuid PRIMARY KEY,
+  course_id uuid NOT NULL REFERENCES public.courses(id),
+  title text NOT NULL
+);
+
+CREATE TABLE public.units (
+  id uuid PRIMARY KEY,
+  module_id uuid NOT NULL REFERENCES public.modules(id),
+  title text NOT NULL,
+  content text
+);
+
+CREATE TABLE public.assessments (
+  id uuid PRIMARY KEY,
+  module_id uuid NOT NULL REFERENCES public.modules(id),
+  title text NOT NULL
+);
+
+CREATE TABLE public.enrollments (
+  id uuid PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES auth.users(id),
+  course_id uuid NOT NULL REFERENCES public.courses(id),
+  status text NOT NULL
+);
+
+CREATE TABLE public.payments (
+  id uuid PRIMARY KEY,
+  enrollment_id uuid REFERENCES public.enrollments(id),
+  user_id uuid,
+  course_id uuid,
+  amount integer NOT NULL DEFAULT 0,
+  amount_paid integer NOT NULL DEFAULT 0,
+  total_installments integer NOT NULL DEFAULT 1,
+  installment_amount integer NOT NULL DEFAULT 0,
+  installment_number integer NOT NULL DEFAULT 1,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.unit_completions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  unit_id uuid NOT NULL REFERENCES public.units(id) ON DELETE CASCADE,
+  completed_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, unit_id)
+);
+
+CREATE TABLE public.module_progress (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  module_id uuid NOT NULL REFERENCES public.modules(id) ON DELETE CASCADE,
+  status text NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'passed')),
+  completed_at timestamptz,
+  UNIQUE (user_id, module_id)
+);
+
+-- 00009 policies. FOR ALL and applied to PUBLIC, which is the exposure 00032 removes.
+ALTER TABLE public.unit_completions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY unit_completions_own ON public.unit_completions
+  FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY unit_completions_service ON public.unit_completions
+  FOR ALL USING (
+    auth.uid() IN (SELECT id FROM public.profiles WHERE role IN ('super_admin', 'admin', 'lecturer'))
+  );
+
+ALTER TABLE public.module_progress ENABLE ROW LEVEL SECURITY;
+CREATE POLICY module_progress_own ON public.module_progress
+  FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY module_progress_service ON public.module_progress
+  FOR ALL USING (
+    auth.uid() IN (SELECT id FROM public.profiles WHERE role IN ('super_admin', 'admin', 'lecturer'))
+  );
+
+-- A profiles policy that queries profiles. A direct staff check would recurse.
+-- The migration's SECURITY DEFINER helpers must not.
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY profiles_select_self ON public.profiles
+  FOR SELECT TO authenticated
+  USING (id = auth.uid());
+CREATE POLICY profiles_select_staff ON public.profiles
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid()
+        AND p.role IN ('super_admin', 'admin', 'lecturer')
+    )
+  );
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+
+INSERT INTO auth.users (id) VALUES
+  ('00000000-0000-4000-8000-000000000001'),
+  ('00000000-0000-4000-8000-000000000002'),
+  ('00000000-0000-4000-8000-000000000003'),
+  ('00000000-0000-4000-8000-000000000004'),
+  ('00000000-0000-4000-8000-000000000005'),
+  ('00000000-0000-4000-8000-000000000006'),
+  ('00000000-0000-4000-8000-000000000007'),
+  ('00000000-0000-4000-8000-000000000008'),
+  ('00000000-0000-4000-8000-000000000009'),
+  ('00000000-0000-4000-8000-00000000000a'),
+  ('00000000-0000-4000-8000-00000000000b'),
+  ('00000000-0000-4000-8000-00000000000c'),
+  ('00000000-0000-4000-8000-00000000000d');
+
+INSERT INTO public.profiles (id, role) VALUES
+  ('00000000-0000-4000-8000-000000000001', 'super_admin'),
+  ('00000000-0000-4000-8000-000000000002', 'lecturer'),
+  ('00000000-0000-4000-8000-000000000003', 'student'),
+  ('00000000-0000-4000-8000-000000000004', 'student'),
+  ('00000000-0000-4000-8000-000000000005', 'student'),
+  ('00000000-0000-4000-8000-000000000006', 'student'),
+  ('00000000-0000-4000-8000-000000000007', 'student'),
+  ('00000000-0000-4000-8000-000000000008', 'student'),
+  ('00000000-0000-4000-8000-000000000009', 'student'),
+  ('00000000-0000-4000-8000-00000000000a', 'student'),
+  ('00000000-0000-4000-8000-00000000000b', 'student'),
+  ('00000000-0000-4000-8000-00000000000c', 'student'),
+  ('00000000-0000-4000-8000-00000000000d', 'student');
+
+INSERT INTO public.courses (id, title, fee) VALUES
+  ('10000000-0000-4000-8000-00000000000a', 'Course A', 12000),
+  ('10000000-0000-4000-8000-00000000000b', 'Course B', 10000);
+
+INSERT INTO public.modules (id, course_id, title) VALUES
+  ('20000000-0000-4000-8000-00000000000a', '10000000-0000-4000-8000-00000000000a', 'Module A'),
+  ('20000000-0000-4000-8000-00000000000b', '10000000-0000-4000-8000-00000000000b', 'Module B');
+
+INSERT INTO public.units (id, module_id, title, content) VALUES
+  ('30000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-00000000000a', 'Unit A', 'SECRET-A'),
+  ('30000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b', 'Unit B', 'SECRET-B');
+
+INSERT INTO public.assessments (id, module_id, title) VALUES
+  ('40000000-0000-4000-8000-00000000000a', '20000000-0000-4000-8000-00000000000a', 'Assessment A'),
+  ('40000000-0000-4000-8000-00000000000b', '20000000-0000-4000-8000-00000000000b', 'Assessment B');
+
+INSERT INTO public.enrollments (id, user_id, course_id, status) VALUES
+  ('50000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-00000000000a', 'approved'),
+  ('50000000-0000-4000-8000-000000000004', '00000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-00000000000a', 'approved'),
+  ('50000000-0000-4000-8000-000000000005', '00000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-00000000000a', 'approved'),
+  ('50000000-0000-4000-8000-000000000006', '00000000-0000-4000-8000-000000000006', '10000000-0000-4000-8000-00000000000a', 'payment_pending'),
+  ('50000000-0000-4000-8000-000000000007', '00000000-0000-4000-8000-000000000007', '10000000-0000-4000-8000-00000000000b', 'approved'),
+  ('50000000-0000-4000-8000-000000000008', '00000000-0000-4000-8000-000000000008', '10000000-0000-4000-8000-00000000000a', 'on_hold'),
+  ('50000000-0000-4000-8000-00000000000a', '00000000-0000-4000-8000-00000000000a', '10000000-0000-4000-8000-00000000000a', 'approved'),
+  ('50000000-0000-4000-8000-00000000000b', '00000000-0000-4000-8000-00000000000b', '10000000-0000-4000-8000-00000000000b', 'approved'),
+  ('50000000-0000-4000-8000-00000000000c', '00000000-0000-4000-8000-00000000000c', '10000000-0000-4000-8000-00000000000b', 'approved'),
+  ('50000000-0000-4000-8000-00000000000d', '00000000-0000-4000-8000-00000000000d', '10000000-0000-4000-8000-00000000000a', 'approved');
+
+INSERT INTO public.payments (
+  id, enrollment_id, user_id, course_id, amount, amount_paid, total_installments, installment_amount, installment_number
+) VALUES
+  ('60000000-0000-4000-8000-000000000003', '50000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-00000000000a', 12000, 12000, 1, 12000, 1),
+  ('60000000-0000-4000-8000-000000000004', '50000000-0000-4000-8000-000000000004', '00000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-00000000000a', 12000, 4000, 3, 4000, 1),
+  ('60000000-0000-4000-8000-000000000005', '50000000-0000-4000-8000-000000000005', '00000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-00000000000a', 12000, 2000, 3, 4000, 1),
+  ('60000000-0000-4000-8000-000000000006', '50000000-0000-4000-8000-000000000006', '00000000-0000-4000-8000-000000000006', '10000000-0000-4000-8000-00000000000a', 12000, 12000, 1, 12000, 1),
+  ('60000000-0000-4000-8000-000000000007', '50000000-0000-4000-8000-000000000007', '00000000-0000-4000-8000-000000000007', '10000000-0000-4000-8000-00000000000b', 10000, 0, 3, 3334, 1),
+  ('60000000-0000-4000-8000-000000000008', '50000000-0000-4000-8000-000000000008', '00000000-0000-4000-8000-000000000008', '10000000-0000-4000-8000-00000000000a', 12000, 12000, 1, 12000, 1),
+  ('60000000-0000-4000-8000-00000000000a', '50000000-0000-4000-8000-00000000000a', '00000000-0000-4000-8000-00000000000a', '10000000-0000-4000-8000-00000000000a', 10000, 3334, 3, 0, 1),
+  ('60000000-0000-4000-8000-00000000000b', '50000000-0000-4000-8000-00000000000b', '00000000-0000-4000-8000-00000000000b', '10000000-0000-4000-8000-00000000000b', 0, 50, 1, 0, 1),
+  ('60000000-0000-4000-8000-00000000000c', '50000000-0000-4000-8000-00000000000c', '00000000-0000-4000-8000-00000000000b', '10000000-0000-4000-8000-00000000000b', 10000, 3333, 3, 0, 1),
+  ('60000000-0000-4000-8000-0000000000d1', '50000000-0000-4000-8000-00000000000d', '00000000-0000-4000-8000-00000000000d', '10000000-0000-4000-8000-00000000000a', 6000, 3000, 2, 3000, 1),
+  ('60000000-0000-4000-8000-0000000000d2', '50000000-0000-4000-8000-00000000000d', '00000000-0000-4000-8000-00000000000d', '10000000-0000-4000-8000-00000000000a', 6000, 0, 2, 3000, 2);
+
+CREATE TABLE public.rls_fixture_sentinel (
+  amount_sum integer NOT NULL,
+  paid_sum integer NOT NULL
+);
+INSERT INTO public.rls_fixture_sentinel
+SELECT COALESCE(SUM(amount), 0), COALESCE(SUM(amount_paid), 0) FROM public.payments;

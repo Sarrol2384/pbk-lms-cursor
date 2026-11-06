@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --experimental-strip-types --test src/lib/tuition.test.ts",
+    "test:rls": "bash supabase/tests/course-content-rls.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

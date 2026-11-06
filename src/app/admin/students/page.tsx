@@ -165,10 +165,10 @@ export default async function AdminStudentsPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Students</h1>
-        <p className="text-gray-500 text-sm mt-1">Manage student applications and enrollments. Approve an application before the student can choose a payment plan or upload proof. They then appear under Payment pending. Course access starts when you record the first payment. Approved = current approved enrollments. All Students = users with the student role (remove from Users to clear).</p>
+        <p className="text-gray-500 text-sm mt-1">Manage student applications and enrollments. Approve an application before the student can choose a payment plan or upload proof. They then appear under Payment pending. Course access starts when the recorded amount reaches the first instalment. Amounts are US dollars. Approved = current approved enrollments. All Students = users with the student role (remove from Users to clear).</p>
         <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
           <p className="font-medium text-amber-900">Where to approve payments</p>
-          <p className="text-amber-800 mt-1">Approve the application first. After the student uploads proof, open <strong>Pending</strong> → <strong>Payment pending</strong> → <strong>Record payment</strong>. The first recorded amount grants course access. Later instalments do not send the welcome email again.</p>
+          <p className="text-amber-800 mt-1">Approve the application first. After the student uploads proof, open <strong>Pending</strong> → <strong>Payment pending</strong> → <strong>Record payment</strong> and enter the amount actually received. Course access and the welcome email open only when that total reaches the first instalment. A smaller amount stays payment pending. Later instalments do not send the welcome email again. Granting access below the first instalment requires an explicit override.</p>
           <SyncPaymentsButton />
         </div>
       </div>

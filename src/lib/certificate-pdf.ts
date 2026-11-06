@@ -102,38 +102,45 @@ export async function buildCertificatePdf(
   const LOGO_H = 42
   try {
     doc.addImage(officialEmblem(), 'PNG', (W - LOGO_W) / 2, y, LOGO_W, LOGO_H, undefined, 'NONE')
-    y += LOGO_H + 7
+    y += LOGO_H + 4
   } catch {
-    y += 10
+    y += 8
   }
+
+  // Completion document only. The formal certificate is presented at graduation.
+  doc.setFont('times', 'bold')
+  doc.setFontSize(13)
+  ink(doc, DARK_BLUE)
+  doc.text('Certificate of Completion', W / 2, y, { align: 'center' })
+  y += 7
 
   // ── "This is to certify that" ─────────────────────────────────────
   doc.setFont('times', 'italic')
-  doc.setFontSize(16)
+  doc.setFontSize(14)
   ink(doc, BODY)
   doc.text('This is to certify that', W / 2, y, { align: 'center' })
-  y += 13
+  y += 10
 
   // ── Student name ──────────────────────────────────────────────────
   doc.setFont('times', 'italic')
-  doc.setFontSize(40)
+  doc.setFontSize(32)
   ink(doc, GOLD)
   doc.text(data.fullName, W / 2, y, { align: 'center' })
-  y += 14
+  y += 11
 
   // ── Body sentence ─────────────────────────────────────────────────
   doc.setFont('times', 'normal')
-  doc.setFontSize(15)
+  doc.setFontSize(14)
   ink(doc, BODY)
-  doc.text('having fulfilled all the requirements has been awarded the degree of', W / 2, y, { align: 'center' })
-  y += 12
+  doc.text('has completed the academic requirements for', W / 2, y, { align: 'center' })
+  y += 10
 
-  // ── Course / degree name ──────────────────────────────────────────
+  // ── Course name ───────────────────────────────────────────────────
   doc.setFont('times', 'bold')
-  doc.setFontSize(32)
+  doc.setFontSize(26)
   ink(doc, GOLD)
   doc.text(data.courseTitle, W / 2, y, { align: 'center' })
-  y += 11
+  y += 9
 
   // ── Course sub-details ────────────────────────────────────────────
   const subParts = [
@@ -155,7 +162,13 @@ export async function buildCertificatePdf(
   doc.setFontSize(12)
   ink(doc, BODY)
   doc.text(
-    `Certificate No: ${data.certificateNumber}   |   Date of issue: ${data.issuedDate}`,
+    `Certificate of Completion No: ${data.certificateNumber}   |   Date of issue: ${data.issuedDate}`,
+    W / 2, y, { align: 'center' }
+  )
+  y += 5
+  doc.setFontSize(8)
+  doc.text(
+    'This is a Certificate of Completion. The formal certificate is presented on graduation day and is not available for download.',
     W / 2, y, { align: 'center' }
   )
 

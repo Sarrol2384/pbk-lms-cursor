@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
 import { buildCertificatePdf } from '@/lib/certificate-pdf'
+import { completionDocumentAllowed } from '@/lib/tuition-lookup'
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createClient()
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   const service = createServiceClient()
   const { data: cert } = await service
     .from('certificates')
-    .select('id, user_id, certificate_number, issued_at, profiles:user_id(first_name, last_name), courses:course_id(title, code, nqf_level, credits)')
+    .select('id, user_id, course_id, certificate_number, issued_at, profiles:user_id(first_name, last_name), courses:course_id(title, code, nqf_level, credits)')
     .eq('id', params.id)
     .single()
   if (!cert) return NextResponse.json({ error: 'Certificate not found' }, { status: 404 })
@@ -22,6 +23,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   const { data: authProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   const isAdmin = ['admin', 'super_admin'].includes(authProfile?.role ?? '')
   if (!isOwner && !isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const courseId = (cert as { course_id?: string }).course_id
+  if (!courseId || !(await completionDocumentAllowed(cert.user_id as string, courseId))) {
+    return NextResponse.json({
+      error: 'A Certificate of Completion is available only after the enrolment is approved and full tuition is recorded.',
+    }, { status: 403 })
+  }
 
   const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Learner'
   const courseTitle = course?.title ?? 'Course'

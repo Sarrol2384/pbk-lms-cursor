@@ -29,7 +29,7 @@ export default async function CertificateSettingsPage() {
       <div className="mb-8">
         <Link href="/admin/certificates" className="text-sm text-blue-600 hover:underline">← Certificates</Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-2">Certificate design</h1>
-        <p className="text-sm text-gray-500 mt-1">Certificates print the official PBK emblem. Set the signatures and seal, then preview before students download.</p>
+        <p className="text-sm text-gray-500 mt-1">This layout is the Certificate of Completion. The formal certificate is presented on graduation day and is not generated here. Certificates print the official PBK emblem. Set the signatures and seal, then preview before students download.</p>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-6">

@@ -1,6 +1,7 @@
 import { INSTITUTE_LOGO_PNG } from '@/lib/brand'
 import { INSTITUTE_MOTTO, INSTITUTE_NAME, supportEmail } from '@/lib/institute'
 import { siteUrl } from '@/lib/site-url'
+import { formatUsd, USD_BANKING_NOTE } from '@/lib/tuition'
 
 /** Absolute URL so Brevo (and other clients) can fetch the hosted emblem. */
 function emblemImg(size = 72, margin = '0 0 12px'): string {
@@ -171,23 +172,36 @@ export async function sendApplicationApprovedEmail(to: string, firstName: string
   const body = `
     <p>Dear ${firstName},</p>
     <p>Your application for <strong>${courseName}</strong> has been approved.</p>
-    <p>Complete your registration by choosing your payment plan (pay in full, or 3, 6 or 12 months) and uploading your proof of payment:</p>
+    <p>Complete your registration by choosing your payment plan (pay in full, or 3, 6 or 12 months) and uploading your proof of payment. Course fees are in US dollars (USD).</p>
     <p><a href="${link}" class="btn">Choose payment plan &amp; upload proof</a></p>
-    <p>You can start the course as soon as your first payment is verified. If you have questions, contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>.</p>
+    <p>${USD_BANKING_NOTE}. The institute's South African account is shown on your enrolment page. Pay that account only if PBK Admin has confirmed it for your USD fee.</p>
+    <p>You can start the course once the first instalment is verified. A smaller payment leaves the enrolment as payment pending. If you have questions, contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>.</p>
     <p>Warm regards,<br>${FROM_NAME} Admissions</p>`
   await sendEmail(to, `Complete your registration – ${courseName}`, baseTemplate('Application approved', body))
 }
 
-/** Sent when admin records a payment: amount received and balance. */
-export async function sendPaymentReceivedEmail(to: string, firstName: string, courseName: string, amountReceived: number, balance: number) {
+/** Sent when admin records a payment: amount received and balance. Amounts are USD. */
+export async function sendPaymentReceivedEmail(
+  to: string,
+  firstName: string,
+  courseName: string,
+  amountReceived: number,
+  balance: number,
+  options?: { courseOpen?: boolean }
+) {
+  const courseOpen = options?.courseOpen !== false
+  const partial = courseOpen
+    ? ''
+    : `<p>This amount is below the first instalment, so your enrolment stays payment pending and the course is not open yet.</p>`
   const body = `
     <p>Dear ${firstName},</p>
-    <p>We have received your payment of <strong>R${amountReceived.toLocaleString()}</strong> for <strong>${courseName}</strong>.</p>
-    <p>Your remaining balance is <strong>R${balance.toLocaleString()}</strong>.</p>
+    <p>We have received your payment of <strong>${formatUsd(amountReceived)}</strong> for <strong>${courseName}</strong>.</p>
+    <p>Your remaining balance is <strong>${formatUsd(balance)}</strong>.</p>
+    ${partial}
     <p>You can log in to the student portal to see your payment details and upload proof for any further payments.</p>
     <p>If you have questions, contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>.</p>
     <p>Warm regards,<br>${FROM_NAME}</p>`
-  await sendEmail(to, `Payment received – R${amountReceived.toLocaleString()} – ${FROM_NAME}`, baseTemplate('Payment received', body))
+  await sendEmail(to, `Payment received – ${formatUsd(amountReceived)} – ${FROM_NAME}`, baseTemplate('Payment received', body))
 }
 
 /**
@@ -239,12 +253,12 @@ export async function sendWelcomeAccessGrantedEmail(
       ${emblemImg(56, '0')}
       <div class="banner-text">
         <h1>Welcome to <span class="highlight">${FROM_NAME}</span>!</h1>
-        <p>Payment Verified – Access Granted</p>
+        <p>First instalment verified – access granted</p>
       </div>
     </div>
     <div class="body">
       <p>Dear ${firstName},</p>
-      <p>Congratulations! Your payment has been verified and you are now officially enrolled in the <strong style="color:#1e3a8a;text-decoration:underline">${courseName}</strong> program.</p>
+      <p>Congratulations! Your first instalment has been verified and you are now officially enrolled in the <strong style="color:#1e3a8a;text-decoration:underline">${courseName}</strong> program. Fees are in US dollars. Later instalments do not send this email again.</p>
       <h2>Your login credentials</h2>
       ${credentialsSection}
       <p style="margin-top:20px"><a href="${loginUrl}" class="btn">Login to Student Portal</a></p>
@@ -298,10 +312,10 @@ export async function sendCertificateIssuedEmail(to: string, firstName: string, 
   const body = `
     <p>Dear ${firstName},</p>
     <p>Congratulations on completing <strong>${courseName}</strong>!</p>
-    <p>Your certificate number is: <strong>${certNumber}</strong></p>
-    <p>You can download your certificate from the LMS at any time.</p>
-    <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/student/certificates" class="btn">View Certificate</a></p>`
-  await sendEmail(to, `Certificate Issued: ${courseName}`, baseTemplate('Certificate Issued', body))
+    <p>Your Certificate of Completion number is: <strong>${certNumber}</strong></p>
+    <p>You can download this Certificate of Completion from the LMS. The formal certificate is presented on graduation day and is not available for download.</p>
+    <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/student/certificates" class="btn">View Certificate of Completion</a></p>`
+  await sendEmail(to, `Certificate of Completion: ${courseName}`, baseTemplate('Certificate of Completion', body))
 }
 
 /** Admin notification: new application submitted */

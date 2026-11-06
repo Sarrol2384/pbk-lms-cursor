@@ -3,10 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import PaymentReviewCard from '@/components/admin/PaymentReviewCard'
 import { signedUrlForStoredFile } from '@/lib/storage/signed-url'
-
-function formatAmount(n: number) {
-  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-}
+import { formatUsd } from '@/lib/tuition'
 
 export default async function PaymentReviewPage({
   params,
@@ -62,7 +59,7 @@ export default async function PaymentReviewPage({
 
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Review payment</h1>
       <p className="text-gray-500 text-sm mb-6">
-        Record amount received, approve full payment, or reject.
+        Record the amount actually received, in US dollars. Recording less than the first instalment does not open the course.
       </p>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -80,9 +77,9 @@ export default async function PaymentReviewPage({
                 <p className="text-sm text-gray-400 mt-1">
                   {p.courses?.title} • {p.courses?.code}
                   {totalInstallments > 1 && <span> • {totalInstallments} installments</span>}
-                  {' • '}Total R{formatAmount(total)}
-                  {paid > 0 && <span> • Paid R{formatAmount(paid)}</span>}
-                  {balance > 0 && <span> • Balance R{formatAmount(balance)}</span>}
+                  {' • '}Total {formatUsd(total)}
+                  {paid > 0 && <span> • Paid {formatUsd(paid)}</span>}
+                  {balance > 0 && <span> • Balance {formatUsd(balance)}</span>}
                 </p>
               </div>
             </div>

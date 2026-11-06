@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sendWelcomeAccessGrantedEmail } from '@/lib/email'
 import { approveEnrollmentFirstTime } from '@/lib/enrollment-access'
+import { assessTuition, manualGrantAllowed, type PaymentSlice } from '@/lib/tuition'
 
 /** PATCH: admin sets enrollment status to on_hold or approved (e.g. "Allow to continue"). */
 export async function PATCH(
@@ -25,25 +26,72 @@ export async function PATCH(
   if (!status) return NextResponse.json({ error: 'status must be on_hold or approved' }, { status: 400 })
 
   const service = createServiceClient()
-  const { data: enrollment, error: fetchErr } = await service
+  const withOverride = await service
     .from('enrollments')
-    .select('id, status, user_id, course_id')
+    .select('id, status, user_id, course_id, enrolled_at, access_override')
     .eq('id', enrollmentId)
     .single()
 
-  if (fetchErr || !enrollment) return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
+  let enrollment = withOverride.data as {
+    id: string
+    status: string
+    user_id: string
+    course_id: string
+    enrolled_at?: string | null
+    access_override?: boolean | null
+  } | null
+  let overrideColumn = !withOverride.error
+  if (withOverride.error && /access_override|column/i.test(withOverride.error.message ?? '')) {
+    const basic = await service
+      .from('enrollments')
+      .select('id, status, user_id, course_id, enrolled_at')
+      .eq('id', enrollmentId)
+      .single()
+    enrollment = basic.data ? { ...basic.data, access_override: false } : null
+    overrideColumn = false
+    if (basic.error || !enrollment) return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
+  } else if (withOverride.error || !enrollment) {
+    return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
+  }
 
   if (status === 'approved') {
-    const { data: payments } = await service.from('payments').select('id, status').eq('enrollment_id', enrollmentId)
-    const pending = (payments ?? []).filter((p: { status: string }) => p.status === 'pending')
-    const anyPayments = (payments ?? []).length > 0
+    const { data: payments } = await service
+      .from('payments')
+      .select('amount, amount_paid, total_installments, installment_amount')
+      .eq('enrollment_id', enrollmentId)
+      .order('installment_number', { ascending: true })
+    const position = assessTuition((payments ?? []) as PaymentSlice[])
     const liftingHold = enrollment.status === 'on_hold'
-    // Outstanding instalments stay pending until they are paid. Lifting a hold must still be allowed.
-    if (!liftingHold && pending.length > 0) {
-      return NextResponse.json({ error: 'Record the payment first. Use Record payment to verify and record the amount received.' }, { status: 400 })
-    }
-    if (!anyPayments) {
-      return NextResponse.json({ error: 'Student must submit a payment plan and proof first. Grant access only after recording payment.' }, { status: 400 })
+    const decision = manualGrantAllowed({
+      enrollmentStatus: enrollment.status,
+      position,
+      override: body.override === true,
+      liftingHold,
+      hadLegitimateAccess: position.meetsFirstInstallment || enrollment.access_override === true,
+    })
+    if (!decision.ok) return NextResponse.json({ error: decision.error }, { status: 400 })
+
+    if (decision.recordOverride) {
+      const reason = typeof body.reason === 'string' ? body.reason.trim() : ''
+      if (reason.length < 3) {
+        return NextResponse.json({ error: 'An explicit admin override requires a short reason.' }, { status: 400 })
+      }
+      if (!overrideColumn) {
+        return NextResponse.json({
+          error: 'Access override could not be saved. Apply the enrollment override migration, then try again. Course access was not changed.',
+        }, { status: 503 })
+      }
+      const { error: overrideErr } = await service.from('enrollments').update({
+        access_override: true,
+        access_override_at: new Date().toISOString(),
+        access_override_by: user.id,
+        access_override_reason: reason.slice(0, 500),
+      }).eq('id', enrollmentId)
+      if (overrideErr) {
+        return NextResponse.json({
+          error: 'Access override could not be saved. Apply the enrollment override migration, then try again. Course access was not changed.',
+        }, { status: 503 })
+      }
     }
 
     let firstApproval = false
@@ -67,7 +115,7 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, override: decision.recordOverride })
   }
 
   const { error: updateErr } = await service.from('enrollments').update({ status }).eq('id', enrollmentId)
