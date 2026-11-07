@@ -8,15 +8,22 @@ import {
   nqfPathwayRows,
   nqfProgressionNotes,
 } from '@/content/marketing'
+import { homepageAvailabilitySummary } from '@/content/application-availability'
 import { INSTITUTE_MOTTO, INSTITUTE_NAME } from '@/lib/institute'
+import { loadApplicationAvailability } from '@/lib/application-openings'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: '2027 Prospectus',
   description:
-    'Certificate, Diploma and Advanced Diploma programmes at PBK Memorial Management and Leadership Institute, with Masters and PhD via Recognition of Prior Learning (RPL) for theology.',
+    '2027 prospectus for PBK Memorial Management and Leadership Institute. A qualification can be applied for only when applications for it are open.',
 }
 
-export default function EducationPage() {
+export default async function EducationPage() {
+  const availability = await loadApplicationAvailability()
+  const summary = homepageAvailabilitySummary(availability.openings)
+
   return (
     <>
       <PageHero
@@ -25,7 +32,7 @@ export default function EducationPage() {
       />
 
       <section className="py-12 sm:py-16 bg-gradient-to-b from-blue-50 via-white to-white">
-        <Prospectus />
+        <Prospectus openings={availability.openings} />
       </section>
 
       <section className="py-12 sm:py-16 px-4 sm:px-6 bg-gradient-to-b from-white via-blue-50 to-blue-50/50">
@@ -38,7 +45,7 @@ export default function EducationPage() {
             {nqfPathwayIntro.body}
           </p>
           <p className="text-gray-600 text-sm text-center max-w-3xl mx-auto mb-10 leading-relaxed">
-            Prospectus programmes are offered at Certificate, Diploma and Advanced Diploma level. Theology & Ministry programmes can also be applied for at Masters and PhD via Recognition of Prior Learning (RPL). The pathway below shows how a qualification can lead on to further study.
+            The prospectus names Certificate, Diploma and Advanced Diploma study. Theology & Ministry also names Masters and PhD via Recognition of Prior Learning (RPL). A qualification can be selected on the application form only when it is open. The pathway below shows how a qualification can lead on to further study.
           </p>
 
           <NqfPathwayTable rows={nqfPathwayRows} />
@@ -64,9 +71,9 @@ export default function EducationPage() {
 
       <CTABand
         institutionName={INSTITUTE_NAME}
-        title="Apply for a 2027 programme"
-        description="Submit the public application form. You do not need an account."
-        primaryLabel="Apply now"
+        title={summary.ctaTitle}
+        description={summary.ctaDescription}
+        primaryLabel={summary.ctaLabel}
       />
     </>
   )

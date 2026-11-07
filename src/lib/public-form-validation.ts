@@ -1,3 +1,9 @@
+import {
+  APPLICATIONS_NOT_OPEN_LABEL,
+  levelSelectOptions,
+  openLevelIds,
+  type QualificationOpening,
+} from '@/content/application-availability'
 import { canonicalCountry } from '@/content/countries'
 import {
   findProgramme,
@@ -56,7 +62,7 @@ export function validateApplication(raw: {
   highestQualification?: unknown
   highestQualificationOther?: unknown
   popiaConsent?: unknown
-}): { ok: true; value: ApplicationInput } | { ok: false; errors: FieldErrors } {
+}, openings: readonly QualificationOpening[]): { ok: true; value: ApplicationInput } | { ok: false; errors: FieldErrors } {
   const errors: FieldErrors = {}
   const firstName = clean(raw.firstName, 80)
   const lastName = clean(raw.lastName, 80)
@@ -79,13 +85,18 @@ export function validateApplication(raw: {
   if (!country) errors.country = 'Choose your country.'
 
   const match = findProgramme(programmeId)
+  const openIds = match ? openLevelIds(match.programme.id, openings) : []
   if (!match) errors.programmeId = 'Choose a programme from the 2027 prospectus.'
+  else if (openIds.length === 0) errors.programmeId = `${match.programme.name}: ${APPLICATIONS_NOT_OPEN_LABEL}`
 
   const levelInfo = studyLevelById(level)
-  if (!levelInfo) errors.level = 'Choose a level offered for this programme.'
-  else if (match && !match.programme.levels.includes(levelInfo.id)) {
-    const offered = match.programme.levels.map(id => studyLevelById(id)?.label).filter(Boolean).join(', ')
-    errors.level = `${match.programme.name} can be applied for at ${offered}.`
+  if (!levelInfo) errors.level = 'Choose a qualification that is open for this programme.'
+  else if (match && !openIds.includes(levelInfo.id)) {
+    if (openIds.length === 0) errors.level = APPLICATIONS_NOT_OPEN_LABEL
+    else {
+      const offered = levelSelectOptions(match.programme.id, openings).map(item => item.label).join(', ')
+      errors.level = `${match.programme.name} can be applied for at ${offered}.`
+    }
   }
 
   const modeInfo = studyModeById(studyMode)

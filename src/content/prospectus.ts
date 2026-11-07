@@ -241,7 +241,10 @@ export function programmeOffersRpl(programme: ProspectusProgramme): boolean {
   return programme.levels.includes('masters_rpl') || programme.levels.includes('phd_rpl')
 }
 
-/** Levels offered for the selected programme. Before a programme is chosen, only the three standard levels are listed. */
+/**
+ * Prospectus text for a programme. This is not the /apply gate.
+ * Application acceptance lives in application-availability.ts.
+ */
 export function studyLevelsForProgramme(programme: ProspectusProgramme | null) {
   if (!programme) {
     return studyLevels.filter(level => level.id === 'certificate' || level.id === 'diploma' || level.id === 'advanced_diploma')

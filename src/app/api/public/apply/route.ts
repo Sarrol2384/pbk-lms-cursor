@@ -8,7 +8,9 @@ import {
   honeypotTripped,
   rateLimit,
 } from '@/lib/public-form-guard'
+import { APPLICATIONS_NOT_OPEN_LABEL, applicationInsertRejectedAsClosed } from '@/content/application-availability'
 import { validateApplication } from '@/lib/public-form-validation'
+import { loadApplicationAvailability } from '@/lib/application-openings'
 import { createAnonClient, createServiceClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -57,6 +59,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true })
   }
 
+  const availability = await loadApplicationAvailability()
   const parsed = validateApplication({
     firstName: form.get('firstName'),
     lastName: form.get('lastName'),
@@ -71,7 +74,7 @@ export async function POST(request: Request) {
     highestQualification: form.get('highestQualification'),
     highestQualificationOther: form.get('highestQualificationOther'),
     popiaConsent: form.get('popiaConsent'),
-  })
+  }, availability.openings)
   if (!parsed.ok) {
     return NextResponse.json({ ok: false, errors: parsed.errors }, { status: 400 })
   }
@@ -135,6 +138,12 @@ export async function POST(request: Request) {
 
   if (insertError) {
     console.error('[Apply] Save failed', insertError.code)
+    if (applicationInsertRejectedAsClosed(insertError)) {
+      return NextResponse.json({
+        ok: false,
+        errors: { programmeId: APPLICATIONS_NOT_OPEN_LABEL },
+      }, { status: 400 })
+    }
     return NextResponse.json({
       ok: false,
       message: `We could not save your application just now. Please email ${INSTITUTE_EMAIL} and we will help you.`,

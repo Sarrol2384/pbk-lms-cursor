@@ -1,5 +1,11 @@
 import Link from 'next/link'
 import { ApplicationsTable, type ApplicationRow } from '@/components/admin/ApplicationsTable'
+import {
+  APPLICATION_OPENINGS_MIGRATION,
+  APPLICATIONS_NOT_OPEN_LABEL,
+  applicationAvailabilityRows,
+} from '@/content/application-availability'
+import { loadApplicationAvailability } from '@/lib/application-openings'
 import { createServiceClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -19,6 +25,7 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
     ? searchParams.status as FilterId
     : 'all'
 
+  const availability = await loadApplicationAvailability()
   const service = createServiceClient()
   const { data, error } = await service
     .from('prospectus_applications')
@@ -63,6 +70,44 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
           Applications from the public form. Update the status here, then reply to the applicant from your own email. The site does not send that reply for you.
         </p>
       </div>
+
+      <section className="mb-6 bg-white border border-gray-200 rounded-xl overflow-hidden" aria-labelledby="application-availability-heading">
+        <div className="px-4 py-3 border-b border-gray-100">
+          <h2 id="application-availability-heading" className="text-sm font-semibold text-gray-900">Qualifications open for applications</h2>
+          <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+            This list is the rows read from prospectus_application_openings. The form and API use that same read.
+            Published courses are not copied into it. This page cannot add a qualification, and a successful read does not show whether the insert trigger or policy is installed.
+            {!availability.openingsTableReadable && (
+              <> The openings table could not be read, so the form and API stay closed. Direct inserts stay possible until {APPLICATION_OPENINGS_MIGRATION} is approved and applied on its own.</>
+            )}
+            {availability.openingsTableReadable && (
+              <> These are the configured rows. A qualification with no row stays {APPLICATIONS_NOT_OPEN_LABEL}. Confirm the insert guard separately after that migration is applied.</>
+            )}
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-gray-50 text-gray-600">
+              <tr>
+                <th className="px-4 py-2 font-medium">School</th>
+                <th className="px-4 py-2 font-medium">Programme</th>
+                <th className="px-4 py-2 font-medium">Applications</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applicationAvailabilityRows(availability.openings).map(row => (
+                <tr key={row.programmeId} className="border-t border-gray-100">
+                  <td className="px-4 py-2 text-gray-600">{row.schoolName}</td>
+                  <td className="px-4 py-2 text-gray-900">{row.programmeName}</td>
+                  <td className="px-4 py-2 text-gray-800">
+                    {row.closed ? APPLICATIONS_NOT_OPEN_LABEL : row.qualifications.join(', ')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {FILTERS.map(item => (

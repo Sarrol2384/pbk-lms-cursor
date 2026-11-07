@@ -6,13 +6,17 @@ import { getMarketingBranding } from '@/lib/marketing/branding'
 import { CTABand } from '@/components/marketing/CTABand'
 import { PartnerLogoMarquee } from '@/components/marketing/PartnerLogoMarquee'
 import { UpcomingEventStrip } from '@/components/marketing/UpcomingEventStrip'
+import { homepageAvailabilitySummary } from '@/content/application-availability'
 import { INSTITUTE_MOTTO } from '@/lib/institute'
+import { loadApplicationAvailability } from '@/lib/application-openings'
 import { nextUpcomingEvent } from '@/lib/events'
 
 export default async function HomePage() {
   noStore()
   const { institutionName } = await getMarketingBranding()
   const nextEvent = nextUpcomingEvent(events, new Date())
+  const availability = await loadApplicationAvailability()
+  const summary = homepageAvailabilitySummary(availability.openings)
 
   return (
     <>
@@ -41,11 +45,11 @@ export default async function HomePage() {
           </h1>
           <p className="text-blue-200 font-medium mb-3">{INSTITUTE_MOTTO}</p>
           <p className="text-blue-100 text-lg sm:text-xl mb-10 max-w-2xl mx-auto">
-            Certificate, Diploma and Advanced Diploma programmes across five schools, with Masters and PhD via Recognition of Prior Learning (RPL) for theology. Study full-time, part-time, in the evening, or by online distance learning.
+            {summary.hero}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/apply" className="bg-white text-blue-900 font-semibold px-8 py-3.5 rounded-xl hover:bg-blue-50 transition-colors text-sm">
-              Apply for a programme
+              {summary.ctaLabel}
             </Link>
             <Link href="/education" className="border border-white/30 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-white/10 transition-colors text-sm">
               2027 prospectus
@@ -61,8 +65,8 @@ export default async function HomePage() {
         <div className="max-w-4xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center justify-items-center">
           {[
             { value: '5 schools', label: 'Programmes grouped by school' },
-            { value: 'Up to PhD', label: 'Certificate, Diploma and Advanced Diploma, and Masters and PhD via RPL for theology' },
-            { value: '4 modes', label: 'Full-time, part-time, evening and online' },
+            { value: summary.statValue, label: summary.statLabel },
+            { value: '4 modes', label: 'Full-time, part-time, evening and online, where a qualification is open' },
           ].map(s => (
             <div key={s.label}>
               <p className="text-2xl font-bold text-blue-700">{s.value}</p>
@@ -105,7 +109,12 @@ export default async function HomePage() {
 
       <PartnerLogoMarquee />
 
-      <CTABand institutionName={institutionName} />
+      <CTABand
+        institutionName={institutionName}
+        title={summary.ctaTitle}
+        description={summary.ctaDescription}
+        primaryLabel={summary.ctaLabel}
+      />
     </>
   )
 }
