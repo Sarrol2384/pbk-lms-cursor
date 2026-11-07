@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
 import { buildCertificatePdf } from '@/lib/certificate-pdf'
+import { certificatePdfAccess } from '@/lib/certificate-public'
 import { completionDocumentAllowed } from '@/lib/tuition-lookup'
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
@@ -19,13 +20,17 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
   const profile = cert.profiles as { first_name?: string; last_name?: string } | null
   const course = cert.courses as { title?: string; code?: string; nqf_level?: number; credits?: number } | null
-  const isOwner = cert.user_id === user.id
   const { data: authProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  const isAdmin = ['admin', 'super_admin'].includes(authProfile?.role ?? '')
-  if (!isOwner && !isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
   const courseId = (cert as { course_id?: string }).course_id
-  if (!courseId || !(await completionDocumentAllowed(cert.user_id as string, courseId))) {
+  const completionAllowed = !!courseId && await completionDocumentAllowed(cert.user_id as string, courseId)
+  const access = certificatePdfAccess({
+    requesterId: user.id,
+    ownerId: cert.user_id as string,
+    role: authProfile?.role,
+    completionAllowed,
+  })
+  if (access === 'forbidden') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (access !== 'ok') {
     return NextResponse.json({
       error: 'A Certificate of Completion is available only after the enrolment is approved and full tuition is recorded.',
     }, { status: 403 })

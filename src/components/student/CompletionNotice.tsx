@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { CertificateIssueRetry } from '@/components/student/CertificateIssueRetry'
+import { certificatePdfPath } from '@/lib/certificate-public'
 
 type Props = {
   moduleCount: number
@@ -41,10 +42,10 @@ export function CompletionNotice({ moduleCount, passedCount, issued, downloadabl
           <div className="mt-3 flex flex-wrap gap-2">
             {ready ? (
               <>
-                <a href={`/api/certificates/${certificateId}/pdf`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-green-700 hover:text-green-800 underline">
+                <a href={certificatePdfPath(certificateId)} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-green-700 hover:text-green-800 underline">
                   View Certificate of Completion
                 </a>
-                <a href={`/api/certificates/${certificateId}/pdf`} download className="text-sm font-medium text-green-700 hover:text-green-800 underline">
+                <a href={certificatePdfPath(certificateId)} download className="text-sm font-medium text-green-700 hover:text-green-800 underline">
                   Download PDF
                 </a>
                 <Link href="/student/certificates" className="text-sm font-medium text-green-700 hover:text-green-800 underline">

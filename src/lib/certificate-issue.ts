@@ -41,6 +41,7 @@ export function logCertificateWriteFailure(error: CertificateWriteError | null |
 /**
  * certificates.verification_url is NOT NULL and has no default.
  * A relative path still satisfies the column when the public app URL is unset.
+ * The path stays /verify/{id} so certificates already stored keep working.
  */
 export function completionVerificationUrl(certificateId: string, appUrl: string | null | undefined): string {
   const path = `/verify/${certificateId}`

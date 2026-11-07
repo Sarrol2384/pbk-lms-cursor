@@ -3,6 +3,7 @@ import { formatDate } from '@/lib/utils'
 import { assessTuition, canIssueCompletionDocument } from '@/lib/tuition'
 import { refreshProgressAndCertificate } from '@/lib/progress'
 import { CertificateIssueRetry } from '@/components/student/CertificateIssueRetry'
+import { certificatePdfPath, certificateVerificationPath } from '@/lib/certificate-public'
 
 export default async function StudentCertificatesPage() {
   const supabase = createClient()
@@ -86,13 +87,13 @@ export default async function StudentCertificatesPage() {
               <div className="mt-4 flex flex-wrap gap-2">
                 {downloadable.has(c.course_id) ? (
                   <>
-                    <a href={`/api/certificates/${c.id}/pdf`} target="_blank" rel="noopener noreferrer" className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition-colors inline-block">View Certificate of Completion</a>
-                    <a href={`/api/certificates/${c.id}/pdf`} download className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg transition-colors inline-block">Download PDF</a>
+                    <a href={certificatePdfPath(c.id)} target="_blank" rel="noopener noreferrer" className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition-colors inline-block">View Certificate of Completion</a>
+                    <a href={certificatePdfPath(c.id)} download className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg transition-colors inline-block">Download PDF</a>
                   </>
                 ) : (
                   <p className="text-xs text-amber-800">Download stays closed until full tuition is confirmed.</p>
                 )}
-                <a href={`/verify/${c.id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-600 hover:underline">Verify</a>
+                <a href={certificateVerificationPath(c.id)} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-600 hover:underline">Verify</a>
               </div>
             </div>
           ))}
