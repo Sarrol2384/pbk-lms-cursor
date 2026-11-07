@@ -73,8 +73,11 @@ export function eligibleOpeningPairs(): { programmeId: string; level: StudyLevel
 
 export type ApplicationAvailability = {
   openings: QualificationOpening[]
-  /** True only when the openings table could be read. An empty table is enforced and still closed. */
-  databaseEnforced: boolean
+  /**
+   * True when the openings table could be read. This is not proof that the
+   * insert trigger or row-level policy from migration 00033 is installed.
+   */
+  openingsTableReadable: boolean
 }
 
 export function rowsToOpenings(
@@ -96,13 +99,13 @@ export function rowsToOpenings(
   return openings
 }
 
-/** A query error fails closed and reports that the database gate is not in place. */
+/** A query error fails closed. A successful read only means the table returned rows. */
 export function availabilityFromQuery(
   error: { code?: string; message?: string } | null,
   rows: readonly { programme_id: string; level: string }[] | null,
 ): ApplicationAvailability {
-  if (error || !rows) return { openings: [], databaseEnforced: false }
-  return { openings: rowsToOpenings(rows), databaseEnforced: true }
+  if (error || !rows) return { openings: [], openingsTableReadable: false }
+  return { openings: rowsToOpenings(rows), openingsTableReadable: true }
 }
 
 export function applicationInsertRejectedAsClosed(error: { code?: string; message?: string } | null): boolean {
@@ -170,13 +173,9 @@ export function applyHeroSubtitle(
 ): string {
   const match = programmeId ? findProgramme(programmeId) : null
   if (!match) return 'Submit a prospectus application. You do not need an account.'
-  const open = openLevelIds(match.programme.id, openings)
+  const open = levelSelectOptions(match.programme.id, openings)
   if (open.length === 0) return `${match.programme.name}: ${APPLICATIONS_NOT_OPEN_LABEL}`
-  const rplOpen = open.some(levelId => RPL_LEVELS.has(levelId))
-  if (rplOpen) {
-    return `Apply for ${match.programme.name}. Masters and PhD are available via Recognition of Prior Learning (RPL). You do not need an account.`
-  }
-  return `Apply for ${match.programme.name}. You do not need an account.`
+  return `Apply for ${match.programme.name} at ${open.map(level => level.label).join(', ')}. You do not need an account.`
 }
 
 export function applicationAvailabilityRows(

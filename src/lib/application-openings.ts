@@ -1,7 +1,7 @@
 import { availabilityFromQuery, type ApplicationAvailability } from '@/content/application-availability'
 import { createAnonClient } from '@/lib/supabase/server'
 
-const CLOSED: ApplicationAvailability = { openings: [], databaseEnforced: false }
+const CLOSED: ApplicationAvailability = { openings: [], openingsTableReadable: false }
 
 /**
  * Read the openings table with the anonymous key, the same access a direct

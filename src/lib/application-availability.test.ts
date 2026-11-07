@@ -62,7 +62,7 @@ const levelIds = studyLevels.map(level => level.id)
 describe('closed application catalogue', () => {
   it('does not approve any qualification when the openings table has no rows', () => {
     const availability = availabilityFromQuery(null, [])
-    assert.equal(availability.databaseEnforced, true)
+    assert.equal(availability.openingsTableReadable, true)
     assert.deepEqual(availability.openings, [])
     for (const programme of programmes) {
       assert.deepEqual(openLevelIds(programme.id, closed), [])
@@ -77,7 +77,7 @@ describe('closed application catalogue', () => {
 
   it('fails closed when the openings table cannot be read', () => {
     const missing = availabilityFromQuery({ code: '42P01', message: 'relation does not exist' }, null)
-    assert.equal(missing.databaseEnforced, false)
+    assert.equal(missing.openingsTableReadable, false)
     assert.deepEqual(missing.openings, [])
     assert.equal(applicationInsertRejectedAsClosed({ code: '42501', message: APPLICATION_NOT_OPEN_DB_MESSAGE }), true)
     assert.equal(applicationInsertRejectedAsClosed({ code: '23514' }), false)
@@ -246,8 +246,14 @@ describe('dropdown options and level reset', () => {
     )
     assert.equal(programmeSelectOption(counselling, approvedSample).disabled, false)
     assert.equal(programmeSelectOption(counselling, approvedSample).label, 'Christian Counselling')
-    assert.match(applyHeroSubtitle('theology', approvedSample), /Masters and PhD are available via Recognition of Prior Learning/)
-    assert.doesNotMatch(applyHeroSubtitle('chaplaincy', approvedSample), /RPL/)
+    assert.equal(
+      applyHeroSubtitle('theology', approvedSample),
+      'Apply for Theology at Masters (via RPL), PhD (via RPL). You do not need an account.',
+    )
+    assert.equal(
+      applyHeroSubtitle('chaplaincy', approvedSample),
+      'Apply for Chaplaincy at Certificate (6 months). You do not need an account.',
+    )
   })
 
   it('clears a stale level when the next programme does not accept it', () => {
@@ -256,6 +262,21 @@ describe('dropdown options and level reset', () => {
     assert.equal(levelAfterProgrammeChange('certificate', 'christian-counselling', approvedSample), '')
     assert.equal(levelAfterProgrammeChange('phd_rpl', '', approvedSample), '')
     assert.equal(levelAfterProgrammeChange('', 'theology', approvedSample), '')
+  })
+
+  it('names only the RPL levels that are actually open', () => {
+    const mastersOnly: readonly QualificationOpening[] = [{ programmeId: 'theology', levels: ['masters_rpl'] }]
+    const phdOnly: readonly QualificationOpening[] = [{ programmeId: 'theology', levels: ['phd_rpl'] }]
+    assert.equal(
+      applyHeroSubtitle('theology', mastersOnly),
+      'Apply for Theology at Masters (via RPL). You do not need an account.',
+    )
+    assert.doesNotMatch(applyHeroSubtitle('theology', mastersOnly), /PhD/)
+    assert.equal(
+      applyHeroSubtitle('theology', phdOnly),
+      'Apply for Theology at PhD (via RPL). You do not need an account.',
+    )
+    assert.doesNotMatch(applyHeroSubtitle('theology', phdOnly), /Masters/)
   })
 
   it('keeps a level that the next programme still accepts', () => {
@@ -318,6 +339,32 @@ describe('database gate', () => {
     assert.match(sql, new RegExp(APPLICATION_NOT_OPEN_DB_MESSAGE))
     assert.match(sql, /GRANT SELECT ON TABLE public\.prospectus_application_openings TO anon, authenticated/)
     assert.doesNotMatch(sql, /GRANT INSERT ON TABLE public\.prospectus_application_openings TO anon/)
+    assert.doesNotMatch(sql, /SECURITY DEFINER/)
+    assert.match(sql, /SECURITY INVOKER/)
+    assert.match(sql, /SET search_path = ''/)
+    assert.doesNotMatch(executable, /CREATE TABLE IF NOT EXISTS/)
+    assert.match(sql, /already exists/)
+    assert.match(sql, /20261101185715/)
+    assert.match(sql, /Do not describe 00031 or 00032 as missing/)
+    assert.match(sql, /Do not repair migration history/)
+    assert.match(sql, /Do not run a migration push/)
+    assert.doesNotMatch(sql, /00031 or 00032 are not applied|00031 and 00032 are missing|outstanding 00031/i)
+  })
+
+  it('restores the 00027 table grants and does not truncate', () => {
+    const executable = sql.split('\n').filter(line => !line.trim().startsWith('--')).join('\n')
+    assert.match(executable, /REVOKE ALL ON TABLE public\.prospectus_applications FROM PUBLIC;/)
+    assert.match(executable, /REVOKE ALL ON TABLE public\.prospectus_applications FROM anon;/)
+    assert.match(executable, /REVOKE ALL ON TABLE public\.prospectus_applications FROM authenticated;/)
+    assert.match(executable, /GRANT INSERT ON TABLE public\.prospectus_applications TO anon;/)
+    assert.match(executable, /GRANT INSERT, SELECT, UPDATE ON TABLE public\.prospectus_applications TO authenticated;/)
+    assert.match(executable, /GRANT ALL ON TABLE public\.prospectus_applications TO service_role;/)
+    assert.doesNotMatch(executable, /GRANT ALL ON TABLE public\.prospectus_applications TO anon/)
+    assert.doesNotMatch(executable, /GRANT ALL ON TABLE public\.prospectus_applications TO authenticated/)
+    assert.doesNotMatch(executable, /TRUNCATE\s+(TABLE\s+)?(public\.)?prospectus_applications/i)
+    assert.match(sql, /RLS does not apply to TRUNCATE/)
+    assert.match(sql, /has_table_privilege\('anon', 'public\.prospectus_applications', 'TRUNCATE'\)/)
+    assert.match(sql, /Do not TRUNCATE/)
   })
 
   it('locks the database eligibility check to the prospectus ceiling', () => {

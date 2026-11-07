@@ -1,9 +1,61 @@
 -- APPROVAL AND DEPLOYMENT PREREQUISITE. DO NOT APPLY this file from the pull request.
 -- Do not run it on staging, production, or any other database until it has been reviewed and approved.
--- This file inserts no rows. After it is applied, every programme stays closed.
--- A later reviewed row in prospectus_application_openings is what opens one distinct qualification.
+-- Do not run a migration push. Apply this file alone. Do not repair migration history.
+-- This file inserts no rows and does not TRUNCATE any table. After it is applied, every
+-- programme stays closed until a later reviewed row is added to prospectus_application_openings.
 -- Do not copy published courses into that table. Course status is enrolment content, not application acceptance.
--- Number 00033 avoids 00031 and 00032, which belong to the separate tuition pull request.
+--
+-- Staging preflight incorporated here, not re-run by this pull request:
+-- prospectus_applications columns, checks, and policies match 00027 and 00029.
+-- The openings table, these functions, and this trigger are absent. No name collision.
+-- anon and authenticated currently hold ALL table privileges, including TRUNCATE and TRIGGER.
+-- That is broader than 00027. RLS does not apply to TRUNCATE. This file revokes the extras.
+-- schema_migrations on that staging database lists 20261101185715 replicate_prod_schema.
+-- 00031 override columns and 00032 policy and private-helper fingerprints are already present
+-- in the schema anyway. Do not describe 00031 or 00032 as missing.
+-- Production was not inspected and is not a target of this file.
+--
+-- Post-approval staging checks, read only. Do not TRUNCATE.
+-- 1. Before and after, list privileges:
+--    SELECT grantee, privilege_type
+--    FROM information_schema.role_table_grants
+--    WHERE table_schema = 'public' AND table_name = 'prospectus_applications'
+--    ORDER BY grantee, privilege_type;
+--    After: anon has INSERT only. authenticated has INSERT, SELECT, and UPDATE.
+--    service_role keeps its existing broad grant. PUBLIC has no rows.
+-- 2. Column grants, still read only:
+--    SELECT grantee, privilege_type, column_name
+--    FROM information_schema.column_privileges
+--    WHERE table_schema = 'public' AND table_name = 'prospectus_applications'
+--      AND grantee IN ('anon', 'authenticated', 'PUBLIC');
+--    anon must not gain SELECT, UPDATE, DELETE, or TRUNCATE through a column grant.
+-- 3. Privilege probe. This does not remove rows:
+--    SELECT has_table_privilege('anon', 'public.prospectus_applications', 'INSERT') AS anon_insert,
+--           has_table_privilege('anon', 'public.prospectus_applications', 'SELECT') AS anon_select,
+--           has_table_privilege('anon', 'public.prospectus_applications', 'TRUNCATE') AS anon_truncate,
+--           has_table_privilege('anon', 'public.prospectus_applications', 'TRIGGER') AS anon_trigger,
+--           has_table_privilege('authenticated', 'public.prospectus_applications', 'INSERT') AS authenticated_insert,
+--           has_table_privilege('authenticated', 'public.prospectus_applications', 'SELECT') AS authenticated_select,
+--           has_table_privilege('authenticated', 'public.prospectus_applications', 'UPDATE') AS authenticated_update,
+--           has_table_privilege('authenticated', 'public.prospectus_applications', 'DELETE') AS authenticated_delete,
+--           has_table_privilege('authenticated', 'public.prospectus_applications', 'TRUNCATE') AS authenticated_truncate;
+--    Expect anon insert true and select, truncate, trigger false.
+--    Expect authenticated insert, select, update true and delete, truncate false.
+-- 4. Confirm the new function is not a definer:
+--    SELECT prosecdef FROM pg_proc
+--    WHERE proname = 'prospectus_application_is_open' AND pronamespace = 'public'::regnamespace;
+--    prosecdef must be false.
+-- 5. Count openings. Expect zero. Do not insert a test row on staging from this pull request.
+
+-- Refuse to continue when the openings table already exists. An existing table may
+-- have different constraints, policies, triggers, or rows. This file does not adopt it.
+DO $$
+BEGIN
+  IF to_regclass('public.prospectus_application_openings') IS NOT NULL THEN
+    RAISE EXCEPTION 'public.prospectus_application_openings already exists. Refusing to continue. This file does not change that table, its constraints, policies, rows, or triggers.';
+  END IF;
+END
+$$;
 
 -- Pairs the prospectus record already names. This is the ceiling for a future approval,
 -- not the list of qualifications that accept applications. The openings table starts empty.
@@ -11,7 +63,8 @@ CREATE OR REPLACE FUNCTION public.prospectus_qualification_may_open(p_programme_
 RETURNS boolean
 LANGUAGE sql
 IMMUTABLE
-SET search_path = public
+SECURITY INVOKER
+SET search_path = ''
 AS $$
   SELECT (p_programme_id, p_level) IN (
     ('business-administration', 'certificate'),
@@ -81,7 +134,7 @@ AS $$
   );
 $$;
 
-CREATE TABLE IF NOT EXISTS public.prospectus_application_openings (
+CREATE TABLE public.prospectus_application_openings (
   programme_id text NOT NULL,
   level text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -107,12 +160,15 @@ GRANT SELECT ON TABLE public.prospectus_application_openings TO anon, authentica
 GRANT ALL ON TABLE public.prospectus_application_openings TO service_role;
 
 -- True only when that exact pair has been inserted. An empty table returns false for every pair.
+-- Invoker on purpose. anon and authenticated can already read this table through the
+-- public SELECT policy below, and service_role can read it through its table grant.
+-- The insert policy and the trigger run as that same role, so a definer is not required.
 CREATE OR REPLACE FUNCTION public.prospectus_application_is_open(p_programme_id text, p_level text)
 RETURNS boolean
 LANGUAGE sql
 STABLE
-SECURITY DEFINER
-SET search_path = public
+SECURITY INVOKER
+SET search_path = ''
 AS $$
   SELECT EXISTS (
     SELECT 1
@@ -125,7 +181,8 @@ $$;
 CREATE OR REPLACE FUNCTION public.prospectus_applications_require_open_pair()
 RETURNS trigger
 LANGUAGE plpgsql
-SET search_path = public
+SECURITY INVOKER
+SET search_path = ''
 AS $$
 BEGIN
   IF TG_OP = 'UPDATE'
@@ -169,3 +226,18 @@ REVOKE ALL ON FUNCTION public.prospectus_applications_require_open_pair() FROM P
 GRANT EXECUTE ON FUNCTION public.prospectus_qualification_may_open(text, text) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.prospectus_application_is_open(text, text) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.prospectus_applications_require_open_pair() TO anon, authenticated, service_role;
+
+-- Least privilege for prospectus_applications, matching the policies in 00027.
+-- anon inserts through prospectus_applications_anon_insert and must not read or change rows.
+-- authenticated needs INSERT because that same policy includes authenticated,
+-- plus SELECT and UPDATE for prospectus_applications_admin_select and prospectus_applications_admin_update.
+-- RLS does not apply to TRUNCATE. Staging currently grants ALL, including TRUNCATE and TRIGGER,
+-- to anon and authenticated. Revoke those extras. This does not remove any rows.
+-- service_role keeps ALL. This does not change privileges on any other table,
+-- and it does not change database-wide default privileges.
+REVOKE ALL ON TABLE public.prospectus_applications FROM PUBLIC;
+REVOKE ALL ON TABLE public.prospectus_applications FROM anon;
+REVOKE ALL ON TABLE public.prospectus_applications FROM authenticated;
+GRANT INSERT ON TABLE public.prospectus_applications TO anon;
+GRANT INSERT, SELECT, UPDATE ON TABLE public.prospectus_applications TO authenticated;
+GRANT ALL ON TABLE public.prospectus_applications TO service_role;

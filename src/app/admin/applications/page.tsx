@@ -75,13 +75,13 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
         <div className="px-4 py-3 border-b border-gray-100">
           <h2 id="application-availability-heading" className="text-sm font-semibold text-gray-900">Qualifications open for applications</h2>
           <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-            This list is read from prospectus_application_openings, the same table the application form, the apply API, and the database insert rule use.
-            Published courses are not copied into it. This page cannot add a qualification.
-            {!availability.databaseEnforced && (
-              <> Migration {APPLICATION_OPENINGS_MIGRATION} is not applied here, so the form and API stay closed, and a direct insert is still possible until that file is approved and applied.</>
+            This list is the rows read from prospectus_application_openings. The form and API use that same read.
+            Published courses are not copied into it. This page cannot add a qualification, and a successful read does not show whether the insert trigger or policy is installed.
+            {!availability.openingsTableReadable && (
+              <> The openings table could not be read, so the form and API stay closed. Direct inserts stay possible until {APPLICATION_OPENINGS_MIGRATION} is approved and applied on its own.</>
             )}
-            {availability.databaseEnforced && (
-              <> The database gate is in place. A qualification stays {APPLICATIONS_NOT_OPEN_LABEL} until a reviewed SQL insert adds that one pair.</>
+            {availability.openingsTableReadable && (
+              <> These are the configured rows. A qualification with no row stays {APPLICATIONS_NOT_OPEN_LABEL}. Confirm the insert guard separately after that migration is applied.</>
             )}
           </p>
         </div>
