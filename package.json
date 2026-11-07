@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --experimental-strip-types --test src/lib/tuition.test.ts",
+    "test": "node --experimental-strip-types --test src/lib/*.test.ts",
     "test:rls": "bash supabase/tests/course-content-rls.sh"
   },
   "dependencies": {

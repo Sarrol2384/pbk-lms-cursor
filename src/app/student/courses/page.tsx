@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { enrolledCourseVisible, UNPUBLISHED_ENROLLMENT_MESSAGE } from '@/lib/enrolled-course'
 
 export default async function StudentCoursesPage() {
   const supabase = createClient()
@@ -26,7 +27,13 @@ export default async function StudentCoursesPage() {
         <div className="mb-8">
           <h2 className="text-base font-semibold text-gray-900 mb-3">Enrolled Programmes</h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            {enrolled.map((e: any) => (
+            {enrolled.map((e: any) => !enrolledCourseVisible(e.courses) ? (
+              <div key={e.course_id} className="bg-white rounded-xl border border-gray-200 p-5">
+                <h3 className="font-semibold text-gray-900 text-sm mb-1">Programme not available yet</h3>
+                <p className="text-sm text-gray-600">{UNPUBLISHED_ENROLLMENT_MESSAGE}</p>
+                <p className="text-xs text-gray-500 mt-2">Status: {e.status === 'approved' ? 'Approved' : e.status === 'pending_approval' || e.status === 'pending' ? 'Awaiting approval' : e.status === 'payment_pending' ? 'Complete payment' : e.status === 'on_hold' ? 'On hold' : e.status === 'rejected' ? 'Not approved' : e.status}</p>
+              </div>
+            ) : (
               <Link key={e.course_id} href={e.status === 'approved' ? `/student/courses/${e.course_id}` : `/student/enroll/${e.course_id}`} className="block bg-white rounded-xl border border-gray-200 p-5 hover:border-blue-300 hover:shadow-sm transition-colors">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center text-sm font-bold">{e.courses?.code?.substring(0, 2)}</div>

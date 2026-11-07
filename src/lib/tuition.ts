@@ -137,6 +137,32 @@ export function canIssueCompletionDocument(
   return enrollmentStatus === 'approved' && position.fullyPaid
 }
 
+export type CompletionIssueDecision =
+  | { action: 'skip'; reason: 'no_modules' | 'incomplete' | 'tuition_incomplete' }
+  | { action: 'insert' }
+
+/**
+ * A completion document needs every module passed, an approved enrolment, and
+ * full tuition. accessOverride can open the course before the first instalment.
+ * It is part of the input so callers pass the real flag through, and it does
+ * not grant this document.
+ */
+export function completionIssueDecision(input: {
+  moduleCount: number
+  allPassed: boolean
+  position: TuitionPosition
+  enrollmentStatus: string | null | undefined
+  accessOverride: boolean
+}): CompletionIssueDecision {
+  if (input.moduleCount < 1) return { action: 'skip', reason: 'no_modules' }
+  if (!input.allPassed) return { action: 'skip', reason: 'incomplete' }
+  const overrideGrantsCompletionDocument = false
+  const tuitionAllows = canIssueCompletionDocument(input.position, input.enrollmentStatus)
+    || (input.accessOverride && overrideGrantsCompletionDocument)
+  if (!tuitionAllows) return { action: 'skip', reason: 'tuition_incomplete' }
+  return { action: 'insert' }
+}
+
 export function manualGrantAllowed(input: {
   enrollmentStatus: string
   position: TuitionPosition

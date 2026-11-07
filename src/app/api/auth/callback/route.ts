@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { recoveryCallbackLocation } from '@/lib/recovery-callback'
 
 /**
  * Supabase redirects here after email confirmation (or OAuth) with ?code=...
  * PKCE requires the code exchange to run in the browser (code_verifier is in client storage),
- * so we redirect to /verify?code=... and let the client page do the exchange.
+ * so signup codes go to /verify?code=... and the client page exchanges them.
+ * New password recovery emails go directly to /reset-password. If an older link
+ * still arrives here, only next=/reset-password is forwarded, including a
+ * fragment the server cannot see.
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -13,13 +16,21 @@ export async function GET(request: NextRequest) {
   const errorParam = searchParams.get('error')
   const errorDesc = searchParams.get('error_description')
 
+  const recoveryTarget = recoveryCallbackLocation({
+    origin,
+    code,
+    next,
+    error: errorParam,
+    errorDescription: errorDesc,
+  })
+  if (recoveryTarget) return NextResponse.redirect(recoveryTarget)
+
   if (errorParam) {
     const msg = errorDesc ? `${errorDesc}` : 'Could not verify link. Please try again.'
     return NextResponse.redirect(`${origin}/verify?error=${encodeURIComponent(msg)}`)
   }
 
   if (code) {
-    // Pass the code to the client so it can run exchangeCodeForSession in the browser (PKCE)
     const nextPart = next ? `&next=${encodeURIComponent(next)}` : ''
     return NextResponse.redirect(`${origin}/verify?code=${encodeURIComponent(code)}${nextPart}`)
   }

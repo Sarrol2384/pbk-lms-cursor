@@ -11,7 +11,7 @@ export function TakeQuiz({
 }: { questions: QuestionSafe[]; totalMarks: number; assessmentId: string }) {
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<{ marks_obtained: number; total_marks: number } | null>(null)
+  const [result, setResult] = useState<{ marks_obtained: number; total_marks: number; certificateError?: string | null } | null>(null)
   const [error, setError] = useState('')
 
   function handleChange(questionId: string, value: string) {
@@ -37,7 +37,11 @@ export function TakeQuiz({
         throw new Error(d.error || res.statusText)
       }
       const data = await res.json()
-      setResult({ marks_obtained: data.marks_obtained, total_marks: data.total_marks })
+      setResult({
+        marks_obtained: data.marks_obtained,
+        total_marks: data.total_marks,
+        certificateError: data.certificateError,
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Submit failed')
     } finally {
@@ -52,6 +56,9 @@ export function TakeQuiz({
         <h3 className="font-semibold text-green-900 text-lg">Quiz submitted</h3>
         <p className="text-2xl font-bold text-green-800 mt-2">{result.marks_obtained} / {result.total_marks} ({pct}%)</p>
         <p className="text-sm text-green-700 mt-1">Your result has been recorded.</p>
+        {result.certificateError && (
+          <p className="text-sm text-red-800 mt-3">{result.certificateError}</p>
+        )}
       </div>
     )
   }

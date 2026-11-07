@@ -1,7 +1,19 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { calculateModuleMark, generateCertificateNumber } from '@/lib/utils'
 import { sendCertificateIssuedEmail } from '@/lib/email'
-import { completionDocumentAllowed } from '@/lib/tuition-lookup'
+import { tuitionForUserCourse } from '@/lib/tuition-lookup'
+import { completionIssueDecision } from '@/lib/tuition'
+import {
+  persistCompletionCertificate,
+  type CertificateRefreshResult,
+} from '@/lib/certificate-issue'
+
+export type ProgressCertificateResult = CertificateRefreshResult | {
+  ok: true
+  created: false
+  certificateId: null
+  reason: 'no_modules' | 'incomplete' | 'tuition_incomplete'
+}
 
 /**
  * Update module_progress for a user/module based on graded submissions.
@@ -95,11 +107,18 @@ export async function updateModuleProgress(userId: string, moduleId: string): Pr
   return passed ? 'passed' : 'in_progress'
 }
 
+function skipped(reason: 'no_modules' | 'incomplete' | 'tuition_incomplete'): ProgressCertificateResult {
+  return { ok: true, created: false, certificateId: null, reason }
+}
+
 /**
- * Refresh module progress for all modules in a course (in sequence), then issue certificate if all passed.
- * Call after grading a submission or when loading student course view.
+ * Refresh module progress for all modules in a course, then issue one Certificate
+ * of Completion when every module is passed and full tuition is confirmed.
+ * The service role writes the row. RLS is not widened: certificates has a SELECT
+ * policy only, and verification_url is a required column with no default.
+ * Insert and lookup failures are logged without addresses and returned.
  */
-export async function refreshProgressAndCertificate(userId: string, courseId: string): Promise<void> {
+export async function refreshProgressAndCertificate(userId: string, courseId: string): Promise<ProgressCertificateResult> {
   const supabase = createServiceClient()
 
   const { data: modules } = await supabase
@@ -107,7 +126,7 @@ export async function refreshProgressAndCertificate(userId: string, courseId: st
     .select('id, sequence')
     .eq('course_id', courseId)
     .order('sequence', { ascending: true })
-  if (!modules?.length) return
+  if (!modules?.length) return skipped('no_modules')
 
   for (const m of modules) {
     await updateModuleProgress(userId, m.id)
@@ -123,31 +142,44 @@ export async function refreshProgressAndCertificate(userId: string, courseId: st
     progressList?.length === modules.length &&
     progressList.every(p => p.status === 'passed')
 
-  if (!allPassed) return
-  if (!(await completionDocumentAllowed(userId, courseId))) return
-
-  const { data: existing } = await supabase
-    .from('certificates')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('course_id', courseId)
-    .maybeSingle()
-  if (existing) return
-
-  const certNumber = generateCertificateNumber()
-  await supabase.from('certificates').insert({
-    user_id: userId,
-    course_id: courseId,
-    certificate_number: certNumber,
-    issued_at: new Date().toISOString(),
+  const tuition = await tuitionForUserCourse(userId, courseId)
+  const decision = completionIssueDecision({
+    moduleCount: modules.length,
+    allPassed,
+    position: tuition.position,
+    enrollmentStatus: tuition.status,
+    accessOverride: tuition.accessOverride,
   })
-  try {
-    const { data: profile } = await supabase.from('profiles').select('first_name').eq('id', userId).single()
-    const { data: authUser } = await supabase.auth.admin.getUserById(userId)
-    const email = authUser?.user?.email
-    const { data: courseRow } = await supabase.from('courses').select('title').eq('id', courseId).single()
-    if (email && courseRow?.title) {
-      await sendCertificateIssuedEmail(email, profile?.first_name ?? 'Learner', courseRow.title, certNumber)
-    }
-  } catch (_) { /* email best-effort */ }
+  if (decision.action === 'skip') return skipped(decision.reason)
+
+  return persistCompletionCertificate({
+    userId,
+    courseId,
+    appUrl: process.env.NEXT_PUBLIC_APP_URL ?? null,
+    now: () => new Date().toISOString(),
+    newId: () => crypto.randomUUID(),
+    newNumber: generateCertificateNumber,
+    find: async () => {
+      const { data, error } = await supabase
+        .from('certificates')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('course_id', courseId)
+        .maybeSingle()
+      return { id: data?.id ?? null, error: error ? { code: error.code, message: error.message } : null }
+    },
+    insert: async (row) => {
+      const { data, error } = await supabase.from('certificates').insert(row).select('id').single()
+      return { id: data?.id ?? null, error: error ? { code: error.code, message: error.message } : null }
+    },
+    notify: async (certificateNumber) => {
+      const { data: profile } = await supabase.from('profiles').select('first_name').eq('id', userId).single()
+      const { data: authUser } = await supabase.auth.admin.getUserById(userId)
+      const email = authUser?.user?.email
+      const { data: courseRow } = await supabase.from('courses').select('title').eq('id', courseId).single()
+      if (email && courseRow?.title) {
+        await sendCertificateIssuedEmail(email, profile?.first_name ?? 'Learner', courseRow.title, certificateNumber)
+      }
+    },
+  })
 }
