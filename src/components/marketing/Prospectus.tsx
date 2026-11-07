@@ -1,5 +1,10 @@
 import Link from 'next/link'
 import {
+  APPLICATIONS_NOT_OPEN_LABEL,
+  openLevelIds,
+  programmeAcceptsApplications,
+} from '@/content/application-availability'
+import {
   PROSPECTUS_YEAR,
   programmeCount,
   programmeOffersRpl,
@@ -19,14 +24,18 @@ export function Prospectus() {
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">{INSTITUTE_NAME}</h2>
         <p className="text-lg text-blue-800 font-medium mb-4">&ldquo;{INSTITUTE_MOTTO}&rdquo;</p>
         <p className="text-gray-600 leading-relaxed">
-          Programmes are offered at Certificate, Diploma and Advanced Diploma level, grouped into five schools.
-          Theology & Ministry programmes can also be applied for at Masters and PhD via Recognition of Prior Learning (RPL).
-          There are {programmeCount()} programmes in this prospectus. Choose a programme below, then apply online. You do not need an account to submit an application.
+          Programmes are grouped into five schools. The prospectus names Certificate, Diploma and Advanced Diploma study,
+          and Masters and PhD via Recognition of Prior Learning (RPL) for Theology & Ministry.
+          There are {programmeCount()} programmes in this prospectus. A programme can be selected on the application form only when that qualification is open.
+          You do not need an account to submit an application.
         </p>
       </section>
 
       <section className="max-w-5xl mx-auto px-4">
         <h2 className="text-2xl font-bold text-gray-900 text-center mb-6">Admission, duration and study mode</h2>
+        <p className="text-center text-sm text-gray-600 max-w-3xl mx-auto mb-6 leading-relaxed">
+          These rows name the qualification levels used in the prospectus. A programme lists a qualification only when applications for that qualification are open.
+        </p>
         <div className="overflow-x-auto bg-white border border-blue-100 rounded-xl">
           <table className="w-full text-sm text-left">
             <thead className="bg-blue-50 text-blue-950">
@@ -55,8 +64,9 @@ export function Prospectus() {
           ))}
         </div>
         <p className="text-center text-sm text-gray-600 mt-4 max-w-3xl mx-auto leading-relaxed">
-          Masters (via RPL) and PhD (via RPL) are available on Theology & Ministry programmes.
-          Every programme can be studied full-time, part-time, in the evening, or by online distance learning.
+          Masters (via RPL) and PhD (via RPL) are the Recognition of Prior Learning qualifications on Theology & Ministry programmes.
+          They are not offered at Certificate, Diploma or Advanced Diploma.
+          Where applications are open, a programme can be studied full-time, part-time, in the evening, or by online distance learning.
         </p>
       </section>
 
@@ -67,11 +77,16 @@ export function Prospectus() {
             <h3 className="text-xl font-bold text-gray-900 mt-1 mb-6">{school.name}</h3>
             {school.programmes.some(programme => programmeOffersRpl(programme)) && (
               <p className="text-sm text-blue-900 bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 mb-6">
-                Programmes in this school can be applied for up to Masters and PhD via Recognition of Prior Learning (RPL).
+                Recognition of Prior Learning (RPL) on programmes in this school is Masters and PhD only.
+                Those qualifications can be selected when applications for them are open.
               </p>
             )}
             <ul className="space-y-5">
-              {school.programmes.map(programme => (
+              {school.programmes.map(programme => {
+                const openLabels = openLevelIds(programme.id)
+                  .map(levelId => studyLevels.find(level => level.id === levelId)?.label)
+                  .filter(Boolean)
+                return (
                 <li key={programme.id} className="border-t border-gray-100 pt-5 first:border-t-0 first:pt-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
                     <h4 className="font-semibold text-gray-900">{programme.name}</h4>
@@ -82,22 +97,27 @@ export function Prospectus() {
                     )}
                   </div>
                   <p className="text-sm text-gray-600 leading-relaxed">{programme.summary}</p>
-                  <p className="text-xs text-blue-800 mt-2">
-                    {programme.levels.map(levelId => studyLevels.find(level => level.id === levelId)?.label).filter(Boolean).join(' · ')}
-                  </p>
-                  {programmeOffersRpl(programme) && (
+                  {openLabels.length > 0 && (
+                    <p className="text-xs text-blue-800 mt-2">{openLabels.join(' · ')}</p>
+                  )}
+                  {programmeOffersRpl(programme) && programmeAcceptsApplications(programme.id) && (
                     <p className="text-xs text-blue-900 mt-1">
                       Masters and PhD are available for this programme via Recognition of Prior Learning (RPL).
                     </p>
                   )}
-                  <Link
-                    href={`/apply?programme=${programme.id}`}
-                    className="inline-block mt-3 text-sm font-semibold text-blue-700 hover:underline"
-                  >
-                    Apply for this programme
-                  </Link>
+                  {programmeAcceptsApplications(programme.id) ? (
+                    <Link
+                      href={`/apply?programme=${programme.id}`}
+                      className="inline-block mt-3 text-sm font-semibold text-blue-700 hover:underline"
+                    >
+                      Apply for this programme
+                    </Link>
+                  ) : (
+                    <p className="mt-3 text-sm text-gray-700">{APPLICATIONS_NOT_OPEN_LABEL}</p>
+                  )}
                 </li>
-              ))}
+                )
+              })}
             </ul>
           </div>
         ))}

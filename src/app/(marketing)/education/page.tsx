@@ -38,7 +38,7 @@ export default function EducationPage() {
             {nqfPathwayIntro.body}
           </p>
           <p className="text-gray-600 text-sm text-center max-w-3xl mx-auto mb-10 leading-relaxed">
-            Prospectus programmes are offered at Certificate, Diploma and Advanced Diploma level. Theology & Ministry programmes can also be applied for at Masters and PhD via Recognition of Prior Learning (RPL). The pathway below shows how a qualification can lead on to further study.
+            The prospectus names Certificate, Diploma and Advanced Diploma study. Theology & Ministry also names Masters and PhD via Recognition of Prior Learning (RPL). A qualification can be selected on the application form only when it is open. The pathway below shows how a qualification can lead on to further study.
           </p>
 
           <NqfPathwayTable rows={nqfPathwayRows} />

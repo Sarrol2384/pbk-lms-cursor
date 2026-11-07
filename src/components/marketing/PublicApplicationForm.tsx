@@ -1,15 +1,19 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import {
+  APPLICATIONS_NOT_OPEN_LABEL,
+  levelAfterProgrammeChange,
+  levelSelectOptions,
+  programmeAcceptsApplications,
+  programmeSelectOption,
+} from '@/content/application-availability'
 import { DEFAULT_COUNTRY } from '@/content/countries'
 import {
   findProgramme,
   highestQualifications,
-  programmeOffersRpl,
   prospectusSchools,
-  studyLevelChoiceLabel,
   studyLevels,
-  studyLevelsForProgramme,
   studyModes,
   type StudyLevelId,
 } from '@/content/prospectus'
@@ -22,9 +26,10 @@ const labelClass = 'block text-sm font-medium text-gray-800 mb-1'
 type Errors = Record<string, string>
 
 export function PublicApplicationForm({ initialProgrammeId }: { initialProgrammeId?: string }) {
-  const starting = findProgramme(initialProgrammeId || '')
-  const [programmeId, setProgrammeId] = useState(starting?.programme.id ?? '')
-  const [level, setLevel] = useState<StudyLevelId | ''>(starting?.programme.levels[0] ?? '')
+  const requested = findProgramme(initialProgrammeId || '')
+  const requestedOpen = requested ? programmeAcceptsApplications(requested.programme.id) : false
+  const [programmeId, setProgrammeId] = useState(requestedOpen && requested ? requested.programme.id : '')
+  const [level, setLevel] = useState<StudyLevelId | ''>('')
   const [country, setCountry] = useState(DEFAULT_COUNTRY)
   const [studyMode, setStudyMode] = useState('')
   const [qualification, setQualification] = useState('')
@@ -34,20 +39,15 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
   const [loading, setLoading] = useState(false)
 
   const selected = useMemo(() => findProgramme(programmeId), [programmeId])
-  const levelOptions = studyLevelsForProgramme(selected?.programme ?? null)
+  const levelOptions = levelSelectOptions(programmeId)
   const levelHint = studyLevels.find(item => item.id === level)
+  const openRpl = levelOptions.some(item => item.id === 'masters_rpl' || item.id === 'phd_rpl')
+  const pairOpen = Boolean(programmeId && level && levelOptions.some(item => item.id === level))
   const idLabel = country === DEFAULT_COUNTRY ? 'ID number' : 'ID or passport number'
 
   function onProgrammeChange(nextId: string) {
     setProgrammeId(nextId)
-    const next = findProgramme(nextId)
-    if (!next) {
-      setLevel('')
-      return
-    }
-    if (!level || !next.programme.levels.includes(level)) {
-      setLevel(next.programme.levels[0] ?? '')
-    }
+    setLevel(levelAfterProgrammeChange(level, nextId))
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -140,6 +140,11 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
 
         <fieldset className="space-y-4">
           <legend className="text-lg font-bold text-gray-900 mb-2">Programme</legend>
+          {requested && !requestedOpen && (
+            <p role="status" className="text-sm text-gray-800 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+              {requested.programme.name}: {APPLICATIONS_NOT_OPEN_LABEL}
+            </p>
+          )}
           <div>
             <label htmlFor="programmeId" className={labelClass}>Programme *</label>
             <select
@@ -148,20 +153,27 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
               required
               className={inputClass}
               value={programmeId}
+              aria-describedby="programme-availability"
               onChange={event => onProgrammeChange(event.target.value)}
             >
               <option value="">Choose a programme</option>
               {prospectusSchools.map((school, index) => (
                 <optgroup key={school.id} label={`School ${index + 1}: ${school.name}`}>
-                  {school.programmes.map(programme => (
-                    <option key={programme.id} value={programme.id}>
-                      {programme.name}{programme.isNew ? ' (New)' : ''}
-                    </option>
-                  ))}
+                  {school.programmes.map(programme => {
+                    const option = programmeSelectOption(programme)
+                    return (
+                      <option key={programme.id} value={option.value} disabled={option.disabled}>
+                        {option.label}
+                      </option>
+                    )
+                  })}
                 </optgroup>
               ))}
             </select>
-            {errors.programmeId && <p className="text-xs text-red-600 mt-1">{errors.programmeId}</p>}
+            <p id="programme-availability" className="text-xs text-gray-600 mt-1">
+              Programmes that are not yet available are labelled “{APPLICATIONS_NOT_OPEN_LABEL}” and cannot be selected.
+            </p>
+            {errors.programmeId && <p id="programme-error" className="text-xs text-red-600 mt-1">{errors.programmeId}</p>}
           </div>
           <div>
             <label htmlFor="level" className={labelClass}>Level *</label>
@@ -170,25 +182,30 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
               name="level"
               required
               className={inputClass}
-              value={level}
+              value={levelOptions.some(item => item.id === level) ? level : ''}
+              aria-describedby="level-availability"
               onChange={event => setLevel(event.target.value as StudyLevelId)}
             >
               <option value="">Choose a level</option>
               {levelOptions.map(item => (
-                <option key={item.id} value={item.id}>{studyLevelChoiceLabel(item)}</option>
+                <option key={item.id} value={item.id}>{item.label}</option>
               ))}
             </select>
-            {selected && (
-              <p className="text-xs text-gray-600 mt-1">
-                Available for this programme: {levelOptions.map(item => studyLevelChoiceLabel(item)).join(', ')}.
-              </p>
-            )}
-            {selected && programmeOffersRpl(selected.programme) && (
+            <p id="level-availability" className="text-xs text-gray-600 mt-1">
+              {selected && levelOptions.length > 0 && (
+                <>Available for this programme: {levelOptions.map(item => item.label).join(', ')}.</>
+              )}
+              {selected && levelOptions.length === 0 && APPLICATIONS_NOT_OPEN_LABEL}
+              {!selected && 'Choose a programme to see the qualifications that are open for applications.'}
+            </p>
+            {selected && openRpl && (
               <p className="text-xs text-blue-800 mt-1">
                 This programme can be applied for up to Masters and PhD via Recognition of Prior Learning (RPL).
               </p>
             )}
-            {levelHint && <p className="text-xs text-gray-500 mt-1">{levelHint.admission}</p>}
+            {levelHint && levelOptions.some(item => item.id === level) && (
+              <p className="text-xs text-gray-500 mt-1">{levelHint.admission}</p>
+            )}
             {errors.level && <p className="text-xs text-red-600 mt-1">{errors.level}</p>}
           </div>
           <div>
@@ -260,9 +277,15 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
           </label>
         </div>
 
+        {!pairOpen && (
+          <p id="submit-availability" className="text-sm text-gray-700">
+            Choose a programme and a qualification that are open for applications.
+          </p>
+        )}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !pairOpen}
+          aria-describedby={pairOpen ? undefined : 'submit-availability'}
           className="w-full sm:w-auto bg-blue-700 hover:bg-blue-800 disabled:bg-gray-300 text-white font-semibold px-8 py-3 rounded-xl text-sm"
         >
           {loading ? 'Submitting…' : 'Submit application'}

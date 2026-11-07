@@ -1,5 +1,9 @@
 import Link from 'next/link'
 import { ApplicationsTable, type ApplicationRow } from '@/components/admin/ApplicationsTable'
+import {
+  APPLICATIONS_NOT_OPEN_LABEL,
+  applicationAvailabilityRows,
+} from '@/content/application-availability'
 import { createServiceClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -63,6 +67,39 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
           Applications from the public form. Update the status here, then reply to the applicant from your own email. The site does not send that reply for you.
         </p>
       </div>
+
+      <section className="mb-6 bg-white border border-gray-200 rounded-xl overflow-hidden" aria-labelledby="application-availability-heading">
+        <div className="px-4 py-3 border-b border-gray-100">
+          <h2 id="application-availability-heading" className="text-sm font-semibold text-gray-900">Qualifications open for applications</h2>
+          <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+            This list is the public application gate. It is separate from published courses, which are enrolment content.
+            A blank qualification stays {APPLICATIONS_NOT_OPEN_LABEL} until that distinct qualification is approved in the site source.
+            This page does not change the list and does not write to the database.
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-gray-50 text-gray-600">
+              <tr>
+                <th className="px-4 py-2 font-medium">School</th>
+                <th className="px-4 py-2 font-medium">Programme</th>
+                <th className="px-4 py-2 font-medium">Applications</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applicationAvailabilityRows().map(row => (
+                <tr key={row.programmeId} className="border-t border-gray-100">
+                  <td className="px-4 py-2 text-gray-600">{row.schoolName}</td>
+                  <td className="px-4 py-2 text-gray-900">{row.programmeName}</td>
+                  <td className="px-4 py-2 text-gray-800">
+                    {row.closed ? APPLICATIONS_NOT_OPEN_LABEL : row.qualifications.join(', ')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {FILTERS.map(item => (
