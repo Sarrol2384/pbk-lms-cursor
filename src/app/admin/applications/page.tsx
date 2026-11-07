@@ -1,9 +1,11 @@
 import Link from 'next/link'
 import { ApplicationsTable, type ApplicationRow } from '@/components/admin/ApplicationsTable'
 import {
+  APPLICATION_OPENINGS_MIGRATION,
   APPLICATIONS_NOT_OPEN_LABEL,
   applicationAvailabilityRows,
 } from '@/content/application-availability'
+import { loadApplicationAvailability } from '@/lib/application-openings'
 import { createServiceClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -23,6 +25,7 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
     ? searchParams.status as FilterId
     : 'all'
 
+  const availability = await loadApplicationAvailability()
   const service = createServiceClient()
   const { data, error } = await service
     .from('prospectus_applications')
@@ -72,9 +75,14 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
         <div className="px-4 py-3 border-b border-gray-100">
           <h2 id="application-availability-heading" className="text-sm font-semibold text-gray-900">Qualifications open for applications</h2>
           <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-            This list is the public application gate. It is separate from published courses, which are enrolment content.
-            A blank qualification stays {APPLICATIONS_NOT_OPEN_LABEL} until that distinct qualification is approved in the site source.
-            This page does not change the list and does not write to the database.
+            This list is read from prospectus_application_openings, the same table the application form, the apply API, and the database insert rule use.
+            Published courses are not copied into it. This page cannot add a qualification.
+            {!availability.databaseEnforced && (
+              <> Migration {APPLICATION_OPENINGS_MIGRATION} is not applied here, so the form and API stay closed, and a direct insert is still possible until that file is approved and applied.</>
+            )}
+            {availability.databaseEnforced && (
+              <> The database gate is in place. A qualification stays {APPLICATIONS_NOT_OPEN_LABEL} until a reviewed SQL insert adds that one pair.</>
+            )}
           </p>
         </div>
         <div className="overflow-x-auto">
@@ -87,7 +95,7 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
               </tr>
             </thead>
             <tbody>
-              {applicationAvailabilityRows().map(row => (
+              {applicationAvailabilityRows(availability.openings).map(row => (
                 <tr key={row.programmeId} className="border-t border-gray-100">
                   <td className="px-4 py-2 text-gray-600">{row.schoolName}</td>
                   <td className="px-4 py-2 text-gray-900">{row.programmeName}</td>

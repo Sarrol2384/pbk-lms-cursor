@@ -62,7 +62,7 @@ export function validateApplication(raw: {
   highestQualification?: unknown
   highestQualificationOther?: unknown
   popiaConsent?: unknown
-}, openings?: readonly QualificationOpening[]): { ok: true; value: ApplicationInput } | { ok: false; errors: FieldErrors } {
+}, openings: readonly QualificationOpening[]): { ok: true; value: ApplicationInput } | { ok: false; errors: FieldErrors } {
   const errors: FieldErrors = {}
   const firstName = clean(raw.firstName, 80)
   const lastName = clean(raw.lastName, 80)

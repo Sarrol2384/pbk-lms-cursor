@@ -3,6 +3,7 @@ import {
   APPLICATIONS_NOT_OPEN_LABEL,
   openLevelIds,
   programmeAcceptsApplications,
+  type QualificationOpening,
 } from '@/content/application-availability'
 import {
   PROSPECTUS_YEAR,
@@ -14,7 +15,7 @@ import {
 } from '@/content/prospectus'
 import { INSTITUTE_MOTTO, INSTITUTE_NAME } from '@/lib/institute'
 
-export function Prospectus() {
+export function Prospectus({ openings }: { openings: readonly QualificationOpening[] }) {
   return (
     <div className="space-y-16">
       <section className="max-w-3xl mx-auto text-center px-4">
@@ -83,7 +84,7 @@ export function Prospectus() {
             )}
             <ul className="space-y-5">
               {school.programmes.map(programme => {
-                const openLabels = openLevelIds(programme.id)
+                const openLabels = openLevelIds(programme.id, openings)
                   .map(levelId => studyLevels.find(level => level.id === levelId)?.label)
                   .filter(Boolean)
                 return (
@@ -100,12 +101,12 @@ export function Prospectus() {
                   {openLabels.length > 0 && (
                     <p className="text-xs text-blue-800 mt-2">{openLabels.join(' · ')}</p>
                   )}
-                  {programmeOffersRpl(programme) && programmeAcceptsApplications(programme.id) && (
+                  {programmeOffersRpl(programme) && programmeAcceptsApplications(programme.id, openings) && (
                     <p className="text-xs text-blue-900 mt-1">
                       Masters and PhD are available for this programme via Recognition of Prior Learning (RPL).
                     </p>
                   )}
-                  {programmeAcceptsApplications(programme.id) ? (
+                  {programmeAcceptsApplications(programme.id, openings) ? (
                     <Link
                       href={`/apply?programme=${programme.id}`}
                       className="inline-block mt-3 text-sm font-semibold text-blue-700 hover:underline"

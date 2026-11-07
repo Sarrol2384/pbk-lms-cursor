@@ -1,14 +1,21 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
+import { readFileSync } from 'node:fs'
 import {
+  APPLICATION_NOT_OPEN_DB_MESSAGE,
+  APPLICATION_OPENINGS_MIGRATION,
   APPLICATIONS_NOT_OPEN_LABEL,
-  applicationOpenings,
+  applicationInsertRejectedAsClosed,
+  availabilityFromQuery,
   applyHeroSubtitle,
+  eligibleOpeningPairs,
+  homepageAvailabilitySummary,
   levelAfterProgrammeChange,
   levelCanBeOpened,
   levelSelectOptions,
   openLevelIds,
   programmeSelectOption,
+  rowsToOpenings,
   type QualificationOpening,
 } from '../content/application-availability'
 import {
@@ -20,6 +27,8 @@ import {
   type StudyLevelId,
 } from '../content/prospectus'
 import { validateApplication } from './public-form-validation'
+
+const closed: readonly QualificationOpening[] = []
 
 const approvedSample: readonly QualificationOpening[] = [
   { programmeId: 'theology', levels: ['masters_rpl', 'phd_rpl'] },
@@ -50,27 +59,37 @@ function application(overrides: Record<string, unknown> = {}) {
 const programmes = prospectusSchools.flatMap(school => school.programmes)
 const levelIds = studyLevels.map(level => level.id)
 
-describe('live application catalogue', () => {
-  it('does not approve any qualification', () => {
-    assert.deepEqual(applicationOpenings, [])
+describe('closed application catalogue', () => {
+  it('does not approve any qualification when the openings table has no rows', () => {
+    const availability = availabilityFromQuery(null, [])
+    assert.equal(availability.databaseEnforced, true)
+    assert.deepEqual(availability.openings, [])
     for (const programme of programmes) {
-      assert.deepEqual(openLevelIds(programme.id), [])
-      assert.equal(programmeSelectOption(programme).disabled, true)
+      assert.deepEqual(openLevelIds(programme.id, closed), [])
+      assert.equal(programmeSelectOption(programme, closed).disabled, true)
       assert.equal(
-        programmeSelectOption(programme).label.endsWith(APPLICATIONS_NOT_OPEN_LABEL),
+        programmeSelectOption(programme, closed).label.endsWith(APPLICATIONS_NOT_OPEN_LABEL),
         true,
       )
-      assert.deepEqual(levelSelectOptions(programme.id), [])
+      assert.deepEqual(levelSelectOptions(programme.id, closed), [])
     }
   })
 
-  it('rejects every live programme and level, including Christian Counselling at all three levels', () => {
+  it('fails closed when the openings table cannot be read', () => {
+    const missing = availabilityFromQuery({ code: '42P01', message: 'relation does not exist' }, null)
+    assert.equal(missing.databaseEnforced, false)
+    assert.deepEqual(missing.openings, [])
+    assert.equal(applicationInsertRejectedAsClosed({ code: '42501', message: APPLICATION_NOT_OPEN_DB_MESSAGE }), true)
+    assert.equal(applicationInsertRejectedAsClosed({ code: '23514' }), false)
+  })
+
+  it('rejects every programme and level while nothing is open, including Christian Counselling at all three levels', () => {
     const counselling = ['certificate', 'diploma', 'advanced_diploma']
     for (const level of counselling) {
       const result = validateApplication(application({
         programmeId: 'christian-counselling',
         level,
-      }))
+      }), closed)
       assert.equal(result.ok, false)
       if (!result.ok) {
         assert.match(result.errors.programmeId, /Christian Counselling/)
@@ -81,7 +100,7 @@ describe('live application catalogue', () => {
 
     for (const programme of programmes) {
       for (const level of levelIds) {
-        const result = validateApplication(application({ programmeId: programme.id, level }))
+        const result = validateApplication(application({ programmeId: programme.id, level }), closed)
         assert.equal(result.ok, false)
         if (!result.ok) assert.match(result.errors.programmeId, new RegExp(APPLICATIONS_NOT_OPEN_LABEL))
       }
@@ -92,10 +111,10 @@ describe('live application catalogue', () => {
     const crafted = validateApplication(application({
       programmeId: 'christian-counselling',
       level: 'advanced_diploma',
-    }))
+    }), closed)
     assert.equal(crafted.ok, false)
 
-    const unknown = validateApplication(application({ programmeId: 'not-a-programme', level: 'certificate' }))
+    const unknown = validateApplication(application({ programmeId: 'not-a-programme', level: 'certificate' }), closed)
     assert.equal(unknown.ok, false)
     if (!unknown.ok) assert.equal(unknown.errors.programmeId, 'Choose a programme from the 2027 prospectus.')
   })
@@ -199,12 +218,12 @@ describe('explicit qualification openings', () => {
 
 describe('dropdown options and level reset', () => {
   it('labels a closed programme and offers no levels before a programme is chosen', () => {
-    const option = programmeSelectOption(findProgramme('christian-counselling')!.programme)
+    const option = programmeSelectOption(findProgramme('christian-counselling')!.programme, closed)
     assert.equal(option.disabled, true)
     assert.equal(option.label, `Christian Counselling — ${APPLICATIONS_NOT_OPEN_LABEL}`)
-    assert.deepEqual(levelSelectOptions(''), [])
-    assert.equal(applyHeroSubtitle('christian-counselling'), `Christian Counselling: ${APPLICATIONS_NOT_OPEN_LABEL}`)
-    assert.match(applyHeroSubtitle(undefined), /You do not need an account/)
+    assert.deepEqual(levelSelectOptions('', closed), [])
+    assert.equal(applyHeroSubtitle('christian-counselling', closed), `Christian Counselling: ${APPLICATIONS_NOT_OPEN_LABEL}`)
+    assert.match(applyHeroSubtitle(undefined, closed), /You do not need an account/)
   })
 
   it('lists only the open qualification and keeps the prospectus record separate', () => {
@@ -284,5 +303,82 @@ describe('existing RPL scope', () => {
       }
     }
     assert.equal(programmeOffersRpl(findProgramme('christian-counselling')!.programme), false)
+  })
+})
+
+describe('database gate', () => {
+  const sql = readFileSync(new URL(`../../supabase/migrations/${APPLICATION_OPENINGS_MIGRATION}`, import.meta.url), 'utf8')
+
+  it('is an unapplied approval prerequisite and inserts no openings', () => {
+    const executable = sql.split('\n').filter(line => !line.trim().startsWith('--')).join('\n')
+    assert.match(sql, /DO NOT APPLY/)
+    assert.doesNotMatch(executable, /INSERT\s+INTO\s+(public\.)?prospectus_application_openings/i)
+    assert.match(sql, /CREATE TRIGGER prospectus_applications_require_open_pair/)
+    assert.match(sql, /prospectus_application_is_open\(programme_id, level\)/)
+    assert.match(sql, new RegExp(APPLICATION_NOT_OPEN_DB_MESSAGE))
+    assert.match(sql, /GRANT SELECT ON TABLE public\.prospectus_application_openings TO anon, authenticated/)
+    assert.doesNotMatch(sql, /GRANT INSERT ON TABLE public\.prospectus_application_openings TO anon/)
+  })
+
+  it('locks the database eligibility check to the prospectus ceiling', () => {
+    const sqlPairs: string[] = []
+    const pairPattern = /\('([a-z0-9-]+)', '([a-z_]+)'\)/g
+    let found = pairPattern.exec(sql)
+    while (found) {
+      sqlPairs.push(`${found[1]}|${found[2]}`)
+      found = pairPattern.exec(sql)
+    }
+    sqlPairs.sort()
+    const codePairs = eligibleOpeningPairs().map(pair => `${pair.programmeId}|${pair.level}`).sort()
+    assert.deepEqual(sqlPairs, codePairs)
+    assert.equal(sqlPairs.includes('christian-counselling|certificate'), true)
+    assert.equal(sqlPairs.includes('christian-counselling|masters_rpl'), false)
+    assert.equal(sqlPairs.includes('certificate-in-climate-change|certificate'), true)
+    assert.equal(sqlPairs.includes('certificate-in-climate-change|diploma'), false)
+  })
+
+  it('uses queried rows as the only open qualifications', () => {
+    const fromRows = rowsToOpenings([
+      { programme_id: 'christian-counselling', level: 'diploma' },
+      { programme_id: 'certificate-in-climate-change', level: 'diploma' },
+      { programme_id: 'chaplaincy', level: 'certificate' },
+    ])
+    assert.deepEqual(fromRows, [
+      { programmeId: 'christian-counselling', levels: ['diploma'] },
+      { programmeId: 'chaplaincy', levels: ['certificate'] },
+    ])
+    assert.equal(validateApplication(application({
+      programmeId: 'christian-counselling',
+      level: 'diploma',
+    }), fromRows).ok, true)
+    assert.equal(validateApplication(application({
+      programmeId: 'christian-counselling',
+      level: 'certificate',
+    }), fromRows).ok, false)
+    assert.equal(validateApplication(application({
+      programmeId: 'certificate-in-climate-change',
+      level: 'diploma',
+    }), fromRows).ok, false)
+  })
+})
+
+describe('homepage availability copy', () => {
+  it('does not claim every level is offered while nothing is open', () => {
+    const summary = homepageAvailabilitySummary([])
+    assert.match(summary.hero, /not yet open/i)
+    assert.equal(summary.statValue, 'Not yet open')
+    assert.doesNotMatch(summary.hero, /Certificate, Diploma and Advanced Diploma programmes/)
+    assert.doesNotMatch(`${summary.hero} ${summary.statValue} ${summary.statLabel}`, /Up to PhD/)
+  })
+
+  it('names only the qualifications present in the openings', () => {
+    const summary = homepageAvailabilitySummary(approvedSample)
+    assert.match(summary.hero, /Theology \(Masters \(via RPL\), PhD \(via RPL\)\)/)
+    assert.match(summary.hero, /Chaplaincy \(Certificate \(6 months\)\)/)
+    assert.match(summary.hero, /Christian Counselling \(Diploma \(1 year\)\)/)
+    assert.match(summary.hero, /Certificate in Climate Change \(Certificate \(6 months\)\)/)
+    assert.doesNotMatch(summary.hero, /Business Administration/)
+    assert.doesNotMatch(summary.hero, /Christian Counselling \(Certificate/)
+    assert.doesNotMatch(summary.hero, /Chaplaincy \(Diploma/)
   })
 })

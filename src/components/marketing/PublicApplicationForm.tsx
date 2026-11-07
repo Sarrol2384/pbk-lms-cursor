@@ -7,6 +7,7 @@ import {
   levelSelectOptions,
   programmeAcceptsApplications,
   programmeSelectOption,
+  type QualificationOpening,
 } from '@/content/application-availability'
 import { DEFAULT_COUNTRY } from '@/content/countries'
 import {
@@ -25,9 +26,15 @@ const labelClass = 'block text-sm font-medium text-gray-800 mb-1'
 
 type Errors = Record<string, string>
 
-export function PublicApplicationForm({ initialProgrammeId }: { initialProgrammeId?: string }) {
+export function PublicApplicationForm({
+  initialProgrammeId,
+  openings,
+}: {
+  initialProgrammeId?: string
+  openings: readonly QualificationOpening[]
+}) {
   const requested = findProgramme(initialProgrammeId || '')
-  const requestedOpen = requested ? programmeAcceptsApplications(requested.programme.id) : false
+  const requestedOpen = requested ? programmeAcceptsApplications(requested.programme.id, openings) : false
   const [programmeId, setProgrammeId] = useState(requestedOpen && requested ? requested.programme.id : '')
   const [level, setLevel] = useState<StudyLevelId | ''>('')
   const [country, setCountry] = useState(DEFAULT_COUNTRY)
@@ -39,7 +46,7 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
   const [loading, setLoading] = useState(false)
 
   const selected = useMemo(() => findProgramme(programmeId), [programmeId])
-  const levelOptions = levelSelectOptions(programmeId)
+  const levelOptions = levelSelectOptions(programmeId, openings)
   const levelHint = studyLevels.find(item => item.id === level)
   const openRpl = levelOptions.some(item => item.id === 'masters_rpl' || item.id === 'phd_rpl')
   const pairOpen = Boolean(programmeId && level && levelOptions.some(item => item.id === level))
@@ -47,7 +54,7 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
 
   function onProgrammeChange(nextId: string) {
     setProgrammeId(nextId)
-    setLevel(levelAfterProgrammeChange(level, nextId))
+    setLevel(levelAfterProgrammeChange(level, nextId, openings))
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -160,7 +167,7 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
               {prospectusSchools.map((school, index) => (
                 <optgroup key={school.id} label={`School ${index + 1}: ${school.name}`}>
                   {school.programmes.map(programme => {
-                    const option = programmeSelectOption(programme)
+                    const option = programmeSelectOption(programme, openings)
                     return (
                       <option key={programme.id} value={option.value} disabled={option.disabled}>
                         {option.label}
