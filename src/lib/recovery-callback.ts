@@ -5,10 +5,9 @@ export function isRecoveryNext(next: string | null | undefined): boolean {
 }
 
 /**
- * Recovery links keep the existing redirect, /api/auth/callback?next=/reset-password.
- * Only that exact next path is forwarded to the reset page. Signup verification
- * is left on /verify. A fragment on the callback is not visible here; sending
- * the browser to /reset-password lets it keep the fragment.
+ * New recovery emails redirect straight to /reset-password. If an older link
+ * still arrives here, only the exact next path /reset-password is forwarded.
+ * Signup verification stays on /verify. Other next values are not followed.
  */
 export function recoveryCallbackLocation(input: {
   origin: string

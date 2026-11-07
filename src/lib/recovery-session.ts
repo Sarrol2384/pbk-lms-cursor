@@ -116,3 +116,72 @@ export function recoveryStatusMessage(phase: RecoveryPhase): string | null {
 export function canUpdateRecoveredPassword(phase: RecoveryPhase): boolean {
   return phase === 'ready'
 }
+
+/**
+ * Supabase only honours redirectTo when it matches an allowlisted URL exactly.
+ * Anything else is replaced with site_url. The approved recovery entry is the
+ * current site origin plus /reset-password, with no callback path and no query.
+ */
+export function passwordRecoveryRedirect(pageOrigin: string): string {
+  const url = new URL(pageOrigin)
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+    throw new Error('Password recovery redirect must use http or https')
+  }
+  return `${url.origin}/reset-password`
+}
+
+type RecoveryEmailClient = {
+  auth: {
+    resetPasswordForEmail: (
+      email: string,
+      options: { redirectTo: string }
+    ) => Promise<{ error: { message: string } | null }>
+  }
+}
+
+/** Request the recovery email with the allowlisted /reset-password redirect. */
+export function requestPasswordRecovery(client: RecoveryEmailClient, email: string, pageOrigin: string) {
+  return client.auth.resetPasswordForEmail(email, { redirectTo: passwordRecoveryRedirect(pageOrigin) })
+}
+
+export type RecoveryAuth = {
+  setSession: (credentials: { access_token: string; refresh_token: string }) => Promise<{
+    data: { session: unknown }
+    error: { message: string } | null
+  }>
+  exchangeCodeForSession: (code: string) => Promise<{
+    data: { session: unknown }
+    error: { message: string } | null
+  }>
+  verifyOtp: (params: { token_hash: string; type: 'recovery' }) => Promise<{
+    data: { session: unknown }
+    error: { message: string } | null
+  }>
+}
+
+/**
+ * Turn a link that already landed on /reset-password into a recovery session.
+ * PKCE codes are exchanged here. Implicit fragments use setSession. token_hash
+ * uses verifyOtp. A missing link is left for the auth listener.
+ */
+export async function establishRecoverySession(auth: RecoveryAuth, link: RecoveryLink): Promise<RecoveryPhase> {
+  if (link.kind === 'recovery_tokens') {
+    const { data, error } = await auth.setSession({
+      access_token: link.accessToken,
+      refresh_token: link.refreshToken,
+    })
+    if (error || !data.session) return phaseAfterRecoveryEstablished(false, classifyRecoveryFailure(error?.message))
+    return 'ready'
+  }
+  if (link.kind === 'code') {
+    const { data, error } = await auth.exchangeCodeForSession(link.code)
+    if (error || !data.session) return phaseAfterRecoveryEstablished(false, classifyRecoveryFailure(error?.message))
+    return 'ready'
+  }
+  if (link.kind === 'token_hash') {
+    const { data, error } = await auth.verifyOtp({ token_hash: link.tokenHash, type: 'recovery' })
+    if (error || !data.session) return phaseAfterRecoveryEstablished(false, classifyRecoveryFailure(error?.message))
+    return 'ready'
+  }
+  return initialRecoveryPhase(link)
+}

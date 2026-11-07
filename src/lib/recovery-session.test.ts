@@ -4,12 +4,18 @@ import { recoveryCallbackLocation } from './recovery-callback.ts'
 import {
   canUpdateRecoveredPassword,
   classifyRecoveryFailure,
+  establishRecoverySession,
   initialRecoveryPhase,
   parseRecoveryLocation,
+  passwordRecoveryRedirect,
   phaseAfterRecoveryEstablished,
   reduceRecoveryPhase,
+  requestPasswordRecovery,
+  type RecoveryAuth,
   type RecoveryLink,
 } from './recovery-session.ts'
+
+const STAGING_RESET_ORIGIN = 'https://pbk-lms-cursor-git-cursor-fix-cert-6940af-sarrol2384s-projects.vercel.app'
 
 const tokens = {
   hash: '#access_token=access-token&refresh_token=refresh-token&type=recovery',
@@ -71,6 +77,102 @@ describe('recovery phase', () => {
     assert.equal(initialDuringImplicit, 'verifying')
     assert.equal(phaseAfterRecoveryEstablished(false, classifyRecoveryFailure('Email link is invalid or has expired')), 'expired')
     assert.equal(phaseAfterRecoveryEstablished(false, classifyRecoveryFailure('bad token')), 'invalid')
+  })
+})
+
+describe('resetPasswordForEmail redirect', () => {
+  it('requests the exact allowlisted /reset-password URL and not the callback or site_url', async () => {
+    let redirectTo = ''
+    let emailSent = ''
+    const result = await requestPasswordRecovery({
+      auth: {
+        resetPasswordForEmail: async (email, options) => {
+          emailSent = email
+          redirectTo = options.redirectTo
+          return { error: null }
+        },
+      },
+    }, 'learner@example.com', STAGING_RESET_ORIGIN)
+    assert.equal(result.error, null)
+    assert.equal(emailSent, 'learner@example.com')
+    assert.equal(redirectTo, `${STAGING_RESET_ORIGIN}/reset-password`)
+    assert.equal(passwordRecoveryRedirect(`${STAGING_RESET_ORIGIN}/`), redirectTo)
+    assert.equal(redirectTo.includes('/api/auth/callback'), false)
+    assert.equal(redirectTo.includes('next='), false)
+    assert.equal(redirectTo.includes('localhost'), false)
+    assert.equal(redirectTo.includes('?'), false)
+  })
+
+  it('uses the page origin rather than rewriting a staging visit to localhost', () => {
+    assert.equal(
+      passwordRecoveryRedirect('http://localhost:3000'),
+      'http://localhost:3000/reset-password'
+    )
+    assert.notEqual(
+      passwordRecoveryRedirect(STAGING_RESET_ORIGIN),
+      'http://localhost:3000'
+    )
+    assert.notEqual(
+      passwordRecoveryRedirect(STAGING_RESET_ORIGIN),
+      'http://localhost:3000/api/auth/callback?next=/reset-password'
+    )
+  })
+})
+
+describe('recovery code exchange', () => {
+  function auth(overrides?: Partial<RecoveryAuth>): RecoveryAuth & { calls: string[] } {
+    const calls: string[] = []
+    return {
+      calls,
+      setSession: async () => {
+        calls.push('setSession')
+        return { data: { session: { ok: true } }, error: null }
+      },
+      exchangeCodeForSession: async (code) => {
+        calls.push(`exchange:${code}`)
+        return { data: { session: { ok: true } }, error: null }
+      },
+      verifyOtp: async (params) => {
+        calls.push(`otp:${params.type}:${params.token_hash}`)
+        return { data: { session: { ok: true } }, error: null }
+      },
+      ...overrides,
+    }
+  }
+
+  it('exchanges a PKCE code that lands on /reset-password and does not use another grant', async () => {
+    const client = auth()
+    const link = parseRecoveryLocation({ hash: '', search: '?code=pkce-recovery-code' })
+    const phase = await establishRecoverySession(client, link)
+    assert.equal(phase, 'ready')
+    assert.deepEqual(client.calls, ['exchange:pkce-recovery-code'])
+  })
+
+  it('keeps the form locked when the code exchange fails', async () => {
+    const client = auth({
+      exchangeCodeForSession: async (code) => {
+        return { data: { session: null }, error: { message: `code ${code} expired` } }
+      },
+    })
+    const phase = await establishRecoverySession(client, { kind: 'code', code: 'used-code' })
+    assert.equal(phase, 'expired')
+    assert.equal(canUpdateRecoveredPassword(phase), false)
+  })
+
+  it('uses setSession for an implicit fragment and verifyOtp for a recovery token hash', async () => {
+    const implicit = auth()
+    const implicitPhase = await establishRecoverySession(implicit, {
+      kind: 'recovery_tokens',
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    })
+    assert.equal(implicitPhase, 'ready')
+    assert.deepEqual(implicit.calls, ['setSession'])
+
+    const hashed = auth()
+    const hashPhase = await establishRecoverySession(hashed, { kind: 'token_hash', tokenHash: 'th_123' })
+    assert.equal(hashPhase, 'ready')
+    assert.deepEqual(hashed.calls, ['otp:recovery:th_123'])
   })
 })
 

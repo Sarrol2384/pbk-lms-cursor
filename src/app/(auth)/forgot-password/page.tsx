@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { requestPasswordRecovery } from '@/lib/recovery-session'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -14,12 +15,14 @@ export default function ForgotPasswordPage() {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    const supabase = createClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/api/auth/callback?next=/reset-password`,
-    })
-    if (error) setError(error.message)
-    else setSent(true)
+    try {
+      const supabase = createClient()
+      const { error } = await requestPasswordRecovery(supabase, email, window.location.origin)
+      if (error) setError(error.message)
+      else setSent(true)
+    } catch {
+      setError('Could not send the reset email. Try again.')
+    }
     setLoading(false)
   }
 

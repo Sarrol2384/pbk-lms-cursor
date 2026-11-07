@@ -5,8 +5,9 @@ import { recoveryCallbackLocation } from '@/lib/recovery-callback'
  * Supabase redirects here after email confirmation (or OAuth) with ?code=...
  * PKCE requires the code exchange to run in the browser (code_verifier is in client storage),
  * so signup codes go to /verify?code=... and the client page exchanges them.
- * Password recovery keeps redirectTo on this callback. Only next=/reset-password
- * is forwarded there, including an implicit fragment the server cannot see.
+ * New password recovery emails go directly to /reset-password. If an older link
+ * still arrives here, only next=/reset-password is forwarded, including a
+ * fragment the server cannot see.
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)

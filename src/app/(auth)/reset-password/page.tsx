@@ -7,13 +7,11 @@ import { createClient } from '@/lib/supabase/client'
 import { PasswordInput } from '@/components/auth/PasswordInput'
 import {
   canUpdateRecoveredPassword,
-  classifyRecoveryFailure,
+  establishRecoverySession,
   initialRecoveryPhase,
   parseRecoveryLocation,
-  phaseAfterRecoveryEstablished,
   recoveryStatusMessage,
   reduceRecoveryPhase,
-  type RecoveryLink,
   type RecoveryPhase,
 } from '@/lib/recovery-session'
 
@@ -68,7 +66,13 @@ export default function ResetPasswordPage() {
       apply(reduceRecoveryPhase(current, { event, hasSession: !!session }, link))
     })
 
-    void establishRecovery(supabase, link, apply)
+    void establishRecoverySession(supabase.auth, link).then((next) => {
+      if (link.kind === 'missing') return
+      apply(next)
+    }).catch(() => {
+      if (link.kind === 'missing') return
+      apply('invalid')
+    })
 
     return () => {
       cancelled = true
@@ -159,46 +163,3 @@ export default function ResetPasswordPage() {
   )
 }
 
-async function establishRecovery(
-  supabase: ReturnType<typeof createClient>,
-  link: RecoveryLink,
-  apply: (phase: RecoveryPhase) => void
-) {
-  if (link.kind === 'recovery_tokens') {
-    const { data, error } = await supabase.auth.setSession({
-      access_token: link.accessToken,
-      refresh_token: link.refreshToken,
-    })
-    if (error || !data.session) {
-      apply(phaseAfterRecoveryEstablished(false, classifyRecoveryFailure(error?.message)))
-      return
-    }
-    clearRecoveryParams()
-    apply('ready')
-    return
-  }
-
-  if (link.kind === 'code') {
-    const { data, error } = await supabase.auth.exchangeCodeForSession(link.code)
-    if (error || !data.session) {
-      apply(phaseAfterRecoveryEstablished(false, classifyRecoveryFailure(error?.message)))
-      return
-    }
-    clearRecoveryParams()
-    apply('ready')
-    return
-  }
-
-  if (link.kind === 'token_hash') {
-    const { data, error } = await supabase.auth.verifyOtp({
-      token_hash: link.tokenHash,
-      type: 'recovery',
-    })
-    if (error || !data.session) {
-      apply(phaseAfterRecoveryEstablished(false, classifyRecoveryFailure(error?.message)))
-      return
-    }
-    clearRecoveryParams()
-    apply('ready')
-  }
-}
