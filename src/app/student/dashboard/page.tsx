@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import UploadProofOfPayment from '@/components/student/UploadProofOfPayment'
 import { formatDate, getPaymentDeadline } from '@/lib/utils'
 import { suspendEnrollmentIfOverdue } from '@/lib/enrollment-access'
+import { programmeMetaLine, publicProgrammeText } from '@/lib/accreditation-wording'
 
 export default async function StudentDashboardPage() {
   const supabase = createClient()
@@ -43,7 +44,7 @@ export default async function StudentDashboardPage() {
       return {
         id: p.id,
         courseId: p.course_id,
-        courseTitle: p.courses?.title,
+        courseTitle: publicProgrammeText(p.courses?.title),
         courseCode: p.courses?.code,
         total: p.amount ?? 0,
         paid: p.amount_paid ?? 0,
@@ -146,7 +147,7 @@ export default async function StudentDashboardPage() {
               return (
                 <Link key={e.id} href={`/student/enroll/${e.course_id}`} className="block p-4 flex items-center gap-3 hover:bg-gray-50 transition-colors">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{e.courses?.title}</p>
+                    <p className="text-sm font-medium text-gray-900">{publicProgrammeText(e.courses?.title)}</p>
                     <p className="text-xs text-gray-500">{e.courses?.code} • {label}</p>
                   </div>
                   <span className="ml-auto text-xs text-blue-600 font-medium shrink-0">View →</span>
@@ -234,8 +235,8 @@ export default async function StudentDashboardPage() {
                     {e.courses?.code?.substring(0, 2)}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{e.courses?.title}</p>
-                    <p className="text-xs text-gray-400">{e.courses?.code} • NQF {e.courses?.nqf_level} • {e.courses?.credits} credits</p>
+                    <p className="text-sm font-medium text-gray-900">{publicProgrammeText(e.courses?.title)}</p>
+                    <p className="text-xs text-gray-400">{programmeMetaLine(e.courses?.code, e.courses?.credits)}</p>
                   </div>
                   <span className="ml-auto text-xs text-blue-600 font-medium">Open →</span>
                 </Link>
@@ -260,7 +261,7 @@ export default async function StudentDashboardPage() {
                 <div key={c.id} className="p-4 flex items-center gap-3">
                   <div className="w-9 h-9 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-lg shrink-0">🏆</div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{c.courses?.title}</p>
+                    <p className="text-sm font-medium text-gray-900">{publicProgrammeText(c.courses?.title)}</p>
                     <p className="text-xs text-gray-400">{c.certificate_number}</p>
                   </div>
                 </div>

@@ -21,8 +21,10 @@ export interface Course {
   id: string
   title: string
   code: string
+  /** Stored number only. Do not present it as an NQF or SAQA registration. */
   nqf_level: number
   credits: number
+  /** Legacy column. PBK is not SAQA registered. Do not show this value to learners. */
   saqa_id: string | null
   description: string | null
   status: CourseStatus

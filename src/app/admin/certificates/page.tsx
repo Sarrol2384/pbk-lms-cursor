@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { formatDateShort } from '@/lib/utils'
+import { publicProgrammeText } from '@/lib/accreditation-wording'
 
 export default async function AdminCertificatesPage() {
   const supabase = createServiceClient()
@@ -44,7 +45,7 @@ export default async function AdminCertificatesPage() {
                       <p className="text-xs text-gray-500">{(c.profiles as any)?.email}</p>
                     </td>
                     <td className="p-4">
-                      <p className="text-gray-900">{(c.courses as any)?.title}</p>
+                      <p className="text-gray-900">{publicProgrammeText((c.courses as any)?.title)}</p>
                       <p className="text-xs text-gray-500">{(c.courses as any)?.code}</p>
                     </td>
                     <td className="p-4 font-mono text-gray-700">{c.certificate_number}</td>
