@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { assertPreviousModulePassed, requireActiveEnrollment } from '@/lib/enrollment-access'
+import { publicProgrammeText } from '@/lib/accreditation-wording'
 
 export default async function StudentModulePage({
   params,
@@ -62,7 +63,7 @@ export default async function StudentModulePage({
     <div className="max-w-3xl">
       <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">
         <Link href={`/student/courses/${params.courseId}`} className="text-blue-600 hover:underline">
-          {course?.title}
+          {publicProgrammeText(course?.title)}
         </Link>
         <span className="text-gray-400">/</span>
         <span className="text-gray-700 font-medium">{module.title}</span>

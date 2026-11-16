@@ -10,6 +10,7 @@ import CompletePaymentForm from '@/components/student/CompletePaymentForm'
 import SavedNotice from '@/components/student/SavedNotice'
 import { BANK } from '@/lib/email'
 import { suspendEnrollmentIfOverdue } from '@/lib/enrollment-access'
+import { programmeMetaLine, publicProgrammeText } from '@/lib/accreditation-wording'
 
 export default async function EnrollPage({ params }: { params: { courseId: string } }) {
   const supabase = createClient()
@@ -71,13 +72,13 @@ export default async function EnrollPage({ params }: { params: { courseId: strin
   return (
     <div className="max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{course.title}</h1>
-        <p className="text-gray-500 text-sm mt-1">{course.code} • NQF {course.nqf_level} • {course.credits} credits</p>
+        <h1 className="text-2xl font-bold text-gray-900">{publicProgrammeText(course.title)}</h1>
+        <p className="text-gray-500 text-sm mt-1">{programmeMetaLine(course.code, course.credits)}</p>
       </div>
 
       {course.description && (
         <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
-          <p className="text-sm text-gray-700 leading-relaxed">{course.description}</p>
+          <p className="text-sm text-gray-700 leading-relaxed">{publicProgrammeText(course.description)}</p>
         </div>
       )}
 

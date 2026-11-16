@@ -116,10 +116,10 @@ export const teamMembers: TeamMember[] = [
 
 export const aboutSections = {
   mission:
-    'We develop ethical, capable leaders through accredited management and leadership qualifications — delivered with flexibility, rigour, and real-world relevance.',
+    'We develop ethical, capable leaders through globally accredited management and leadership qualifications — delivered with flexibility, rigour, and real-world relevance.',
   accreditation: [
-    'NQF-aligned programmes from levels 4 through 10',
-    'Recognised pathways for professional development in South Africa and Zambia',
+    'Globally accredited management and leadership programmes',
+    'Study options for learners in South Africa and Zambia',
     'Structured online learning with expert lecturer support',
   ],
   values: [
@@ -130,7 +130,7 @@ export const aboutSections = {
   ],
 }
 
-export type NqfPathwayRow = {
+export type StudyPathwayRow = {
   level: string
   qualificationType: string
   entryRequirement: string
@@ -138,81 +138,60 @@ export type NqfPathwayRow = {
   nextStep: string
 }
 
-export const nqfPathwayIntro = {
-  title: 'Your Academic Pathway at PBK Memorial: NQF Levels 1 to 10',
-  body: 'At PBK Memorial Management and Leadership Institute, we are committed to guiding you from your first qualification all the way to a Doctoral Degree. South Africa\'s National Qualifications Framework (NQF) provides a clear path for progression. Here\'s how you can advance with us:',
+export const studyPathwayIntro = {
+  title: 'Your academic pathway at PBK Memorial',
+  body: 'PBK Memorial Management and Leadership Institute offers globally accredited programmes. You can progress from a certificate through to doctoral study where that level is offered. These are PBK study levels. They are not registered with the South African Qualifications Authority (SAQA), and they are not registered on the National Qualifications Framework (NQF).',
 }
 
-export const nqfPathwayRows: NqfPathwayRow[] = [
+export const studyPathwayRows: StudyPathwayRow[] = [
   {
-    level: 'NQF 1',
-    qualificationType: 'Grade 9 / ABET Level 4',
-    entryRequirement: 'No formal requirement',
+    level: 'Certificate',
+    qualificationType: 'Certificate',
+    entryRequirement: 'Grade 9 or Grade 12. Open to anyone with an interest in the field.',
+    duration: '6 months',
+    nextStep: 'Diploma, where you meet the admission requirement',
+  },
+  {
+    level: 'Diploma',
+    qualificationType: 'Diploma',
+    entryRequirement: 'A Grade 12 certificate, plus a certificate in a relevant field.',
     duration: '1 year',
-    nextStep: 'Proceed to NQF 2–4 programmes',
+    nextStep: 'Advanced Diploma, where you meet the admission requirement',
   },
   {
-    level: 'NQF 2–4',
-    qualificationType: 'National Certificates, Higher Certificate or Diploma',
-    entryRequirement: 'Grade 10–12, Matric, NQF 1 or equivalent',
-    duration: '1–3 years',
-    nextStep: 'Access NQF 5',
+    level: 'Advanced Diploma',
+    qualificationType: 'Advanced Diploma',
+    entryRequirement: 'A diploma in a relevant field.',
+    duration: '2 years',
+    nextStep: 'Further study. Masters via RPL is offered on Theology & Ministry programmes',
   },
   {
-    level: 'NQF 5',
-    qualificationType: 'Higher Certificate',
-    entryRequirement: 'NQF 4 / Matric',
-    duration: '1 year',
-    nextStep: 'Proceed to NQF 6 Diploma or Advanced Certificate',
+    level: 'Masters (via RPL)',
+    qualificationType: 'Masters',
+    entryRequirement: 'Recognition of Prior Learning (RPL) on a Theology & Ministry programme.',
+    duration: 'Individual assessment',
+    nextStep: 'PhD via RPL, on a Theology & Ministry programme',
   },
   {
-    level: 'NQF 6',
-    qualificationType: 'Diploma / Advanced Certificate',
-    entryRequirement: 'NQF 4 or NQF 5',
-    duration: '1–2 years',
-    nextStep: 'Proceed to NQF 7 Advanced Diploma or Bachelor\'s Degree',
-  },
-  {
-    level: 'NQF 7',
-    qualificationType: 'Bachelor\'s Degree / Advanced Diploma',
-    entryRequirement: 'NQF 6 Diploma',
-    duration: '1–3 years',
-    nextStep: 'Qualify for NQF 8 Honours / Postgraduate Diploma',
-  },
-  {
-    level: 'NQF 8',
-    qualificationType: 'Honours Degree / Postgraduate Diploma',
-    entryRequirement: 'NQF 7 Bachelor\'s Degree, min. 60% average',
-    duration: '1 year',
-    nextStep: 'Qualify for NQF 9 Master\'s Degree',
-  },
-  {
-    level: 'NQF 9',
-    qualificationType: 'Master\'s Degree',
-    entryRequirement: 'NQF 8 Honours or equivalent + research proposal',
-    duration: '1–2 years',
-    nextStep: 'Qualify for NQF 10 Doctoral Degree',
-  },
-  {
-    level: 'NQF 10',
-    qualificationType: 'Doctoral Degree / PhD',
-    entryRequirement: 'NQF 9 Master\'s Degree + approved research proposal',
-    duration: '2–4 years',
-    nextStep: 'Highest academic qualification',
+    level: 'PhD (via RPL)',
+    qualificationType: 'Doctoral degree',
+    entryRequirement: 'Recognition of Prior Learning (RPL) on a Theology & Ministry programme. Prior learning is assessed for doctoral entry.',
+    duration: 'Individual assessment',
+    nextStep: 'Highest PBK study level',
   },
 ]
 
-export const nqfProgressionNotes = [
-  'Entry requirements: Successful completion of the previous NQF level is generally required. Some postgraduate programmes require a minimum average of 60–65%.',
-  'Recognition of Prior Learning (RPL): Relevant work experience may allow entry at a higher level without formal prior qualifications.',
-  'Bridging courses: PBK offers bridging programmes for learners who do not meet direct entry requirements for their chosen qualification.',
-  'Accreditation: All PBK programmes are aligned with SAQA and the NQF for national and international recognition.',
+export const studyProgressionNotes = [
+  'Entry requirements: Use the admission requirement for the level you are applying for.',
+  'Recognition of Prior Learning (RPL): Relevant experience may be considered for Masters and PhD on Theology & Ministry programmes.',
+  'Bridging courses: PBK offers bridging programmes for learners who do not meet the direct admission requirement for their chosen qualification.',
+  'Accreditation: PBK programmes are globally accredited.',
 ]
 
 export const educationProgrammes = [
   {
     title: 'Management & leadership qualifications',
-    levels: 'NQF 4 – 10',
+    levels: 'Certificate, Diploma and Advanced Diploma, and further study where offered',
     delivery: 'Online and in-person options',
     highlights: [
       'Modular structure with formative and summative assessments',
@@ -245,11 +224,12 @@ export const partnerLogos = [
   { id: 'eae', name: 'EAE', src: '/logos/partners/eae.jpeg' },
   { id: 'eimt', name: 'EIMT', src: '/logos/partners/eimt.jpeg' },
   { id: 'esms', name: 'ESMS', src: '/logos/partners/esms.jpeg' },
-  { id: 'etdp', name: 'ETDP', src: '/logos/partners/etdp.jpeg' },
   { id: 'ibr', name: 'IBR', src: '/logos/partners/ibr.jpeg' },
   { id: 'pbkmli', name: 'PBK Memorial Leadership Institute', src: '/brand/pbk-emblem.webp' },
-  { id: 'qcto', name: 'QCTO', src: '/logos/partners/qcto.jpeg' },
 ] as const
+
+// QCTO and ETDP SETA logos are not shown. Both are South African NQF quality bodies,
+// so displaying them implied that PBK qualifications are SAQA registered. They are not.
 
 /** Center nav only — Apply is the blue button on the right */
 export const mainNavLinks = [

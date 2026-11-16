@@ -34,7 +34,6 @@ export type CertificateData = {
   fullName          : string
   courseTitle       : string
   courseCode        : string
-  nqf               : string | number
   credits           : string | number
   certificateNumber : string
   issuedDate        : string
@@ -138,8 +137,8 @@ export async function buildCertificatePdf(
   // ── Course sub-details ────────────────────────────────────────────
   const subParts = [
     data.courseCode,
-    data.nqf     ? `NQF ${data.nqf}`          : '',
-    data.credits ? `${data.credits} credits`  : '',
+    data.credits ? `${data.credits} credits` : '',
+    'Globally accredited',
   ].filter(Boolean).join('  •  ')
 
   if (subParts) {

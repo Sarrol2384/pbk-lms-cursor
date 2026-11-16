@@ -6,7 +6,7 @@ import { siteUrl } from '@/lib/site-url'
 
 const inter = Inter({ subsets: ['latin'] })
 
-const description = 'Accredited management and leadership qualifications — apply online.'
+const description = 'Globally accredited management and leadership qualifications — apply online.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),

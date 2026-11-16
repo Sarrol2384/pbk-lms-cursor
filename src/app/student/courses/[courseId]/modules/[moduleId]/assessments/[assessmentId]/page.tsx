@@ -5,6 +5,7 @@ import { SubmitAssignmentForm } from './SubmitAssignmentForm'
 import { TakeQuiz } from '@/components/student/TakeQuiz'
 import { assertAllUnitsComplete, assertPreviousModulePassed, requireActiveEnrollment } from '@/lib/enrollment-access'
 import { updateModuleProgress } from '@/lib/progress'
+import { publicProgrammeText } from '@/lib/accreditation-wording'
 
 export default async function StudentAssessmentPage({
   params,
@@ -65,7 +66,7 @@ export default async function StudentAssessmentPage({
   return (
     <div className="max-w-2xl">
       <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">
-        <Link href={`/student/courses/${params.courseId}`} className="text-blue-600 hover:underline">{course?.title}</Link>
+        <Link href={`/student/courses/${params.courseId}`} className="text-blue-600 hover:underline">{publicProgrammeText(course?.title)}</Link>
         <span className="text-gray-400">/</span>
         <Link href={`/student/courses/${params.courseId}/modules/${params.moduleId}`} className="text-blue-600 hover:underline">{module?.title}</Link>
         <span className="text-gray-400">/</span>
