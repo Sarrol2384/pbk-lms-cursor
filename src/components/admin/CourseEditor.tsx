@@ -529,7 +529,7 @@ export default function CourseEditor({ course, modules }: { course: Course; modu
                 placeholder="e.g. 15000"
                 className="w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-500">R</span>
+              <span className="text-sm text-gray-500">USD</span>
               <button onClick={saveFeeAndDuration} className="px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Save fee & duration</button>
             </div>
             {course.fee != null && course.fee > 0 && <p className="text-xs text-green-600 mt-1">Current fee: ${course.fee.toLocaleString('en-US')}</p>}

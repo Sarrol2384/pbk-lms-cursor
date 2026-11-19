@@ -13,6 +13,8 @@ import {
   studyModes,
   type StudyLevelId,
 } from '@/content/prospectus'
+import { registrationSentence, scheduleRow, trackForSchool } from '@/content/programme-fees'
+import { formatUsd } from '@/lib/tuition'
 import { INSTITUTE_EMAIL, INSTITUTE_NAME } from '@/lib/institute'
 import { CountrySelect } from '@/components/marketing/CountrySelect'
 
@@ -34,8 +36,10 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
   const [loading, setLoading] = useState(false)
 
   const selected = useMemo(() => findProgramme(programmeId), [programmeId])
+  const track = trackForSchool(selected?.school.id ?? '')
   const levelOptions = studyLevelsForProgramme(selected?.programme ?? null)
   const levelHint = studyLevels.find(item => item.id === level)
+  const selectedQuote = levelHint ? scheduleRow(track, levelHint.id) : null
   const idLabel = country === DEFAULT_COUNTRY ? 'ID number' : 'ID or passport number'
 
   function onProgrammeChange(nextId: string) {
@@ -175,20 +179,25 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
             >
               <option value="">Choose a level</option>
               {levelOptions.map(item => (
-                <option key={item.id} value={item.id}>{studyLevelChoiceLabel(item)}</option>
+                <option key={item.id} value={item.id}>{studyLevelChoiceLabel(item, track)}</option>
               ))}
             </select>
             {selected && (
               <p className="text-xs text-gray-600 mt-1">
-                Available for this programme: {levelOptions.map(item => studyLevelChoiceLabel(item)).join(', ')}.
+                Available for this programme: {levelOptions.map(item => studyLevelChoiceLabel(item, track)).join(', ')}.
               </p>
             )}
             {selected && programmeOffersRpl(selected.programme) && (
               <p className="text-xs text-blue-800 mt-1">
-                This programme can be applied for up to Masters and PhD via Recognition of Prior Learning (RPL).
+                This programme lists Bachelor&apos;s, and Master&apos;s and PhD via Recognition of Prior Learning (RPL). RPL is not used from Certificate through Bachelor&apos;s.
               </p>
             )}
             {levelHint && <p className="text-xs text-gray-500 mt-1">{levelHint.admission}</p>}
+            {selectedQuote && levelHint && (
+              <p className="text-xs text-gray-700 mt-1">
+                Programme fee {formatUsd(selectedQuote.tuitionUsd)}. {registrationSentence(levelHint.id, formatUsd)} Amounts are full totals in US dollars.
+              </p>
+            )}
             {errors.level && <p className="text-xs text-red-600 mt-1">{errors.level}</p>}
           </div>
           <div>

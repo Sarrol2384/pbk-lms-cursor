@@ -41,7 +41,7 @@ export default async function HomePage() {
           </h1>
           <p className="text-blue-200 font-medium mb-3">{INSTITUTE_MOTTO}</p>
           <p className="text-blue-100 text-lg sm:text-xl mb-10 max-w-2xl mx-auto">
-            Certificate, Diploma and Advanced Diploma programmes across five schools, with Masters and PhD via Recognition of Prior Learning (RPL) for theology. Study full-time, part-time, in the evening, or by online distance learning.
+            Certificate through Bachelor&apos;s programmes across five schools. Theology & Ministry also lists Master&apos;s and PhD via Recognition of Prior Learning (RPL). Fees are full totals in US dollars. Study full-time, part-time, in the evening, or by online distance learning.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/apply" className="bg-white text-blue-900 font-semibold px-8 py-3.5 rounded-xl hover:bg-blue-50 transition-colors text-sm">
@@ -61,7 +61,7 @@ export default async function HomePage() {
         <div className="max-w-4xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center justify-items-center">
           {[
             { value: '5 schools', label: 'Programmes grouped by school' },
-            { value: 'Up to PhD', label: 'Certificate, Diploma and Advanced Diploma, and Masters and PhD via RPL for theology' },
+            { value: 'Up to PhD', label: "Certificate through Bachelor's, plus Master's and PhD via RPL for theology" },
             { value: '4 modes', label: 'Full-time, part-time, evening and online' },
           ].map(s => (
             <div key={s.label}>
@@ -87,7 +87,7 @@ export default async function HomePage() {
           <div className="grid sm:grid-cols-3 gap-6">
             {[
               { icon: '📚', title: 'Structured Learning', desc: 'Sequential modules with formative quizzes, assignments, and final assessments.' },
-              { icon: '🏆', title: 'Recognised Qualifications', desc: 'Earn globally recognised qualifications and certificates upon successful completion of your programme.' },
+              { icon: '🏆', title: 'Globally Accredited Qualifications', desc: 'Earn globally accredited qualifications and certificates upon successful completion of your programme.' },
               { icon: '💳', title: 'Flexible Payments', desc: 'Pay your course fee in US dollars, in 3, 6, or 12 monthly instalments — whichever suits you best.' },
               { icon: '📱', title: 'Study Anywhere', desc: 'Access your course material from any device, any time.' },
               { icon: '👩‍🏫', title: 'Expert Lecturers', desc: 'Learn from qualified professionals with real-world industry experience.' },

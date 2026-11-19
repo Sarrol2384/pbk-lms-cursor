@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { FeeSchedule } from '@/components/marketing/FeeSchedule'
 import {
   PROSPECTUS_YEAR,
   programmeCount,
@@ -7,7 +8,9 @@ import {
   studyLevels,
   studyModes,
 } from '@/content/prospectus'
+import { scheduleRow, trackForSchool } from '@/content/programme-fees'
 import { INSTITUTE_MOTTO, INSTITUTE_NAME } from '@/lib/institute'
+import { formatUsd } from '@/lib/tuition'
 
 export function Prospectus() {
   return (
@@ -19,28 +22,32 @@ export function Prospectus() {
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">{INSTITUTE_NAME}</h2>
         <p className="text-lg text-blue-800 font-medium mb-4">&ldquo;{INSTITUTE_MOTTO}&rdquo;</p>
         <p className="text-gray-600 leading-relaxed">
-          Programmes are offered at Certificate, Diploma and Advanced Diploma level, grouped into five schools.
-          Theology & Ministry programmes can also be applied for at Masters and PhD via Recognition of Prior Learning (RPL).
-          There are {programmeCount()} programmes in this prospectus. Choose a programme below, then apply online. You do not need an account to submit an application.
+          Programmes are offered from Certificate through Bachelor&apos;s, grouped into five schools.
+          Theology & Ministry programmes also list Bachelor&apos;s, and Master&apos;s and PhD via Recognition of Prior Learning (RPL).
+          RPL is not used from Certificate through Bachelor&apos;s.
+          There are {programmeCount()} programmes in this prospectus. Fees are full totals in US dollars.
+          Choose a programme below, then apply online. You do not need an account to submit an application.
         </p>
       </section>
 
       <section className="max-w-5xl mx-auto px-4">
-        <h2 className="text-2xl font-bold text-gray-900 text-center mb-6">Admission, duration and study mode</h2>
+        <h2 className="text-2xl font-bold text-gray-900 text-center mb-6">Admission and study mode</h2>
         <div className="overflow-x-auto bg-white border border-blue-100 rounded-xl">
           <table className="w-full text-sm text-left">
             <thead className="bg-blue-50 text-blue-950">
               <tr>
-                <th className="px-4 py-3 font-semibold">Level</th>
-                <th className="px-4 py-3 font-semibold">Duration</th>
-                <th className="px-4 py-3 font-semibold">Admission requirement</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Level</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Academic duration</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Theology duration</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Admission requirement</th>
               </tr>
             </thead>
             <tbody>
               {studyLevels.map(level => (
                 <tr key={level.id} className="border-t border-blue-50">
-                  <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{level.label}</td>
-                  <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{level.duration}</td>
+                  <th scope="row" className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap text-left">{level.label}</th>
+                  <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{scheduleRow('academic', level.id).duration}</td>
+                  <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{scheduleRow('theology', level.id).duration}</td>
                   <td className="px-4 py-3 text-gray-600">{level.admission}</td>
                 </tr>
               ))}
@@ -55,9 +62,14 @@ export function Prospectus() {
           ))}
         </div>
         <p className="text-center text-sm text-gray-600 mt-4 max-w-3xl mx-auto leading-relaxed">
-          Masters (via RPL) and PhD (via RPL) are available on Theology & Ministry programmes.
+          Master&apos;s (RPL) and PhD (RPL) are available on Theology & Ministry programmes.
+          Academic prices for those two levels are shown in the fee table, and those qualifications are not listed on academic programmes.
           Every programme can be studied full-time, part-time, in the evening, or by online distance learning.
         </p>
+      </section>
+
+      <section className="max-w-5xl mx-auto px-4">
+        <FeeSchedule />
       </section>
 
       <section className="max-w-5xl mx-auto px-4 space-y-10">
@@ -67,7 +79,7 @@ export function Prospectus() {
             <h3 className="text-xl font-bold text-gray-900 mt-1 mb-6">{school.name}</h3>
             {school.programmes.some(programme => programmeOffersRpl(programme)) && (
               <p className="text-sm text-blue-900 bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 mb-6">
-                Programmes in this school can be applied for up to Masters and PhD via Recognition of Prior Learning (RPL).
+                Programmes in this school list Bachelor&apos;s, and Master&apos;s and PhD via Recognition of Prior Learning (RPL).
               </p>
             )}
             <ul className="space-y-5">
@@ -83,11 +95,16 @@ export function Prospectus() {
                   </div>
                   <p className="text-sm text-gray-600 leading-relaxed">{programme.summary}</p>
                   <p className="text-xs text-blue-800 mt-2">
-                    {programme.levels.map(levelId => studyLevels.find(level => level.id === levelId)?.label).filter(Boolean).join(' · ')}
+                    {programme.levels.map(levelId => {
+                      const level = studyLevels.find(item => item.id === levelId)
+                      if (!level) return null
+                      const priced = scheduleRow(trackForSchool(school.id), level.id)
+                      return `${level.label} (${priced.duration}, ${formatUsd(priced.tuitionUsd)})`
+                    }).filter(Boolean).join(' · ')}
                   </p>
                   {programmeOffersRpl(programme) && (
                     <p className="text-xs text-blue-900 mt-1">
-                      Masters and PhD are available for this programme via Recognition of Prior Learning (RPL).
+                      Master&apos;s and PhD are available for this programme via Recognition of Prior Learning (RPL). RPL is not used from Certificate through Bachelor&apos;s.
                     </p>
                   )}
                   <Link
