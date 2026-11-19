@@ -1,52 +1,76 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { getPaymentDeadline } from '@/lib/utils'
 import { updateModuleProgress } from '@/lib/progress'
+import { assessTuition, courseAccessAllowed, type PaymentSlice } from '@/lib/tuition'
 
 type EnrollmentRow = {
   id: string
   status: string
   enrolled_at?: string | null
   created_at?: string | null
+  access_override?: boolean | null
+}
+
+type PaymentRow = PaymentSlice & { created_at?: string | null }
+
+async function loadPayments(enrollmentId: string): Promise<PaymentRow[]> {
+  const service = createServiceClient()
+  const { data } = await service
+    .from('payments')
+    .select('amount, amount_paid, created_at, total_installments, installment_amount')
+    .eq('enrollment_id', enrollmentId)
+    .order('created_at', { ascending: true })
+  return (data ?? []) as PaymentRow[]
+}
+
+function overdueFrom(enrollment: EnrollmentRow, payments: PaymentRow[]): boolean {
+  const position = assessTuition(payments)
+  if (position.balance <= 0) return false
+  const startDate = enrollment.enrolled_at ?? payments[0]?.created_at ?? enrollment.created_at
+  return getPaymentDeadline(startDate, position.totalInstallments).isOverdue
 }
 
 export type ActiveEnrollmentResult =
   | { ok: true; enrollmentId: string }
   | { ok: false; httpStatus: 403; error: string }
 
-async function isOverdue(enrollment: EnrollmentRow): Promise<boolean> {
+async function loadEnrollmentForAccess(userId: string, courseId: string): Promise<EnrollmentRow | null> {
   const service = createServiceClient()
-  const { data: payments } = await service
-    .from('payments')
-    .select('amount, amount_paid, created_at, total_installments')
-    .eq('enrollment_id', enrollment.id)
-    .order('created_at', { ascending: true })
-
-  const total = (payments ?? []).reduce((sum, p) => sum + (p.amount ?? 0), 0)
-  const paid = (payments ?? []).reduce((sum, p) => sum + (p.amount_paid ?? 0), 0)
-  if (total - paid <= 0) return false
-
-  const totalInstallments = Math.max(1, payments?.[0]?.total_installments ?? 1)
-  const startDate = enrollment.enrolled_at ?? payments?.[0]?.created_at ?? enrollment.created_at
-  return getPaymentDeadline(startDate, totalInstallments).isOverdue
-}
-
-/**
- * Course content is open only while the enrolment is approved and the payment plan is not past its deadline.
- * A past deadline moves the row to on_hold.
- */
-export async function requireActiveEnrollment(userId: string, courseId: string): Promise<ActiveEnrollmentResult> {
-  const service = createServiceClient()
-  const { data: enrollment } = await service
+  const withOverride = await service
+    .from('enrollments')
+    .select('id, status, enrolled_at, created_at, access_override')
+    .eq('user_id', userId)
+    .eq('course_id', courseId)
+    .maybeSingle()
+  if (!withOverride.error) return (withOverride.data as EnrollmentRow | null) ?? null
+  const basic = await service
     .from('enrollments')
     .select('id, status, enrolled_at, created_at')
     .eq('user_id', userId)
     .eq('course_id', courseId)
     .maybeSingle()
+  if (!basic.data) return null
+  return { ...(basic.data as EnrollmentRow), access_override: false }
+}
+
+/**
+ * Course content is open only for an approved enrolment that has reached the first
+ * instalment (or has an explicit admin override) and is not past the payment deadline.
+ * A past deadline moves the row to on_hold.
+ */
+export async function requireActiveEnrollment(userId: string, courseId: string): Promise<ActiveEnrollmentResult> {
+  const service = createServiceClient()
+  const enrollment = await loadEnrollmentForAccess(userId, courseId)
 
   if (!enrollment) return { ok: false, httpStatus: 403, error: 'Not enrolled' }
 
   if (enrollment.status === 'approved') {
-    if (await isOverdue(enrollment)) {
+    const payments = await loadPayments(enrollment.id)
+    const position = assessTuition(payments)
+    if (!courseAccessAllowed(enrollment.status, position, enrollment.access_override === true)) {
+      return { ok: false, httpStatus: 403, error: 'Course access opens after the first instalment is recorded' }
+    }
+    if (overdueFrom(enrollment, payments)) {
       await service.from('enrollments').update({ status: 'on_hold' }).eq('id', enrollment.id).eq('status', 'approved')
       return { ok: false, httpStatus: 403, error: 'Course access is on hold until the balance is paid' }
     }
@@ -62,7 +86,8 @@ export async function requireActiveEnrollment(userId: string, courseId: string):
 /** Used by the dashboard, which already holds enrolment rows and reloads after a hold. */
 export async function suspendEnrollmentIfOverdue(enrollment: EnrollmentRow & { status: string }): Promise<boolean> {
   if (enrollment.status !== 'approved') return false
-  if (!(await isOverdue(enrollment))) return false
+  const payments = await loadPayments(enrollment.id)
+  if (!overdueFrom(enrollment, payments)) return false
   const service = createServiceClient()
   await service.from('enrollments').update({ status: 'on_hold' }).eq('id', enrollment.id).eq('status', 'approved')
   return true

@@ -41,34 +41,18 @@ export default function PaymentReviewCard({
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
-        setMessage({ type: 'success', text: data.fullyPaid ? 'Payment recorded and enrollment approved' : 'Payment recorded' })
+        const text = data.partial
+          ? 'Partial payment recorded. The enrolment stays payment pending until the first instalment is reached. No welcome email was sent.'
+          : data.fullyPaid
+            ? 'Full tuition recorded. Enrolment approved.'
+            : data.openedAccess
+              ? 'First instalment recorded. Course access is open.'
+              : 'Payment recorded'
+        setMessage({ type: 'success', text })
         setRecordAmount('')
         setTimeout(() => router.push('/admin/students'), 1000)
       } else {
         setMessage({ type: 'error', text: data.error || 'Failed to record payment' })
-      }
-    } catch {
-      setMessage({ type: 'error', text: 'Request failed' })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function approveFull() {
-    setLoading(true)
-    setMessage(null)
-    try {
-      const res = await fetch('/api/payments/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (res.ok) {
-        setMessage({ type: 'success', text: 'Enrollment approved. Student can access the course.' })
-        setTimeout(() => router.push('/admin/students'), 1000)
-      } else {
-        setMessage({ type: 'error', text: data.error || 'Failed to approve' })
       }
     } catch {
       setMessage({ type: 'error', text: 'Request failed' })
@@ -164,7 +148,7 @@ export default function PaymentReviewCard({
               type="text"
               value={recordAmount}
               onChange={(e) => setRecordAmount(e.target.value)}
-              placeholder="Amount received (R)"
+              placeholder="Amount received ($)"
               className="w-36 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button
@@ -177,14 +161,6 @@ export default function PaymentReviewCard({
             </button>
           </div>
         )}
-        <button
-          type="button"
-          onClick={approveFull}
-          disabled={loading}
-          className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          Approve full payment
-        </button>
         {enrollmentId && (
           <button
             type="button"
