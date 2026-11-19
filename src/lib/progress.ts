@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { calculateModuleMark, generateCertificateNumber } from '@/lib/utils'
 import { sendCertificateIssuedEmail } from '@/lib/email'
+import { completionDocumentAllowed } from '@/lib/tuition-lookup'
 
 /**
  * Update module_progress for a user/module based on graded submissions.
@@ -123,6 +124,7 @@ export async function refreshProgressAndCertificate(userId: string, courseId: st
     progressList.every(p => p.status === 'passed')
 
   if (!allPassed) return
+  if (!(await completionDocumentAllowed(userId, courseId))) return
 
   const { data: existing } = await supabase
     .from('certificates')

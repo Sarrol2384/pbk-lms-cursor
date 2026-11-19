@@ -52,7 +52,7 @@ export default function EnrollForm({ course, userId }: { course: Course; userId:
           <li>Submit your application below</li>
           <li>Wait for an administrator to approve it. You will get an email</li>
           <li>After approval, choose a payment plan and upload proof of payment</li>
-          <li>After your first payment is verified, you can start the course</li>
+          <li>After your first instalment is verified, you can start the course. Fees are in US dollars</li>
         </ol>
       </div>
 
