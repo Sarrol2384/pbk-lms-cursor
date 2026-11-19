@@ -1,3 +1,5 @@
+-- APPLIED on production (ownoxqbsdmhacalegsmr) on 2026-11-19 with Cyril's approval. Do not re-apply.
+-- The 'DO NOT APPLY' notes below are kept for history and no longer apply.
 -- APPROVAL AND DEPLOYMENT PREREQUISITE. DO NOT APPLY this file from the pull request.
 -- Do not run it on staging, production, or any other database until it has been reviewed and approved.
 -- Do not merge it as an applied migration. Do not run a migration push. Paste this file alone, after review.

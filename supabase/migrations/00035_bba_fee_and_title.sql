@@ -1,3 +1,5 @@
+-- APPLIED on production (ownoxqbsdmhacalegsmr) on 2026-11-19 with Cyril's approval. Do not re-apply.
+-- The 'DO NOT APPLY' notes below are kept for history and no longer apply.
 -- APPROVAL AND DEPLOYMENT PREREQUISITE. DO NOT APPLY this file to production from the pull request.
 -- Production project ownoxqbsdmhacalegsmr is not a target of this file until Cyril approves it separately.
 -- Staging may receive it only after the pre-check shows exactly one matching course.
