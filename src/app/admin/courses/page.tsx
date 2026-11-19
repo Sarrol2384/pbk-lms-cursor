@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { formatDateShort } from '@/lib/utils'
 import DeleteCourseButton from '@/components/admin/DeleteCourseButton'
+import { publicProgrammeText, storesAccreditationClaim } from '@/lib/accreditation-wording'
 
 export default async function AdminCoursesPage() {
   const supabase = createServiceClient()
@@ -29,7 +30,7 @@ export default async function AdminCoursesPage() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Courses</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage SETA-accredited courses</p>
+          <p className="text-gray-500 text-sm mt-1">Manage globally accredited programmes</p>
         </div>
         <Link href="/admin/courses/new" className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -44,14 +45,14 @@ export default async function AdminCoursesPage() {
           <div className="p-12 text-center">
             <p className="text-4xl mb-3">📚</p>
             <p className="font-medium text-gray-900 mb-1">No courses yet</p>
-            <p className="text-sm text-gray-500 mb-4">Create your first SETA-accredited course to get started.</p>
+            <p className="text-sm text-gray-500 mb-4">Create your first programme to get started.</p>
             <Link href="/admin/courses/new" className="text-blue-600 text-sm font-medium hover:underline">Create a course →</Link>
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                {['Course', 'Code', 'NQF', 'Credits', 'Modules', 'Students', 'Status', 'Created', ''].map(h => (
+                {['Course', 'Code', 'Level', 'Credits', 'Modules', 'Students', 'Status', 'Created', ''].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -60,8 +61,10 @@ export default async function AdminCoursesPage() {
               {courses.map(c => (
                 <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900">{c.title}</p>
-                    {c.saqa_id && <p className="text-xs text-gray-400">SAQA: {c.saqa_id}</p>}
+                    <p className="font-medium text-gray-900">{publicProgrammeText(c.title)}</p>
+                    {storesAccreditationClaim({ title: c.title, saqaId: c.saqa_id }) && (
+                      <p className="text-xs text-amber-800">Stored SAQA, NQF, or SETA wording is hidden from learners. The database row has not been changed.</p>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-gray-600">{c.code}</td>
                   <td className="px-4 py-3 text-gray-600">{c.nqf_level}</td>
@@ -78,7 +81,7 @@ export default async function AdminCoursesPage() {
                   <td className="px-4 py-3 text-gray-400 text-xs">{formatDateShort(c.created_at)}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <Link href={`/admin/courses/${c.id}`} className="text-blue-600 hover:underline text-xs font-medium">Manage</Link>
-                    <DeleteCourseButton courseId={c.id} courseTitle={c.title} />
+                    <DeleteCourseButton courseId={c.id} courseTitle={publicProgrammeText(c.title)} />
                   </td>
                 </tr>
               ))}

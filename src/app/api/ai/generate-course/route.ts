@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { withoutSaqaOrNqfClaim } from '@/lib/accreditation-wording'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -19,7 +20,6 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const {
     courseTitle,
-    nqfLevel,
     credits,
     description,
     batchIndex = 0,
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         max_tokens: 100,
         messages: [{
           role: 'user',
-          content: `Course: "${courseTitle}". Existing module titles (do not duplicate or overlap): ${existingTitles.join(' | ')}.\n\nSuggest ONE new module title that is clearly distinct and fits this course. Reply with only the title, no quotes, no explanation.`,
+          content: `Course: "${withoutSaqaOrNqfClaim(String(courseTitle))}". Existing module titles (do not duplicate or overlap): ${existingTitles.join(' | ')}.\n\nSuggest ONE new module title that is clearly distinct and fits this course. Do not mention SAQA, a SAQA qualification ID, SETA accreditation, or an NQF level. Reply with only the title, no quotes, no explanation.`,
         }],
       })
       const raw = (suggestRes.content[0] as { type: string; text: string }).text.trim()
@@ -74,19 +74,20 @@ export async function POST(request: NextRequest) {
     : ''
   const useSuggested = effectiveModuleNames.length >= BATCH_SIZE
   const creditsInstruction = requestedModuleCredits != null ? ` Use ${requestedModuleCredits} credits for this module.` : ''
-  const yearInstruction = moduleYear ? ` This module is for ${String(moduleYear)} (e.g. Year 1 = NQF 5, Year 2 = NQF 6, Year 3 = NQF 7).` : ''
+  const yearInstruction = moduleYear ? ` This module is for ${String(moduleYear)}.` : ''
 
-  const prompt = `You are a SETA-accredited curriculum designer in South Africa creating COMPLETE, publication-ready course content.
+  const prompt = `You are a curriculum designer creating COMPLETE, publication-ready course content for a globally accredited programme.
+
+Do not describe the programme, any module, or any assessment as SAQA accredited, SAQA registered, SETA accredited, SETA aligned, or registered on the South African National Qualifications Framework (NQF). Do not invent an accrediting body or an accreditation number.
 
 COURSE CONTEXT:
-- Title: ${courseTitle}
-- NQF Level: ${nqfLevel ?? 'Not specified'}
+- Title: ${withoutSaqaOrNqfClaim(String(courseTitle))}
 - Total Credits: ${credits ?? 'Not specified'}
-- Description: ${description || 'Not provided'}
+- Description: ${description ? withoutSaqaOrNqfClaim(String(description)) : 'Not provided'}
 ${noDuplicateInstruction}
 ${yearInstruction}${creditsInstruction}
 
-TASK: Generate exactly ${BATCH_SIZE} modules for this batch. Use academic style, South African context, and SETA standards. Match the same structure as the rest of the course: ${unitsPerModule} units per module, same content length and assessment style.
+TASK: Generate exactly ${BATCH_SIZE} modules for this batch. Use academic style and South African context. Do not cite NQF levels. Match the same structure as the rest of the course: ${unitsPerModule} units per module, same content length and assessment style.
 
 ${useSuggested ? `USE THESE EXACT MODULE TITLES IN ORDER: ${effectiveModuleNames.slice(0, BATCH_SIZE).join(' | ')}` : ''}
 

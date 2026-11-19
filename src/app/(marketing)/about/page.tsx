@@ -6,7 +6,7 @@ import { aboutSections } from '@/content/marketing'
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'Mission, values, and accreditation',
+  description: 'Mission, values, and global accreditation',
 }
 
 export default async function AboutPage() {
@@ -28,7 +28,7 @@ export default async function AboutPage() {
 
       <section className="py-16 px-4 bg-gray-50">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Accreditation & recognition</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Accreditation</h2>
           <ul className="space-y-3">
             {aboutSections.accreditation.map(item => (
               <li key={item} className="flex gap-3 text-gray-600">

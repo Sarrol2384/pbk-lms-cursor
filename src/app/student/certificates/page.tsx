@@ -1,6 +1,7 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
 import { assessTuition, canIssueCompletionDocument } from '@/lib/tuition'
+import { publicProgrammeText } from '@/lib/accreditation-wording'
 
 export default async function StudentCertificatesPage() {
   const supabase = createClient()
@@ -9,7 +10,7 @@ export default async function StudentCertificatesPage() {
 
   const { data: certificates } = await supabase
     .from('certificates')
-    .select('id, course_id, certificate_number, issued_at, courses:course_id(title, code, nqf_level, credits)')
+    .select('id, course_id, certificate_number, issued_at, courses:course_id(title, code)')
     .eq('user_id', user.id)
     .order('issued_at', { ascending: false })
 
@@ -52,8 +53,8 @@ export default async function StudentCertificatesPage() {
               <div className="flex items-start gap-3">
                 <div className="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-xl flex items-center justify-center text-2xl shrink-0">🏆</div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 text-sm">{(c.courses as any)?.title}</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">{(c.courses as any)?.code} • NQF {(c.courses as any)?.nqf_level}</p>
+                  <h3 className="font-semibold text-gray-900 text-sm">{publicProgrammeText((c.courses as any)?.title)}</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">{(c.courses as any)?.code}</p>
                   <p className="text-xs text-gray-400 mt-1">Certificate of Completion No: <span className="font-medium text-gray-600">{c.certificate_number}</span></p>
                   <p className="text-xs text-gray-400">Issued: {formatDate(c.issued_at)}</p>
                 </div>
