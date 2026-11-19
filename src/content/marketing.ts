@@ -1,3 +1,10 @@
+import { formatUsd } from '@/lib/tuition'
+import {
+  PROGRESSION_NOTES,
+  STUDY_PATHWAY_INTRO,
+  pathwayFacts,
+  type FeeTrack,
+} from '@/content/programme-fees'
 import { INDAGATION_PATH } from './indagation'
 
 export type TeamMember = {
@@ -137,63 +144,33 @@ export type StudyPathwayRow = {
   qualificationType: string
   entryRequirement: string
   duration: string
+  tuition: string
+  registration: string
   nextStep: string
 }
 
-export const studyPathwayIntro = {
-  title: 'Your academic pathway at PBK Memorial',
-  body: 'PBK Memorial Management and Leadership Institute offers globally accredited programmes. You can progress from a certificate through to doctoral study where that level is offered. These are PBK study levels. They are not registered with the South African Qualifications Authority (SAQA), and they are not registered on the National Qualifications Framework (NQF).',
+export const studyPathwayIntro = STUDY_PATHWAY_INTRO
+export const studyProgressionNotes = PROGRESSION_NOTES
+
+function pathwayRows(track: FeeTrack): StudyPathwayRow[] {
+  return pathwayFacts(track).map(fact => ({
+    level: fact.levelLabel,
+    qualificationType: fact.qualificationName,
+    entryRequirement: fact.entryRequirement,
+    duration: fact.duration,
+    tuition: formatUsd(fact.tuitionUsd),
+    registration: fact.registrationUsd == null ? 'Not set' : formatUsd(fact.registrationUsd),
+    nextStep: fact.nextStep,
+  }))
 }
 
-export const studyPathwayRows: StudyPathwayRow[] = [
-  {
-    level: 'Certificate',
-    qualificationType: 'Certificate',
-    entryRequirement: 'Grade 9 or Grade 12. Open to anyone with an interest in the field.',
-    duration: '6 months',
-    nextStep: 'Diploma, where you meet the admission requirement',
-  },
-  {
-    level: 'Diploma',
-    qualificationType: 'Diploma',
-    entryRequirement: 'A Grade 12 certificate, plus a certificate in a relevant field.',
-    duration: '1 year',
-    nextStep: 'Advanced Diploma, where you meet the admission requirement',
-  },
-  {
-    level: 'Advanced Diploma',
-    qualificationType: 'Advanced Diploma',
-    entryRequirement: 'A diploma in a relevant field.',
-    duration: '2 years',
-    nextStep: 'Further study. Masters via RPL is offered on Theology & Ministry programmes',
-  },
-  {
-    level: 'Masters (via RPL)',
-    qualificationType: 'Masters',
-    entryRequirement: 'Recognition of Prior Learning (RPL) on a Theology & Ministry programme.',
-    duration: 'Individual assessment',
-    nextStep: 'PhD via RPL, on a Theology & Ministry programme',
-  },
-  {
-    level: 'PhD (via RPL)',
-    qualificationType: 'Doctoral degree',
-    entryRequirement: 'Recognition of Prior Learning (RPL) on a Theology & Ministry programme. Prior learning is assessed for doctoral entry.',
-    duration: 'Individual assessment',
-    nextStep: 'Highest PBK study level',
-  },
-]
-
-export const studyProgressionNotes = [
-  'Entry requirements: Use the admission requirement for the level you are applying for.',
-  'Recognition of Prior Learning (RPL): Relevant experience may be considered for Masters and PhD on Theology & Ministry programmes.',
-  'Bridging courses: PBK offers bridging programmes for learners who do not meet the direct admission requirement for their chosen qualification.',
-  'Accreditation: PBK programmes are globally accredited.',
-]
+export const academicPathwayRows = pathwayRows('academic')
+export const theologyPathwayRows = pathwayRows('theology')
 
 export const educationProgrammes = [
   {
     title: 'Management & leadership qualifications',
-    levels: 'Certificate, Diploma and Advanced Diploma, and further study where offered',
+    levels: "Certificate through Bachelor's, with Master's and PhD via RPL where a programme lists them",
     delivery: 'Online and in-person options',
     highlights: [
       'Modular structure with formative and summative assessments',

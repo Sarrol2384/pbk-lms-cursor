@@ -4,16 +4,17 @@ import { CTABand } from '@/components/marketing/CTABand'
 import { StudyPathwayTable } from '@/components/marketing/StudyPathwayTable'
 import { Prospectus } from '@/components/marketing/Prospectus'
 import {
+  academicPathwayRows,
   studyPathwayIntro,
-  studyPathwayRows,
   studyProgressionNotes,
+  theologyPathwayRows,
 } from '@/content/marketing'
 import { INSTITUTE_MOTTO, INSTITUTE_NAME } from '@/lib/institute'
 
 export const metadata: Metadata = {
   title: '2027 Prospectus',
   description:
-    'Certificate, Diploma and Advanced Diploma programmes at PBK Memorial Management and Leadership Institute, with Masters and PhD via Recognition of Prior Learning (RPL) for theology.',
+    "Certificate through Bachelor's programmes at PBK Memorial Management and Leadership Institute, with Master's and PhD via Recognition of Prior Learning (RPL) for theology. Fees are full totals in US dollars.",
 }
 
 export default function EducationPage() {
@@ -38,10 +39,14 @@ export default function EducationPage() {
             {studyPathwayIntro.body}
           </p>
           <p className="text-gray-600 text-sm text-center max-w-3xl mx-auto mb-10 leading-relaxed">
-            Prospectus programmes are offered at Certificate, Diploma and Advanced Diploma level. Theology & Ministry programmes can also be applied for at Masters and PhD via Recognition of Prior Learning (RPL). The pathway below shows how a qualification can lead on to further study.
+            Academic programmes are listed from Certificate through Bachelor&apos;s. Theology & Ministry programmes also list Bachelor&apos;s, and Master&apos;s and PhD via Recognition of Prior Learning (RPL). RPL is not used from Certificate through Bachelor&apos;s.
           </p>
 
-          <StudyPathwayTable rows={studyPathwayRows} />
+          <h3 className="text-lg font-bold text-blue-950 mb-4">Academic programmes</h3>
+          <StudyPathwayTable caption="Academic programme fees and durations in US dollars" rows={academicPathwayRows} />
+
+          <h3 className="text-lg font-bold text-blue-950 mt-10 mb-4">Theology & Ministry</h3>
+          <StudyPathwayTable caption="Theology and ministry programme fees and durations in US dollars" rows={theologyPathwayRows} />
 
           <div className="mt-12 bg-white rounded-xl border border-blue-100 p-6 sm:p-8">
             <h3 className="text-lg font-bold text-blue-900 mb-4">Key progression notes</h3>
@@ -58,7 +63,7 @@ export default function EducationPage() {
 
       <section className="py-12 px-4 bg-blue-50 border-y border-blue-100">
         <div className="max-w-3xl mx-auto text-center text-sm text-gray-600">
-          Fees are confirmed when your application is reviewed. Current students sign in to the portal to continue an enrolment.
+          Programme fees above are the full totals in US dollars. Registration for programmes other than Master&apos;s and PhD (RPL) has not been set. Current students sign in to the portal to continue an enrolment.
         </div>
       </section>
 

@@ -1,41 +1,55 @@
+import {
+  ACADEMIC_LADDER,
+  LEVEL_LABEL,
+  THEOLOGY_LADDER,
+  choiceLabel,
+  entryRequirement,
+  type FeeTrack,
+  type StudyLevelId,
+} from '@/content/programme-fees'
+import { formatUsd } from '@/lib/tuition'
+
 export const PROSPECTUS_YEAR = 2027
+
+export type { StudyLevelId }
 
 export const studyLevels = [
   {
     id: 'certificate',
-    label: 'Certificate',
-    duration: '6 months',
-    admission: 'Grade 9 or Grade 12. Open to anyone with an interest in the field.',
+    label: LEVEL_LABEL.certificate,
+    admission: entryRequirement('academic', 'certificate'),
+  },
+  {
+    id: 'advanced_certificate',
+    label: LEVEL_LABEL.advanced_certificate,
+    admission: entryRequirement('academic', 'advanced_certificate'),
   },
   {
     id: 'diploma',
-    label: 'Diploma',
-    duration: '1 year',
-    admission: 'A Grade 12 certificate, plus a certificate in a relevant field.',
+    label: LEVEL_LABEL.diploma,
+    admission: entryRequirement('academic', 'diploma'),
   },
   {
     id: 'advanced_diploma',
-    label: 'Advanced Diploma',
-    duration: '2 years',
-    admission: 'A diploma in a relevant field.',
+    label: LEVEL_LABEL.advanced_diploma,
+    admission: entryRequirement('academic', 'advanced_diploma'),
+  },
+  {
+    id: 'bachelors',
+    label: LEVEL_LABEL.bachelors,
+    admission: entryRequirement('academic', 'bachelors'),
   },
   {
     id: 'masters_rpl',
-    label: 'Masters (via RPL)',
-    duration: 'Individual assessment',
-    admission: 'Recognition of Prior Learning (RPL) on a Theology & Ministry programme.',
-    choiceShowsDuration: false,
+    label: LEVEL_LABEL.masters_rpl,
+    admission: entryRequirement('theology', 'masters_rpl'),
   },
   {
     id: 'phd_rpl',
-    label: 'PhD (via RPL)',
-    duration: 'Individual assessment',
-    admission: 'Recognition of Prior Learning (RPL) on a Theology & Ministry programme. Prior learning is assessed for doctoral entry.',
-    choiceShowsDuration: false,
+    label: LEVEL_LABEL.phd_rpl,
+    admission: entryRequirement('theology', 'phd_rpl'),
   },
-] as const
-
-export type StudyLevelId = (typeof studyLevels)[number]['id']
+] as const satisfies readonly { id: StudyLevelId; label: string; admission: string }[]
 
 export const studyModes = [
   { id: 'full_time', label: 'Full-time' },
@@ -56,16 +70,16 @@ export const highestQualifications = [
   'Other',
 ] as const
 
-const standardLevels: StudyLevelId[] = ['certificate', 'diploma', 'advanced_diploma']
+const academicLadder: readonly StudyLevelId[] = ACADEMIC_LADDER
 
-/** Theology & Ministry (the prospectus school for theology and biblical studies). */
-const theologyLevels: StudyLevelId[] = [...standardLevels, 'masters_rpl', 'phd_rpl']
+/** Theology & Ministry, including Bachelor's and Master's and PhD via RPL. */
+const theologyLevels: readonly StudyLevelId[] = THEOLOGY_LADDER
 
 export type ProspectusProgramme = {
   id: string
   name: string
   summary: string
-  levels: StudyLevelId[]
+  levels: readonly StudyLevelId[]
   /** Shown on the prospectus. Only the new climate programme uses this. */
   isNew?: boolean
 }
@@ -85,31 +99,31 @@ export const prospectusSchools: ProspectusSchool[] = [
         id: 'business-administration',
         name: 'Business Administration',
         summary: 'Business operations, finance, marketing and strategic planning.',
-        levels: standardLevels,
+        levels: academicLadder,
       },
       {
         id: 'business-management',
         name: 'Business Management',
         summary: 'Managerial skills for effective supervision and corporate leadership.',
-        levels: standardLevels,
+        levels: academicLadder,
       },
       {
         id: 'entrepreneurship',
         name: 'Entrepreneurship',
         summary: 'Starting, managing and scaling sustainable businesses and ministries.',
-        levels: standardLevels,
+        levels: academicLadder,
       },
       {
         id: 'organisational-leadership',
         name: 'Organisational Leadership',
         summary: 'Transformational leadership, decision-making and team-building.',
-        levels: standardLevels,
+        levels: academicLadder,
       },
       {
         id: 'public-administration',
         name: 'Public Administration',
         summary: 'Governance, public policy and service in government and NGOs.',
-        levels: standardLevels,
+        levels: academicLadder,
       },
     ],
   },
@@ -163,25 +177,25 @@ export const prospectusSchools: ProspectusSchool[] = [
         id: 'christian-counselling',
         name: 'Christian Counselling',
         summary: 'Biblical counselling for individuals, families and marriages.',
-        levels: standardLevels,
+        levels: academicLadder,
       },
       {
         id: 'christian-psychology',
         name: 'Christian Psychology',
         summary: 'Integration of psychology and Christian faith.',
-        levels: standardLevels,
+        levels: academicLadder,
       },
       {
         id: 'conflict-management',
         name: 'Conflict Management',
         summary: 'Mediation, peace-building and conflict resolution.',
-        levels: standardLevels,
+        levels: academicLadder,
       },
       {
         id: 'risk-management',
         name: 'Risk Management',
         summary: 'Identifying, assessing and mitigating organisational risks.',
-        levels: standardLevels,
+        levels: academicLadder,
       },
     ],
   },
@@ -193,13 +207,13 @@ export const prospectusSchools: ProspectusSchool[] = [
         id: 'safety-and-security-management',
         name: 'Safety and Security Management',
         summary: 'Security operations and safety protocols.',
-        levels: standardLevels,
+        levels: academicLadder,
       },
       {
         id: 'it-cybersecurity',
         name: 'IT / Cybersecurity',
         summary: 'IT fundamentals, networks and cyber threat protection.',
-        levels: standardLevels,
+        levels: academicLadder,
       },
     ],
   },
@@ -231,22 +245,19 @@ export function studyLevelById(id: string) {
   return studyLevels.find(level => level.id === id) ?? null
 }
 
-/** Dropdown text. RPL levels keep the label 'Masters (via RPL)' / 'PhD (via RPL)'. */
-export function studyLevelChoiceLabel(level: (typeof studyLevels)[number]): string {
-  if ('choiceShowsDuration' in level && level.choiceShowsDuration === false) return level.label
-  return `${level.label} (${level.duration})`
+/** Dropdown text: level, duration for that programme's track, and the full USD total. */
+export function studyLevelChoiceLabel(level: (typeof studyLevels)[number], track: FeeTrack): string {
+  return choiceLabel(level.label, track, level.id, formatUsd)
 }
 
 export function programmeOffersRpl(programme: ProspectusProgramme): boolean {
   return programme.levels.includes('masters_rpl') || programme.levels.includes('phd_rpl')
 }
 
-/** Levels offered for the selected programme. Before a programme is chosen, only the three standard levels are listed. */
+/** Levels offered for the selected programme. Before a programme is chosen, the academic ladder is listed. RPL is not on that ladder. */
 export function studyLevelsForProgramme(programme: ProspectusProgramme | null) {
-  if (!programme) {
-    return studyLevels.filter(level => level.id === 'certificate' || level.id === 'diploma' || level.id === 'advanced_diploma')
-  }
-  return studyLevels.filter(level => programme.levels.includes(level.id))
+  const offered = programme ? programme.levels : academicLadder
+  return studyLevels.filter(level => (offered as readonly StudyLevelId[]).includes(level.id))
 }
 
 export function studyModeById(id: string) {
