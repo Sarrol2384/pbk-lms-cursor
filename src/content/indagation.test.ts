@@ -10,10 +10,10 @@ import {
 } from './indagation.ts'
 import { isPublicPath, PUBLIC_PATH_PREFIXES } from '../lib/public-paths.ts'
 
-const flyerFees = {
-  bachelors: [159.57, 132.98, 159.57, 132.98],
-  masters: [265.96, 159.57, 265.96, 132.98],
-  'phd-social': [425.53, 265.96, 425.53, 132.98],
+const roundedFees = {
+  bachelors: [160, 133, 160, 133],
+  masters: [266, 160, 266, 133],
+  'phd-social': [426, 266, 426, 133],
 } as const
 
 test('keeps Indagation fees in one constant, in flyer order', () => {
@@ -27,7 +27,7 @@ test('keeps Indagation fees in one constant, in flyer order', () => {
   )
 
   for (const level of INDAGATION_FEES.levels) {
-    const expected = flyerFees[level.id as keyof typeof flyerFees]
+    const expected = roundedFees[level.id as keyof typeof roundedFees]
     if (expected) {
       assert.ok(level.amounts)
       assert.deepEqual(
@@ -44,13 +44,24 @@ test('keeps Indagation fees in one constant, in flyer order', () => {
   assert.equal(scientific?.note, 'Prices depend on the kind of research.')
 })
 
-test('formats full US dollar amounts without tax wording', () => {
-  assert.equal(formatUsd(159.57), 'USD 159.57')
-  assert.equal(formatUsd(132.98), 'USD 132.98')
-  assert.equal(formatUsd(265.96), 'USD 265.96')
-  assert.equal(formatUsd(425.53), 'USD 425.53')
-  assert.equal(formatUsd(1000), 'USD 1\u00a0000.00')
-  assert.equal(formatUsd(159.57).includes('VAT'), false)
+test('displays whole US dollars and no cents', () => {
+  assert.equal(formatUsd(160), 'USD 160')
+  assert.equal(formatUsd(133), 'USD 133')
+  assert.equal(formatUsd(266), 'USD 266')
+  assert.equal(formatUsd(426), 'USD 426')
+  assert.equal(formatUsd(159.57), 'USD 160')
+  assert.equal(formatUsd(132.98), 'USD 133')
+  assert.equal(formatUsd(265.96), 'USD 266')
+  assert.equal(formatUsd(425.53), 'USD 426')
+  assert.equal(formatUsd(1000), 'USD 1\u00a0000')
+  for (const level of INDAGATION_FEES.levels) {
+    if (!level.amounts) continue
+    for (const service of INDAGATION_FEES.services) {
+      const shown = formatUsd(level.amounts[service.id])
+      assert.equal(shown.includes('.'), false, shown)
+      assert.equal(shown.includes('VAT'), false)
+    }
+  }
 })
 
 test('uses the flyer partnership wording for PBK students', () => {

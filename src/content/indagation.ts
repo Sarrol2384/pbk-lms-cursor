@@ -1,6 +1,6 @@
 /**
  * Partnership copy and service fees for The Indagation Institute (TII).
- * Fees are full US dollar amounts. Edit INDAGATION_FEES when prices change.
+ * Fees are whole US dollars, rounded from the flyer. Edit INDAGATION_FEES when prices change.
  */
 
 export const INDAGATION_PATH = '/research-support'
@@ -32,10 +32,10 @@ export const INDAGATION_FEES = {
       id: 'bachelors',
       label: "Bachelor's degree (all fields)",
       amounts: {
-        proposal: 159.57,
-        analysis: 132.98,
-        report: 159.57,
-        consultancy: 132.98,
+        proposal: 160,
+        analysis: 133,
+        report: 160,
+        consultancy: 133,
       },
       note: null,
     },
@@ -43,10 +43,10 @@ export const INDAGATION_FEES = {
       id: 'masters',
       label: "Master's degree (all fields)",
       amounts: {
-        proposal: 265.96,
-        analysis: 159.57,
-        report: 265.96,
-        consultancy: 132.98,
+        proposal: 266,
+        analysis: 160,
+        report: 266,
+        consultancy: 133,
       },
       note: null,
     },
@@ -54,10 +54,10 @@ export const INDAGATION_FEES = {
       id: 'phd-social',
       label: 'PhD programmes, social research',
       amounts: {
-        proposal: 425.53,
-        analysis: 265.96,
-        report: 425.53,
-        consultancy: 132.98,
+        proposal: 426,
+        analysis: 266,
+        report: 426,
+        consultancy: 133,
       },
       note: null,
     },
@@ -108,12 +108,10 @@ export const INDAGATION_WHATSAPP_LINK = {
 export const INDAGATION_META_DESCRIPTION =
   'The Indagation Institute (TII) and PBK Memorial Leadership Institute are strategic partners for quality research and academic excellence. Research support fees are in US dollars.'
 
-/** Full US dollar amount, with cents. No tax wording. */
+/** Whole US dollars, with no cents. No tax wording. */
 export function formatUsd(amount: number): string {
-  const cents = Math.round(Math.abs(amount) * 100)
-  const whole = Math.floor(cents / 100)
+  const whole = Math.round(Math.abs(amount))
     .toString()
     .replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')
-  const fraction = String(cents % 100).padStart(2, '0')
-  return `USD ${whole}.${fraction}`
+  return `USD ${whole}`
 }
