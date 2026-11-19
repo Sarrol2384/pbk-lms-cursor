@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { PageHero } from '@/components/marketing/PageHero'
 import { ContactForm } from '@/components/marketing/ContactForm'
+import { FacebookLink } from '@/components/marketing/FacebookLink'
 import { INSTITUTE_NAME, supportEmail } from '@/lib/institute'
 
 export const metadata: Metadata = {
@@ -19,10 +20,15 @@ export default function ContactPage() {
       />
       <section className="py-12 sm:py-16 px-4 bg-gray-50">
         <div className="max-w-3xl mx-auto space-y-6">
-          <p className="text-sm text-gray-600 text-center">
-            Or email us directly at{' '}
-            <a href={`mailto:${email}`} className="text-blue-700 hover:underline">{email}</a>.
-          </p>
+          <div className="text-sm text-gray-600 text-center space-y-2">
+            <p>
+              Or email us directly at{' '}
+              <a href={`mailto:${email}`} className="text-blue-700 hover:underline">{email}</a>.
+            </p>
+            <p>
+              Follow PBK on <FacebookLink className="text-blue-700 hover:underline align-middle" />.
+            </p>
+          </div>
           <ContactForm />
         </div>
       </section>

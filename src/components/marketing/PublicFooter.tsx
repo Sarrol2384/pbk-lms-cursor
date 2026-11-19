@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { MarketingBranding } from '@/lib/marketing/branding'
 import { navLinks } from '@/content/marketing'
 import { supportEmail as instituteEmail } from '@/lib/institute'
+import { FacebookLink } from './FacebookLink'
 import { InstitutionLogo } from './InstitutionLogo'
 
 export function PublicFooter({ branding }: { branding: MarketingBranding }) {
@@ -12,7 +13,7 @@ export function PublicFooter({ branding }: { branding: MarketingBranding }) {
     <footer className="border-t border-gray-100 bg-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-8">
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-start gap-3 min-w-0">
             <InstitutionLogo size="footer" />
             <div className="min-w-0">
               <p className="font-semibold text-gray-900 leading-tight">{branding.institutionName}</p>
@@ -22,6 +23,14 @@ export function PublicFooter({ branding }: { branding: MarketingBranding }) {
                   {supportEmail}
                 </a>
               </p>
+              <div className="mt-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Follow</p>
+                <ul className="mt-2">
+                  <li>
+                    <FacebookLink className="text-sm font-medium text-blue-700 hover:underline" />
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
           <nav className="flex flex-wrap gap-x-6 gap-y-2">

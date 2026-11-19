@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { partnerLogos } from '@/content/marketing'
 
 function LogoCircle({ name, src }: { name: string; src: string }) {
@@ -18,7 +19,13 @@ function LogoCircle({ name, src }: { name: string; src: string }) {
   )
 }
 
-export function PartnerLogoMarquee() {
+export function PartnerLogoMarquee({
+  partnerHref,
+  partnerLabel,
+}: {
+  partnerHref: string
+  partnerLabel: string
+}) {
   const track = [...partnerLogos, ...partnerLogos]
 
   return (
@@ -42,6 +49,14 @@ export function PartnerLogoMarquee() {
           <LogoCircle key={logo.id} name={logo.name} src={logo.src} />
         ))}
       </div>
+
+      <p className="text-center text-sm text-gray-600 mt-8 px-4 max-w-2xl mx-auto leading-relaxed">
+        <Link href={partnerHref} className="font-medium text-blue-700 hover:underline">
+          {partnerLabel}
+        </Link>
+        {' '}
+        is available to PBK students.
+      </p>
     </section>
   )
 }
