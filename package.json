@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --experimental-strip-types --test src/lib/tuition.test.ts src/lib/accreditation-wording.test.ts src/content/programme-fees.test.ts",
+    "test": "node --experimental-strip-types --test src/lib/tuition.test.ts src/lib/accreditation-wording.test.ts src/lib/public-paths.test.ts src/content/indagation.test.ts src/content/social.test.ts src/content/programme-fees.test.ts",
     "test:rls": "bash supabase/tests/course-content-rls.sh",
     "typecheck": "tsc --noEmit"
   },
