@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { getMarketingBranding } from '@/lib/marketing/branding'
 import { PageHero } from '@/components/marketing/PageHero'
 import { CTABand } from '@/components/marketing/CTABand'
+import { INDAGATION_PARTNERSHIP } from '@/content/indagation'
 import { aboutSections } from '@/content/marketing'
 
 export const metadata: Metadata = {
@@ -51,6 +53,18 @@ export default async function AboutPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="py-16 px-4 bg-gray-50">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Partners</h2>
+          <p className="text-gray-600 leading-relaxed">{INDAGATION_PARTNERSHIP.teaser}</p>
+          <p className="mt-4">
+            <Link href={INDAGATION_PARTNERSHIP.path} className="text-blue-700 font-medium hover:underline">
+              Research support and service fees
+            </Link>
+          </p>
         </div>
       </section>
 

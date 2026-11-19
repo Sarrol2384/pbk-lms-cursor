@@ -6,6 +6,7 @@ import { getMarketingBranding } from '@/lib/marketing/branding'
 import { CTABand } from '@/components/marketing/CTABand'
 import { PartnerLogoMarquee } from '@/components/marketing/PartnerLogoMarquee'
 import { UpcomingEventStrip } from '@/components/marketing/UpcomingEventStrip'
+import { INDAGATION_PARTNERSHIP } from '@/content/indagation'
 import { INSTITUTE_MOTTO } from '@/lib/institute'
 import { nextUpcomingEvent } from '@/lib/events'
 
@@ -41,7 +42,7 @@ export default async function HomePage() {
           </h1>
           <p className="text-blue-200 font-medium mb-3">{INSTITUTE_MOTTO}</p>
           <p className="text-blue-100 text-lg sm:text-xl mb-10 max-w-2xl mx-auto">
-            Certificate, Diploma and Advanced Diploma programmes across five schools, with Masters and PhD via Recognition of Prior Learning (RPL) for theology. Study full-time, part-time, in the evening, or by online distance learning.
+            Certificate through Bachelor&apos;s programmes across five schools. Theology & Ministry also lists Master&apos;s and PhD via Recognition of Prior Learning (RPL). Fees are full totals in US dollars. Study full-time, part-time, in the evening, or by online distance learning.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/apply" className="bg-white text-blue-900 font-semibold px-8 py-3.5 rounded-xl hover:bg-blue-50 transition-colors text-sm">
@@ -61,7 +62,7 @@ export default async function HomePage() {
         <div className="max-w-4xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center justify-items-center">
           {[
             { value: '5 schools', label: 'Programmes grouped by school' },
-            { value: 'Up to PhD', label: 'Certificate, Diploma and Advanced Diploma, and Masters and PhD via RPL for theology' },
+            { value: 'Up to PhD', label: "Certificate through Bachelor's, plus Master's and PhD via RPL for theology" },
             { value: '4 modes', label: 'Full-time, part-time, evening and online' },
           ].map(s => (
             <div key={s.label}>
@@ -81,7 +82,8 @@ export default async function HomePage() {
             Learn more about our{' '}
             <Link href="/about" className="text-blue-700 hover:underline">mission</Link>,{' '}
             <Link href="/education" className="text-blue-700 hover:underline">programmes</Link>,{' '}
-            <Link href="/team" className="text-blue-700 hover:underline">leadership team</Link>, and{' '}
+            <Link href="/team" className="text-blue-700 hover:underline">leadership team</Link>,{' '}
+            <Link href={INDAGATION_PARTNERSHIP.path} className="text-blue-700 hover:underline">research support</Link>, and{' '}
             <Link href="/events" className="text-blue-700 hover:underline">events</Link>.
           </p>
           <div className="grid sm:grid-cols-3 gap-6">
@@ -103,7 +105,10 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <PartnerLogoMarquee />
+      <PartnerLogoMarquee
+        partnerHref={INDAGATION_PARTNERSHIP.path}
+        partnerLabel="Research support with The Indagation Institute"
+      />
 
       <CTABand institutionName={institutionName} />
     </>
