@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
 import DashboardResetButton from '@/components/admin/DashboardResetButton'
 import { signedUrlForStoredFile } from '@/lib/storage/signed-url'
+import { publicProgrammeText } from '@/lib/accreditation-wording'
 
 export const dynamic = 'force-dynamic'
 
@@ -166,7 +167,7 @@ export default async function AdminDashboardPage() {
                     </p>
                     <p className="text-xs text-gray-500">{item.profiles?.email || (item.user_id ? `User ${item.user_id.slice(0, 8)}…` : '')}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      {item.courses?.title} • {formatDate(item.created_at)}
+                      {publicProgrammeText(item.courses?.title)} • {formatDate(item.created_at)}
                       {item._type === 'application' && (
                         <span className="ml-1 text-amber-600 font-medium">• Application (no payment yet)</span>
                       )}

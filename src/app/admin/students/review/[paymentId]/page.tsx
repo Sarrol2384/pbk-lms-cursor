@@ -4,6 +4,7 @@ import Link from 'next/link'
 import PaymentReviewCard from '@/components/admin/PaymentReviewCard'
 import { signedUrlForStoredFile } from '@/lib/storage/signed-url'
 import { formatUsd } from '@/lib/tuition'
+import { publicProgrammeText } from '@/lib/accreditation-wording'
 
 export default async function PaymentReviewPage({
   params,
@@ -75,7 +76,7 @@ export default async function PaymentReviewPage({
                 </p>
                 <p className="text-sm text-gray-500">{p.profiles?.email}</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  {p.courses?.title} • {p.courses?.code}
+                  {publicProgrammeText(p.courses?.title)} • {p.courses?.code}
                   {totalInstallments > 1 && <span> • {totalInstallments} installments</span>}
                   {' • '}Total {formatUsd(total)}
                   {paid > 0 && <span> • Paid {formatUsd(paid)}</span>}

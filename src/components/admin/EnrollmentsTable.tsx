@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatDateShort } from '@/lib/utils'
+import { publicProgrammeText } from '@/lib/accreditation-wording'
 
 type EnrollmentRow = {
   id: string
@@ -22,7 +23,7 @@ export default function EnrollmentsTable({ enrollments: initial }: { enrollments
 
   async function removeEnrollment(row: EnrollmentRow) {
     const name = [row.profiles?.first_name, row.profiles?.last_name].filter(Boolean).join(' ') || row.profiles?.email || 'Student'
-    const course = row.courses?.title || row.courses?.code || 'course'
+    const course = publicProgrammeText(row.courses?.title) || row.courses?.code || 'course'
     if (!window.confirm(`Remove this enrollment?\n\n${name} — ${course}\n\nThis will delete progress, submissions, and certificate for this course. This cannot be undone.`)) {
       return
     }
@@ -86,7 +87,7 @@ export default function EnrollmentsTable({ enrollments: initial }: { enrollments
                       <p className="text-xs text-gray-500">{row.profiles?.email ?? '—'}</p>
                     </td>
                     <td className="py-3 px-4 text-gray-700">
-                      {row.courses?.title ?? '—'} {row.courses?.code && `(${row.courses.code})`}
+                      {publicProgrammeText(row.courses?.title) || '—'} {row.courses?.code && `(${row.courses.code})`}
                     </td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${

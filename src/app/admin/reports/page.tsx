@@ -13,7 +13,7 @@ export default async function AdminReportsPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-        <p className="text-gray-500 text-sm mt-1">Analytics and SETA reporting</p>
+        <p className="text-gray-500 text-sm mt-1">Analytics</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -31,8 +31,8 @@ export default async function AdminReportsPage() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="font-semibold text-gray-900 mb-1">SETA Export</h2>
-        <p className="text-sm text-gray-500 mb-4">Download learner and assessment data for SETA reporting.</p>
+        <h2 className="font-semibold text-gray-900 mb-1">Learner export</h2>
+        <p className="text-sm text-gray-500 mb-4">Download learner and assessment data.</p>
         <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
           Export to CSV
         </button>

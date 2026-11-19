@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --experimental-strip-types --test src/lib/tuition.test.ts src/content/programme-fees.test.ts",
-    "test:rls": "bash supabase/tests/course-content-rls.sh"
+    "test": "node --experimental-strip-types --test src/lib/tuition.test.ts src/lib/accreditation-wording.test.ts src/content/programme-fees.test.ts",
+    "test:rls": "bash supabase/tests/course-content-rls.sh",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

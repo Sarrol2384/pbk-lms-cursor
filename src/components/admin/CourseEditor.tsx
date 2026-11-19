@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { publicProgrammeText, storesAccreditationClaim } from '@/lib/accreditation-wording'
 import ValidateCourseLinks from '@/components/admin/ValidateCourseLinks'
 
 const MAX_MODULES = 24
@@ -185,10 +186,9 @@ export default function CourseEditor({ course, modules }: { course: Course; modu
       const existingTitles = [...modules.map(m => m.title), ...insertedTitles]
       const item = listToUse?.[i]
       const payload = {
-        courseTitle: course.title,
-        nqfLevel: course.nqf_level,
+        courseTitle: publicProgrammeText(course.title),
         credits: course.credits,
-        description: course.description || '',
+        description: publicProgrammeText(course.description) || '',
         existingModuleCount: modules.length + inserted,
         existingModuleTitles: existingTitles,
         batchIndex: 0,
@@ -347,7 +347,7 @@ export default function CourseEditor({ course, modules }: { course: Course; modu
               <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
                 {modules.length < expectedModules
                   ? `Add ${expectedModules - modules.length} more unique module(s) to meet the ${expectedModules}-module standard.`
-                  : `You have ${modules.length - expectedModules} extra module(s). Remove duplicates or keep if your SETA allows.`}
+                  : `You have ${modules.length - expectedModules} extra module(s). Remove duplicates, or keep them if they belong on this programme.`}
               </p>
             )}
             <button type="button" onClick={reorderModules} disabled={reorderLoading} className="text-xs text-blue-600 hover:underline disabled:opacity-50">
@@ -536,7 +536,7 @@ export default function CourseEditor({ course, modules }: { course: Course; modu
           </div>
           <div className="border-b border-gray-100 pb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Expected modules</label>
-            <p className="text-xs text-gray-500 mb-2">Target module count for this qualification (e.g. 18 for SAQA 118402 BBA, 20 for SETA-aligned full qualification).</p>
+            <p className="text-xs text-gray-500 mb-2">Target module count for this programme. This is an internal planning figure, not a SAQA or SETA requirement.</p>
             <div className="flex gap-2 items-center">
               <select
                 value={expectedModulesSetting}
@@ -563,12 +563,11 @@ export default function CourseEditor({ course, modules }: { course: Course; modu
             <span className="text-sm text-gray-500 ml-2">months</span>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-1">Description</p>
-            <p className="text-sm text-gray-500">{course.description || 'No description set.'}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-700 mb-1">SAQA ID</p>
-            <p className="text-sm text-gray-500">{course.saqa_id || 'Not set'}</p>
+            <p className="text-sm font-medium text-gray-700 mb-1">Description shown to learners</p>
+            <p className="text-sm text-gray-500">{publicProgrammeText(course.description) || 'No description set.'}</p>
+            {storesAccreditationClaim({ title: course.title, description: course.description, saqaId: course.saqa_id }) && (
+              <p className="text-xs text-amber-800 mt-2">The stored record still contains SAQA, NQF, or SETA wording, or a SAQA qualification ID. That wording is hidden here. The database row has not been changed.</p>
+            )}
           </div>
           <div className="pt-2 border-t border-gray-100">
             <p className="text-sm font-medium text-gray-700 mb-2">Publication status</p>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { withoutSaqaOrNqfClaim } from '@/lib/accreditation-wording'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 const QUIZ_QUESTIONS = 10
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
 
   const { data: course } = await service
     .from('courses')
-    .select('title, nqf_level, credits, description')
+    .select('title, credits, description')
     .eq('id', module.course_id)
     .single()
   if (!course) return NextResponse.json({ error: 'Course not found' }, { status: 404 })
@@ -50,13 +51,15 @@ export async function POST(request: NextRequest) {
 
   const unitSummaries = (units ?? []).map((u) => `Unit ${u.sequence}: ${u.title}${u.content ? ` — ${String(u.content).slice(0, 200)}...` : ''}`).join('\n')
 
-  const prompt = `You are a SETA-accredited curriculum designer in South Africa creating assessment content only.
+  const prompt = `You are a curriculum designer creating assessment content for a globally accredited programme.
 
-COURSE: ${course.title}
-NQF Level: ${course.nqf_level ?? 'Not specified'} | Credits: ${course.credits ?? 'Not specified'}
+Do not describe the programme or the assessment as SAQA accredited, SAQA registered, SETA accredited, SETA aligned, or registered on the South African National Qualifications Framework (NQF). Do not invent an accrediting body or an accreditation number. Do not cite NQF levels.
+
+COURSE: ${withoutSaqaOrNqfClaim(course.title ?? '')}
+Credits: ${course.credits ?? 'Not specified'}
 
 MODULE TO ASSESS: "${module.title}"
-${module.description ? `Description: ${module.description}` : ''}
+${module.description ? `Description: ${withoutSaqaOrNqfClaim(module.description)}` : ''}
 
 UNIT CONTENT (use this to align quiz and assignment):
 ${unitSummaries || 'No unit content provided.'}

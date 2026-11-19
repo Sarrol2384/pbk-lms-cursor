@@ -24,7 +24,7 @@ export function PartnerLogoMarquee() {
   return (
     <section className="py-10 sm:py-12 border-y border-blue-100 bg-blue-50/50 overflow-hidden">
       <h2 className="text-center text-sm font-semibold text-blue-800 uppercase tracking-wide mb-8 px-4">
-        Our partners &amp; accreditations
+        Our partners
       </h2>
 
       {/* Animated marquee */}

@@ -202,11 +202,12 @@ export const partnerLogos = [
   { id: 'eae', name: 'EAE', src: '/logos/partners/eae.jpeg' },
   { id: 'eimt', name: 'EIMT', src: '/logos/partners/eimt.jpeg' },
   { id: 'esms', name: 'ESMS', src: '/logos/partners/esms.jpeg' },
-  { id: 'etdp', name: 'ETDP', src: '/logos/partners/etdp.jpeg' },
   { id: 'ibr', name: 'IBR', src: '/logos/partners/ibr.jpeg' },
   { id: 'pbkmli', name: 'PBK Memorial Leadership Institute', src: '/brand/pbk-emblem.webp' },
-  { id: 'qcto', name: 'QCTO', src: '/logos/partners/qcto.jpeg' },
 ] as const
+
+// QCTO and ETDP SETA logos are not shown. Both are South African NQF quality bodies,
+// so displaying them implied that PBK qualifications are SAQA registered. They are not.
 
 /** Center nav only — Apply is the blue button on the right */
 export const mainNavLinks = [

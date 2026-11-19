@@ -174,6 +174,21 @@ describe('reviewed SQL', () => {
   })
 })
 
+describe('BBA fee statement', () => {
+  const sql = readFileSync(join(root, 'supabase/migrations/00035_bba_fee_and_title.sql'), 'utf8')
+
+  it('guards a single exact title and sets the academic bachelor total', () => {
+    assert.match(sql, /DO NOT APPLY this file to production/)
+    assert.match(sql, /'Bachelor of Business Administration \(SAQA 118402\)'/)
+    assert.match(sql, /title = 'Bachelor of Business Administration'/)
+    assert.match(sql, /fee = 6000/)
+    assert.match(sql, /match_count <> 1/)
+    assert.match(sql, /updated_count <> 1/)
+    assert.match(sql, /Production project ownoxqbsdmhacalegsmr is not a target/)
+    assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /\bVAT\b/i)
+  })
+})
+
 describe('public catalogue still matches the ladders', () => {
   const prospectus = readFileSync(join(root, 'src/content/prospectus.ts'), 'utf8')
 
