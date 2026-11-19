@@ -1,3 +1,5 @@
+import { INDAGATION_PATH } from './indagation'
+
 export type TeamMember = {
   id: string
   name: string
@@ -231,7 +233,8 @@ export const partnerLogos = [
 // QCTO and ETDP SETA logos are not shown. Both are South African NQF quality bodies,
 // so displaying them implied that PBK qualifications are SAQA registered. They are not.
 
-/** Center nav only — Apply is the blue button on the right */
+/** Center nav only — Apply is the blue button on the right.
+ * Research support is omitted here: the institute name already fills the desktop bar. */
 export const mainNavLinks = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
@@ -241,7 +244,23 @@ export const mainNavLinks = [
   { href: '/contact', label: 'Contact' },
 ] as const
 
+export const researchSupportLink = {
+  href: INDAGATION_PATH,
+  label: 'Research support',
+} as const
+
+/** Phone menu and footer. The desktop bar stays on mainNavLinks so the institute name is not truncated. */
+export const mobileNavLinks = [
+  mainNavLinks[0],
+  mainNavLinks[1],
+  mainNavLinks[2],
+  researchSupportLink,
+  mainNavLinks[3],
+  mainNavLinks[4],
+  mainNavLinks[5],
+] as const
+
 export const navLinks = [
-  ...mainNavLinks,
+  ...mobileNavLinks,
   { href: '/apply', label: 'Apply' },
 ] as const

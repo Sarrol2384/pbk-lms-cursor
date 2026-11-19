@@ -6,6 +6,7 @@ import { getMarketingBranding } from '@/lib/marketing/branding'
 import { CTABand } from '@/components/marketing/CTABand'
 import { PartnerLogoMarquee } from '@/components/marketing/PartnerLogoMarquee'
 import { UpcomingEventStrip } from '@/components/marketing/UpcomingEventStrip'
+import { INDAGATION_PARTNERSHIP } from '@/content/indagation'
 import { INSTITUTE_MOTTO } from '@/lib/institute'
 import { nextUpcomingEvent } from '@/lib/events'
 
@@ -81,7 +82,8 @@ export default async function HomePage() {
             Learn more about our{' '}
             <Link href="/about" className="text-blue-700 hover:underline">mission</Link>,{' '}
             <Link href="/education" className="text-blue-700 hover:underline">programmes</Link>,{' '}
-            <Link href="/team" className="text-blue-700 hover:underline">leadership team</Link>, and{' '}
+            <Link href="/team" className="text-blue-700 hover:underline">leadership team</Link>,{' '}
+            <Link href={INDAGATION_PARTNERSHIP.path} className="text-blue-700 hover:underline">research support</Link>, and{' '}
             <Link href="/events" className="text-blue-700 hover:underline">events</Link>.
           </p>
           <div className="grid sm:grid-cols-3 gap-6">
@@ -103,7 +105,10 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <PartnerLogoMarquee />
+      <PartnerLogoMarquee
+        partnerHref={INDAGATION_PARTNERSHIP.path}
+        partnerLabel="Research support with The Indagation Institute"
+      />
 
       <CTABand institutionName={institutionName} />
     </>

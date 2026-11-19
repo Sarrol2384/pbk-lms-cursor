@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { mainNavLinks } from '@/content/marketing'
+import { mainNavLinks, mobileNavLinks } from '@/content/marketing'
 
 function isActive(pathname: string, href: string) {
   return href === '/' ? pathname === '/' : pathname.startsWith(href)
@@ -36,7 +36,7 @@ export function PublicNavChips() {
 
   return (
     <div className="lg:hidden border-t border-gray-100 px-4 py-2 flex gap-2 overflow-x-auto">
-      {mainNavLinks.map(({ href, label }) => {
+      {mobileNavLinks.map(({ href, label }) => {
         const active = isActive(pathname, href)
         return (
           <Link
