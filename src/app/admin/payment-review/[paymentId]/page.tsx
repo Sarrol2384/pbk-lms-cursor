@@ -4,6 +4,7 @@ import PaymentReviewCard from '@/components/admin/PaymentReviewCard'
 import { getPaymentDeadline } from '@/lib/utils'
 import { signedUrlForStoredFile } from '@/lib/storage/signed-url'
 import { firstInstallmentDue, formatUsd } from '@/lib/tuition'
+import { publicProgrammeText } from '@/lib/accreditation-wording'
 
 export const dynamic = 'force-dynamic'
 
@@ -150,7 +151,7 @@ export default async function PaymentReviewPage({
                 </p>
                 <p className="text-sm text-gray-500">{profiles?.email}</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  {courses?.title} • {courses?.code}
+                  {publicProgrammeText(courses?.title)} • {courses?.code}
                   {totalInstallments > 1 && <span> • {totalInstallments} installments</span>}
                   {' • '}Total {formatUsd(total)}
                   {paid > 0 && <span> • Paid {formatUsd(paid)}</span>}

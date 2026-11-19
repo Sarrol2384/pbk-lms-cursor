@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { UnitCompleteAtBottom } from '@/components/student/UnitCompleteAtBottom'
 import { LessonContent } from '@/components/student/LessonContent'
 import { assertPreviousModulePassed, requireActiveEnrollment } from '@/lib/enrollment-access'
+import { publicProgrammeText } from '@/lib/accreditation-wording'
 
 export default async function StudentUnitPage({
   params,
@@ -48,7 +49,7 @@ export default async function StudentUnitPage({
     <div className="w-full min-w-0 max-w-3xl">
       <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">
         <Link href={`/student/courses/${params.courseId}`} className="text-blue-600 hover:underline">
-          {course?.title}
+          {publicProgrammeText(course?.title)}
         </Link>
         <span className="text-gray-400">/</span>
         <Link href={`/student/courses/${params.courseId}/modules/${params.moduleId}`} className="text-blue-600 hover:underline">

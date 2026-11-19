@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { formatUsd } from '@/lib/tuition'
 import { formatDateShort } from '@/lib/utils'
+import { publicProgrammeText } from '@/lib/accreditation-wording'
 
 type Payment = {
   id: string
@@ -214,7 +215,7 @@ export default function StudentsTable({
                           <p className="text-sm font-medium text-gray-900">{e.profiles?.first_name} {e.profiles?.last_name}</p>
                           <p className="text-xs text-gray-500">{e.profiles?.email}</p>
                           <p className="text-xs text-gray-400">
-                            {e.courses?.title} • {e.courses?.code} • Enrolled {e.enrolled_at ? formatDateShort(e.enrolled_at) : '—'}
+                            {publicProgrammeText(e.courses?.title)} • {e.courses?.code} • Enrolled {e.enrolled_at ? formatDateShort(e.enrolled_at) : '—'}
                             {e.paymentForRecord && e.paymentForRecord.balance > 0 && (
                               <span> • Total {formatUsd(e.paymentForRecord.total)}
                                 {e.paymentForRecord.paid > 0 && <span> • Paid {formatUsd(e.paymentForRecord.paid)}</span>}
@@ -252,7 +253,7 @@ export default function StudentsTable({
                         <div>
                           <p className="text-sm font-medium text-gray-900">{e.profiles?.first_name} {e.profiles?.last_name}</p>
                           <p className="text-xs text-gray-500">{e.profiles?.email}</p>
-                          <p className="text-xs text-gray-400">{e.courses?.title} • {e.courses?.code}</p>
+                          <p className="text-xs text-gray-400">{publicProgrammeText(e.courses?.title)} • {e.courses?.code}</p>
                         </div>
                       </div>
                       <button type="button" onClick={() => setEnrollmentStatus(e.id, 'approved')} disabled={loading}
@@ -283,7 +284,7 @@ export default function StudentsTable({
                             <div>
                               <p className="text-sm font-medium text-gray-900">{app.profiles?.first_name} {app.profiles?.last_name}</p>
                               <p className="text-xs text-gray-500">{app.profiles?.email}</p>
-                              <p className="text-xs text-gray-400">{app.courses?.title} • {app.courses?.code} • Applied {formatDateShort(app.created_at)}</p>
+                              <p className="text-xs text-gray-400">{publicProgrammeText(app.courses?.title)} • {app.courses?.code} • Applied {formatDateShort(app.created_at)}</p>
                             </div>
                           </div>
                           {['pending_approval', 'pending', ''].includes((app.status || '').toString().toLowerCase().trim()) ? (
@@ -321,7 +322,7 @@ export default function StudentsTable({
                             <p className="text-sm font-medium text-gray-900">{p.profiles?.first_name} {p.profiles?.last_name}</p>
                             <p className="text-xs text-gray-500">{p.profiles?.email}</p>
                             <p className="text-xs text-gray-400">
-                              {p.courses?.title} • {p.courses?.code}
+                              {publicProgrammeText(p.courses?.title)} • {p.courses?.code}
                               {g.totalInstallments > 1 && <span> • {g.totalInstallments} installments</span>}
                               {' • '}Total {formatUsd(g.total)}
                               {g.paid > 0 && <span> • Paid {formatUsd(g.paid)}</span>}
@@ -356,7 +357,7 @@ export default function StudentsTable({
                       <div>
                         <p className="text-sm font-medium text-gray-900">{p.profiles?.first_name} {p.profiles?.last_name}</p>
                         <p className="text-xs text-gray-500">{p.profiles?.email}</p>
-                        <p className="text-xs text-gray-400">{p.courses?.title} • {p.courses?.code} • {formatUsd(p.amount)} • {formatDateShort(p?.created_at)}</p>
+                        <p className="text-xs text-gray-400">{publicProgrammeText(p.courses?.title)} • {p.courses?.code} • {formatUsd(p.amount)} • {formatDateShort(p?.created_at)}</p>
                       </div>
                     </div>
                     <span className="text-xs font-medium text-red-700">rejected</span>

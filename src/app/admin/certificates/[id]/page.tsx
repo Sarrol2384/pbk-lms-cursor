@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { EditCertificateForm } from './EditCertificateForm'
+import { publicProgrammeText } from '@/lib/accreditation-wording'
 
 export default async function AdminCertificateEditPage({ params }: { params: { id: string } }) {
   const supabase = createServiceClient()
@@ -19,7 +20,7 @@ export default async function AdminCertificateEditPage({ params }: { params: { i
       </div>
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h1 className="text-xl font-bold text-gray-900">Edit certificate</h1>
-        <p className="text-sm text-gray-500 mt-1">{(cert.profiles as any)?.first_name} {(cert.profiles as any)?.last_name} • {(cert.courses as any)?.title}</p>
+        <p className="text-sm text-gray-500 mt-1">{(cert.profiles as any)?.first_name} {(cert.profiles as any)?.last_name} • {publicProgrammeText((cert.courses as any)?.title)}</p>
         <EditCertificateForm certId={params.id} certificateNumber={cert.certificate_number} issuedAt={cert.issued_at} />
       </div>
     </div>

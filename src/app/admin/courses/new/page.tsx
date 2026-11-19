@@ -25,7 +25,7 @@ export default function NewCoursePage() {
 
   const [form, setForm] = useState({
     title: '', code: '', nqf_level: 4, credits: 120,
-    saqa_id: '', description: '', status: 'draft' as 'draft' | 'published',
+    description: '', status: 'draft' as 'draft' | 'published',
   })
 
   const [aiConfig, setAiConfig] = useState({
@@ -41,9 +41,9 @@ export default function NewCoursePage() {
     setForm(f => ({ ...f, [field]: value }))
   }
 
-  function buildAutoDescription(title: string, nqfLevel: number, credits: number) {
-    const safeTitle = title.trim() || 'This course'
-    return `${safeTitle} is a SETA-aligned programme at NQF Level ${nqfLevel} (${credits} credits), designed for the South African context. It develops practical and academic competence through structured modules, formative quizzes, and applied assignments to support real workplace performance.`
+  function buildAutoDescription(title: string, credits: number) {
+    const safeTitle = title.trim() || 'This programme'
+    return `${safeTitle} is a globally accredited programme (${credits} credits). It develops practical and academic competence through structured modules, formative quizzes, and applied assignments.`
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -55,10 +55,10 @@ export default function NewCoursePage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setError('Not authenticated'); setLoading(false); return }
 
-    const description = form.description.trim() || buildAutoDescription(form.title, form.nqf_level, form.credits)
+    const description = form.description.trim() || buildAutoDescription(form.title, form.credits)
     const { data: course, error: err } = await supabase
       .from('courses')
-      .insert({ ...form, saqa_id: form.saqa_id || null, description, created_by: user.id, expected_modules: 20 })
+      .insert({ ...form, saqa_id: null, description, created_by: user.id, expected_modules: 20 })
       .select('id').single()
 
     if (err) { setError(err.message); setLoading(false); return }
@@ -92,14 +92,14 @@ export default function NewCoursePage() {
       course = existing
       setAiProgress('Found existing course — cleaning old generated content...')
 
-      const description = form.description.trim() || buildAutoDescription(form.title, form.nqf_level, form.credits)
+      const description = form.description.trim() || buildAutoDescription(form.title, form.credits)
       const { error: updateErr } = await supabase
         .from('courses')
         .update({
           title: form.title,
           nqf_level: form.nqf_level,
           credits: form.credits,
-          saqa_id: form.saqa_id || null,
+          saqa_id: null,
           description,
           status: form.status,
           expected_modules: aiConfig.numModules,
@@ -114,10 +114,10 @@ export default function NewCoursePage() {
         .eq('course_id', existing.id)
       if (wipeErr) { setError(`Failed to reset old modules: ${wipeErr.message}`); setAiLoading(false); setAiProgress(null); return }
     } else {
-      const description = form.description.trim() || buildAutoDescription(form.title, form.nqf_level, form.credits)
+      const description = form.description.trim() || buildAutoDescription(form.title, form.credits)
       const { data: inserted, error: err } = await supabase
         .from('courses')
-        .insert({ ...form, saqa_id: form.saqa_id || null, description, created_by: user.id, expected_modules: aiConfig.numModules })
+        .insert({ ...form, saqa_id: null, description, created_by: user.id, expected_modules: aiConfig.numModules })
         .select('id').single()
       if (err) { setError(err.message); setAiLoading(false); return }
       course = inserted
@@ -152,7 +152,6 @@ export default function NewCoursePage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             courseTitle: form.title,
-            nqfLevel: form.nqf_level,
             credits: form.credits,
             description: form.description,
             batchIndex,
@@ -323,7 +322,7 @@ export default function NewCoursePage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">New Course</h1>
-          <p className="text-gray-500 text-sm">Create a SETA-accredited course</p>
+          <p className="text-gray-500 text-sm">Create a globally accredited programme</p>
         </div>
       </div>
 
@@ -343,19 +342,14 @@ export default function NewCoursePage() {
           <label className="block text-sm font-medium text-gray-700 mb-1">Course title *</label>
           <input value={form.title} onChange={e => set('title', e.target.value)} className={fieldClass()} placeholder="e.g. Bachelor of Business Administration" required />
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Course code *</label>
-            <input value={form.code} onChange={e => set('code', e.target.value)} className={fieldClass()} placeholder="e.g. BBA101" required />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">SAQA ID</label>
-            <input value={form.saqa_id} onChange={e => set('saqa_id', e.target.value)} className={fieldClass()} placeholder="e.g. 118402" />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Course code *</label>
+          <input value={form.code} onChange={e => set('code', e.target.value)} className={fieldClass()} placeholder="e.g. BBA101" required />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">NQF Level *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Internal level *</label>
+            <p className="text-xs text-gray-500 mb-1">Stored for administration only. It is not shown to learners, and it is not an NQF or SAQA registration.</p>
             <select value={form.nqf_level} onChange={e => set('nqf_level', Number(e.target.value))} className={cn(fieldClass(), 'bg-white')}>
               {[1,2,3,4,5,6,7,8,9,10].map(l => <option key={l} value={l}>Level {l}</option>)}
             </select>

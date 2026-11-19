@@ -4,6 +4,7 @@ import { formatDate } from '@/lib/utils'
 import { buildCertificatePdf } from '@/lib/certificate-pdf'
 import { certificatePdfAccess } from '@/lib/certificate-public'
 import { completionDocumentAllowed } from '@/lib/tuition-lookup'
+import { publicProgrammeText } from '@/lib/accreditation-wording'
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createClient()
@@ -13,13 +14,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   const service = createServiceClient()
   const { data: cert } = await service
     .from('certificates')
-    .select('id, user_id, course_id, certificate_number, issued_at, profiles:user_id(first_name, last_name), courses:course_id(title, code, nqf_level, credits)')
+    .select('id, user_id, course_id, certificate_number, issued_at, profiles:user_id(first_name, last_name), courses:course_id(title, code, credits)')
     .eq('id', params.id)
     .single()
   if (!cert) return NextResponse.json({ error: 'Certificate not found' }, { status: 404 })
 
   const profile = cert.profiles as { first_name?: string; last_name?: string } | null
-  const course = cert.courses as { title?: string; code?: string; nqf_level?: number; credits?: number } | null
+  const course = cert.courses as { title?: string; code?: string; credits?: number } | null
   const { data: authProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   const courseId = (cert as { course_id?: string }).course_id
   const completionAllowed = !!courseId && await completionDocumentAllowed(cert.user_id as string, courseId)
@@ -37,9 +38,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 
   const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Learner'
-  const courseTitle = course?.title ?? 'Course'
+  const courseTitle = publicProgrammeText(course?.title) || 'Course'
   const courseCode = course?.code ?? ''
-  const nqf = course?.nqf_level ?? ''
   const credits = course?.credits ?? ''
   const issued = formatDate(cert.issued_at)
 
@@ -61,7 +61,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       fullName,
       courseTitle,
       courseCode,
-      nqf,
       credits,
       certificateNumber: cert.certificate_number as string,
       issuedDate: issued,

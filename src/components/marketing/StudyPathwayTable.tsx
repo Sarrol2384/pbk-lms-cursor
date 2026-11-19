@@ -1,17 +1,16 @@
-import type { NqfPathwayRow } from '@/content/marketing'
+import type { StudyPathwayRow } from '@/content/marketing'
 
 const columns = [
-  { key: 'level', label: 'NQF Level' },
-  { key: 'qualificationType', label: 'Qualification Type' },
-  { key: 'entryRequirement', label: 'Entry Requirement' },
+  { key: 'level', label: 'Level' },
+  { key: 'qualificationType', label: 'Qualification type' },
+  { key: 'entryRequirement', label: 'Entry requirement' },
   { key: 'duration', label: 'Duration' },
-  { key: 'nextStep', label: 'Next Step After Completion' },
+  { key: 'nextStep', label: 'Next step after completion' },
 ] as const
 
-export function NqfPathwayTable({ rows }: { rows: NqfPathwayRow[] }) {
+export function StudyPathwayTable({ rows }: { rows: StudyPathwayRow[] }) {
   return (
     <>
-      {/* Desktop table */}
       <div className="hidden lg:block overflow-x-auto rounded-xl border border-blue-100 shadow-sm">
         <table className="w-full text-left text-sm border-collapse">
           <thead>
@@ -42,7 +41,6 @@ export function NqfPathwayTable({ rows }: { rows: NqfPathwayRow[] }) {
         </table>
       </div>
 
-      {/* Mobile cards */}
       <div className="lg:hidden space-y-4">
         {rows.map(row => (
           <article

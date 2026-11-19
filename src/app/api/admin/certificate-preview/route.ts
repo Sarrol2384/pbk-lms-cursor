@@ -29,7 +29,6 @@ export async function GET() {
       fullName: 'Sample Learner',
       courseTitle: 'Sample Course Title',
       courseCode: 'SAMPLE-101',
-      nqf: 5,
       credits: 12,
       certificateNumber: 'PREVIEW-000000',
       issuedDate: new Date().toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }),

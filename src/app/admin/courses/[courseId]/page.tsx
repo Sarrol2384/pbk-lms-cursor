@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import CourseEditor from '@/components/admin/CourseEditor'
 import ValidateCourseLinks from '@/components/admin/ValidateCourseLinks'
+import { programmeMetaLine, publicProgrammeText, storesAccreditationClaim } from '@/lib/accreditation-wording'
 
 export default async function CourseDetailPage({ params }: { params: { courseId: string } }) {
   const supabase = createClient()
@@ -25,12 +26,15 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-900">{course.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{publicProgrammeText(course.title)}</h1>
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${course.status === 'published' ? 'bg-green-100 text-green-700' : course.status === 'draft' ? 'bg-gray-100 text-gray-700' : 'bg-red-100 text-red-700'}`}>
               {course.status}
             </span>
           </div>
-          <p className="text-gray-500 text-sm">{course.code} • NQF {course.nqf_level} • {course.credits} credits</p>
+          <p className="text-gray-500 text-sm">{programmeMetaLine(course.code, course.credits)}</p>
+          {storesAccreditationClaim({ title: course.title, description: course.description, saqaId: course.saqa_id }) && (
+            <p className="text-xs text-amber-800 mt-1">This course record still contains SAQA, NQF, or SETA wording, or a SAQA qualification ID. Learners, certificates, and emails do not show it. The database row has not been changed.</p>
+          )}
         </div>
       </div>
       <div className="mb-6">

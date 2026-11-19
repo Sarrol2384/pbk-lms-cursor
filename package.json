@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "node --experimental-strip-types --test src/lib/*.test.ts",
-    "test:rls": "bash supabase/tests/course-content-rls.sh"
+    "test:rls": "bash supabase/tests/course-content-rls.sh",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
