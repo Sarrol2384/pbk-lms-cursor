@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { mouPartners, mouPartnersStatement, partnerLogos } from '@/content/marketing'
+import { MouPartnerLogos } from '@/components/marketing/MouPartners'
+import { mouPartnersStatement, partnerLogos } from '@/content/marketing'
 
 function LogoCircle({ name, src }: { name: string; src: string }) {
   return (
@@ -52,14 +53,7 @@ export function PartnerLogoMarquee({
 
       <div className="max-w-3xl mx-auto mt-8 px-4 text-center">
         <p className="text-sm text-gray-700 leading-relaxed">{mouPartnersStatement}</p>
-        <ul className="mt-4 flex flex-wrap justify-center gap-3">
-          {mouPartners.map(partner => (
-            <li key={partner.id} className="min-w-[9rem] rounded-xl border border-blue-200 bg-white px-5 py-4 shadow-sm">
-              <p className="text-sm font-semibold tracking-wide text-blue-950">{partner.name}</p>
-              <p className="mt-1 text-xs text-gray-500">Memorandum of Understanding</p>
-            </li>
-          ))}
-        </ul>
+        <MouPartnerLogos />
       </div>
 
       <p className="text-center text-sm text-gray-600 mt-8 px-4 max-w-2xl mx-auto leading-relaxed">

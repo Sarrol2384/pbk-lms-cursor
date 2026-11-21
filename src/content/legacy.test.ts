@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
@@ -39,13 +39,17 @@ test('keeps the full tribute, the founder heading, and South African spelling', 
   assert.match(tribute, /LEGACY_QUOTE/)
 })
 
-test('names the memoranda of understanding and leaves a logo TODO', () => {
+test('names the memoranda partners and uses the supplied logos', () => {
   const marketing = readFileSync(join(root, 'src/content/marketing.ts'), 'utf8')
-  assert.match(marketing, /PBK has Memoranda of Understanding with EIMI, Birchwood and EuroAmerican/)
-  assert.match(marketing, /TODO\(logos\)/)
-  assert.match(marketing, /Do not hotlink/)
+  assert.match(marketing, /European Institute of Management & Technology/)
+  assert.match(marketing, /EuroAmerican Education/)
+  assert.match(marketing, /Birchwood University/)
+  assert.equal(marketing.includes('EIMI'), false)
+  for (const file of ['eimt.webp', 'euroamerican.webp', 'birchwood.webp']) {
+    assert.equal(existsSync(join(root, 'public/logos/partners', file)), true, file)
+  }
   const about = readFileSync(join(root, 'src/app/(marketing)/about/page.tsx'), 'utf8')
-  const home = readFileSync(join(root, 'src/components/marketing/PartnerLogoMarquee.tsx'), 'utf8')
+  const logos = readFileSync(join(root, 'src/components/marketing/MouPartners.tsx'), 'utf8')
   assert.match(about, /MouPartners/)
-  assert.match(home, /mouPartnersStatement/)
+  assert.match(logos, /alt=\{partner\.alt\}/)
 })
