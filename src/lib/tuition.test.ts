@@ -8,6 +8,8 @@ import {
   courseAccessAllowed,
   firstInstallmentDue,
   formatUsd,
+  openingPaymentUsd,
+  MINIMUM_DEPOSIT_RATIO,
   manualGrantAllowed,
   outcomeAfterRecording,
   parseAmountReceived,
@@ -217,6 +219,19 @@ describe('completion document gate', () => {
       enrollmentStatus: 'payment_pending',
       accessOverride: false,
     }), { action: 'skip', reason: 'tuition_incomplete' })
+  })
+})
+
+describe('opening deposit', () => {
+  it('keeps an equal share that is already at least 30 percent, and raises a smaller share to 30 percent', () => {
+    assert.equal(MINIMUM_DEPOSIT_RATIO, 0.3)
+    assert.equal(openingPaymentUsd(12000, 1), 12000)
+    assert.equal(openingPaymentUsd(12000, 3), 4000)
+    assert.equal(openingPaymentUsd(12000, 6), 3600)
+    assert.equal(openingPaymentUsd(12000, 12), 3600)
+    assert.equal(openingPaymentUsd(100, 12), 30)
+    assert.equal(openingPaymentUsd(0, 6), 0)
+    assert.equal(firstInstallmentDue(12000, 12, 1000), 1000)
   })
 })
 

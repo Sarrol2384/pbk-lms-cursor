@@ -8,7 +8,7 @@ import {
   studyLevels,
   studyModes,
 } from '@/content/prospectus'
-import { scheduleRow, trackForSchool } from '@/content/programme-fees'
+import { CHAPLAINCY_PATH, scheduleRow, trackForSchool } from '@/content/programme-fees'
 import { INSTITUTE_MOTTO, INSTITUTE_NAME } from '@/lib/institute'
 import { formatUsd } from '@/lib/tuition'
 
@@ -99,12 +99,18 @@ export function Prospectus() {
                       const level = studyLevels.find(item => item.id === levelId)
                       if (!level) return null
                       const priced = scheduleRow(trackForSchool(school.id), level.id)
-                      return `${level.label} (${priced.duration}, ${formatUsd(priced.tuitionUsd)})`
+                      return `${level.label} (${priced.duration}, ${formatUsd(priced.tuitionUsd)}, registration ${formatUsd(priced.registrationUsd)})`
                     }).filter(Boolean).join(' · ')}
                   </p>
                   {programmeOffersRpl(programme) && (
                     <p className="text-xs text-blue-900 mt-1">
                       Master&apos;s and PhD are available for this programme via Recognition of Prior Learning (RPL). RPL is not used from Certificate through Bachelor&apos;s.
+                    </p>
+                  )}
+                  {programme.id === 'chaplaincy' && (
+                    <p className="text-xs text-gray-700 mt-1">
+                      Designated, Certified, and Professional Chaplain fees are listed on the{' '}
+                      <Link href={CHAPLAINCY_PATH} className="font-semibold text-blue-700 hover:underline">chaplaincy page</Link>.
                     </p>
                   )}
                   <Link

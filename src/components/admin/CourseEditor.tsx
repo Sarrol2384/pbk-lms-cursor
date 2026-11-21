@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { publicProgrammeText, storesAccreditationClaim } from '@/lib/accreditation-wording'
+import { INSTALMENT_TERMS } from '@/content/programme-fees'
 import ValidateCourseLinks from '@/components/admin/ValidateCourseLinks'
 
 const MAX_MODULES = 24
@@ -518,7 +519,7 @@ export default function CourseEditor({ course, modules }: { course: Course; modu
         <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-lg space-y-4">
           <div className="border-b border-gray-100 pb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Course fee (USD)</label>
-            <p className="text-xs text-gray-500 mb-2">Set the total fee in US dollars. The number already stored is the USD amount. Students can pay in 1, 3, 6, or 12 instalments. Do not convert it.</p>
+            <p className="text-xs text-gray-500 mb-2">Set the total fee in US dollars. The number already stored is the USD amount. Students can pay in full, or choose a 3, 6, or 12 month plan. {INSTALMENT_TERMS} Do not convert the stored amount.</p>
             <div className="flex gap-2 items-center">
               <input
                 type="number"

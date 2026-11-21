@@ -7,6 +7,7 @@ import { CTABand } from '@/components/marketing/CTABand'
 import { PartnerLogoMarquee } from '@/components/marketing/PartnerLogoMarquee'
 import { UpcomingEventStrip } from '@/components/marketing/UpcomingEventStrip'
 import { INDAGATION_PARTNERSHIP } from '@/content/indagation'
+import { INSTALMENT_TERMS } from '@/content/programme-fees'
 import { INSTITUTE_MOTTO } from '@/lib/institute'
 import { nextUpcomingEvent } from '@/lib/events'
 
@@ -90,7 +91,7 @@ export default async function HomePage() {
             {[
               { icon: '📚', title: 'Structured Learning', desc: 'Sequential modules with formative quizzes, assignments, and final assessments.' },
               { icon: '🏆', title: 'Globally Accredited Qualifications', desc: 'Earn globally accredited qualifications and certificates upon successful completion of your programme.' },
-              { icon: '💳', title: 'Flexible Payments', desc: 'Pay your course fee in US dollars, in 3, 6, or 12 monthly instalments — whichever suits you best.' },
+              { icon: '💳', title: 'Flexible Payments', desc: `Pay your course fee in US dollars. ${INSTALMENT_TERMS}` },
               { icon: '📱', title: 'Study Anywhere', desc: 'Access your course material from any device, any time.' },
               { icon: '👩‍🏫', title: 'Expert Lecturers', desc: 'Learn from qualified professionals with real-world industry experience.' },
               { icon: '📊', title: 'Progress Tracking', desc: 'Track your marks and progress through each module in real time.' },

@@ -1,5 +1,6 @@
 import { formatUsd } from '@/lib/tuition'
 import {
+  CHAPLAINCY_PATH,
   PROGRESSION_NOTES,
   STUDY_PATHWAY_INTRO,
   pathwayFacts,
@@ -159,7 +160,7 @@ function pathwayRows(track: FeeTrack): StudyPathwayRow[] {
     entryRequirement: fact.entryRequirement,
     duration: fact.duration,
     tuition: formatUsd(fact.tuitionUsd),
-    registration: fact.registrationUsd == null ? 'Not set' : formatUsd(fact.registrationUsd),
+    registration: formatUsd(fact.registrationUsd),
     nextStep: fact.nextStep,
   }))
 }
@@ -183,7 +184,7 @@ export const educationProgrammes = [
     levels: 'Self-paced within programme guidelines',
     delivery: 'Access materials from any device',
     highlights: [
-      'Pay course fees in US dollars, in 3, 6, or 12 monthly instalments',
+      'Pay course fees in US dollars. A deposit of 30% to 50% of the total fee, then monthly instalments for the balance',
       'Proof-of-payment workflow for bank transfers',
       'Admin-reviewed applications before full access',
     ],
@@ -194,8 +195,24 @@ export const applySteps = [
   { step: 1, title: 'Create your account', desc: 'Register with your email and set a secure password.' },
   { step: 2, title: 'Choose a programme', desc: 'Browse available qualifications and select the one that fits your goals.' },
   { step: 3, title: 'Submit your application', desc: 'Complete the enrolment form for your chosen programme.' },
-  { step: 4, title: 'Approval, then payment', desc: 'After an administrator approves your application, choose a payment plan and upload proof of payment. Fees are in US dollars. Course access opens once the first instalment is verified.' },
+  { step: 4, title: 'Approval, then payment', desc: 'After an administrator approves your application, choose a payment plan and upload proof of payment. Fees are in US dollars. A deposit of 30% to 50% of the total fee, then monthly instalments for the balance. Course access opens once that deposit is verified.' },
 ]
+
+/**
+ * Memoranda of Understanding named by the institute.
+ * TODO(logos): add logo files at public/logos/partners/eimi, birchwood, and
+ * euroamerican when they are supplied. Do not hotlink logos from other sites.
+ * Text badges are the stand-in until those files exist. EIMT in the marquee
+ * is a different mark and is not a substitute for EIMI.
+ */
+export const mouPartners = [
+  { id: 'eimi', name: 'EIMI' },
+  { id: 'birchwood', name: 'Birchwood' },
+  { id: 'euroamerican', name: 'EuroAmerican' },
+] as const
+
+export const mouPartnersStatement =
+  'PBK has Memoranda of Understanding with EIMI, Birchwood and EuroAmerican.'
 
 export const partnerLogos = [
   { id: 'aasa', name: 'AASA', src: '/logos/partners/aasa.jpeg' },
@@ -211,11 +228,17 @@ export const partnerLogos = [
 // so displaying them implied that PBK qualifications are SAQA registered. They are not.
 
 /** Center nav only — Apply is the blue button on the right.
- * Research support is omitted here: the institute name already fills the desktop bar. */
+ * Research support stays on the phone menu and footer so the institute name still fits. */
+export const chaplaincyLink = {
+  href: CHAPLAINCY_PATH,
+  label: 'Chaplaincy',
+} as const
+
 export const mainNavLinks = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
   { href: '/education', label: 'Education' },
+  chaplaincyLink,
   { href: '/team', label: 'Our Team' },
   { href: '/events', label: 'Events' },
   { href: '/contact', label: 'Contact' },
@@ -231,10 +254,11 @@ export const mobileNavLinks = [
   mainNavLinks[0],
   mainNavLinks[1],
   mainNavLinks[2],
+  chaplaincyLink,
   researchSupportLink,
-  mainNavLinks[3],
   mainNavLinks[4],
   mainNavLinks[5],
+  mainNavLinks[6],
 ] as const
 
 export const navLinks = [

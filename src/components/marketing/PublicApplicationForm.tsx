@@ -14,6 +14,7 @@ import {
   type StudyLevelId,
 } from '@/content/prospectus'
 import { registrationSentence, scheduleRow, trackForSchool } from '@/content/programme-fees'
+import { PaymentTerms } from '@/components/marketing/PaymentTerms'
 import { formatUsd } from '@/lib/tuition'
 import { INSTITUTE_EMAIL, INSTITUTE_NAME } from '@/lib/institute'
 import { CountrySelect } from '@/components/marketing/CountrySelect'
@@ -198,6 +199,7 @@ export function PublicApplicationForm({ initialProgrammeId }: { initialProgramme
                 Programme fee {formatUsd(selectedQuote.tuitionUsd)}. {registrationSentence(levelHint.id, formatUsd)} Amounts are full totals in US dollars.
               </p>
             )}
+            <PaymentTerms className="text-xs text-gray-700 mt-2 leading-relaxed" />
             {errors.level && <p className="text-xs text-red-600 mt-1">{errors.level}</p>}
           </div>
           <div>

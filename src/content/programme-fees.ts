@@ -1,18 +1,19 @@
 /**
- * Cyril's approved programme fees, in whole US dollars.
+ * Published programme fees, in whole US dollars.
  *
- * This module is the published source. Migration 00034 is the same schedule
- * for the database, and it is not applied from the pull request.
+ * This module is the published source. Migration 00034 created the same
+ * tuition schedule and left standard registration NULL. Migration 00037 sets
+ * that registration amount to 25. Neither file is run from the pull request.
  * `courses.fee` is a separate stored course total. This module does not
  * change those rows, and it does not convert them.
  *
- * Registration for programmes that are not Master's or PhD (RPL) is one
- * setting, `STANDARD_REGISTRATION_USD`. It is unset on purpose.
- * Do not replace null with a guessed number.
+ * Registration for academic and theology programmes that are not Master's or
+ * PhD (RPL) is `STANDARD_REGISTRATION_USD`. RPL registration stays
+ * `RPL_REGISTRATION_USD`.
  *
- * Chaplaincy registration is also $100, and that rule is not implemented here.
- * Chaplaincy stays on the theology tuition totals and on the unset standard
- * registration amount.
+ * The chaplaincy certification pathway has its own amounts in
+ * `CHAPLAINCY_FEES`. The Theology & Ministry prospectus programme named
+ * Chaplaincy stays on the theology ladder.
  */
 
 export const FEE_TRACKS = ['academic', 'theology'] as const
@@ -46,14 +47,65 @@ export const THEOLOGY_LADDER = [
   'phd_rpl',
 ] as const satisfies readonly StudyLevelId[]
 
-/** Whole US dollars. Known amount for Master's and PhD (RPL) only. */
+/** Whole US dollars. Master's and PhD (RPL) only. */
 export const RPL_REGISTRATION_USD = 100
 
+/** Whole US dollars. Academic and theology programmes that are not RPL. */
+export const STANDARD_REGISTRATION_USD = 25
+
 /**
- * TODO: standard registration amount for programmes that are not RPL.
- * Cyril has not approved a number. Leave this null.
+ * Published payment terms. The opening amount on a 3, 6, or 12 month plan is
+ * at least 30% of the fee. An equal share that is already higher is kept.
+ * The month counts are the existing plans. This does not add a new term.
  */
-export const STANDARD_REGISTRATION_USD: number | null = null
+export const INSTALMENT_TERMS =
+  'A deposit of 30% to 50% of the total fee, then monthly instalments for the balance.'
+
+export const CHAPLAINCY_PATH = '/chaplaincy'
+
+export type ChaplaincyLevelId = 'designated' | 'certified' | 'professional'
+
+export type ChaplaincyLevel = {
+  id: ChaplaincyLevelId
+  name: string
+  feeUsd: number
+  entryRequirement: string
+  /** Null when a duration was not provided. Do not invent one. */
+  duration: string | null
+}
+
+/** Chaplaincy certification pathway. Separate from theology prospectus tuition. */
+export const CHAPLAINCY_FEES: {
+  registrationUsd: number
+  acbcMembershipUsd: number
+  levels: readonly ChaplaincyLevel[]
+} = {
+  registrationUsd: 50,
+  acbcMembershipUsd: 50,
+  levels: [
+    {
+      id: 'designated',
+      name: 'Designated Chaplain',
+      feeUsd: 80,
+      entryRequirement: 'Grade 12 (NQF 4) or higher',
+      duration: null,
+    },
+    {
+      id: 'certified',
+      name: 'Certified Chaplain',
+      feeUsd: 150,
+      entryRequirement: 'Any theological diploma',
+      duration: '6 months',
+    },
+    {
+      id: 'professional',
+      name: 'Professional Chaplain',
+      feeUsd: 250,
+      entryRequirement: 'A degree',
+      duration: '1 year or more',
+    },
+  ],
+}
 
 export const LEVEL_LABEL: Record<StudyLevelId, string> = {
   certificate: 'Certificate',
@@ -99,7 +151,7 @@ export type FeeScheduleRow = {
   name: string
   tuitionUsd: number
   duration: string
-  registrationUsd: number | null
+  registrationUsd: number
   offeredOnProspectus: boolean
 }
 
@@ -137,14 +189,12 @@ export function scheduleRow(track: FeeTrack, level: StudyLevelId): FeeScheduleRo
   return row
 }
 
-export function registrationAmount(level: StudyLevelId): number | null {
+export function registrationAmount(level: StudyLevelId): number {
   return isRplLevel(level) ? RPL_REGISTRATION_USD : STANDARD_REGISTRATION_USD
 }
 
 export function registrationSentence(level: StudyLevelId, format: (amount: number) => string): string {
-  const amount = registrationAmount(level)
-  if (amount == null) return 'Registration for this programme has not been set.'
-  return `Registration is ${format(amount)}.`
+  return `Registration is ${format(registrationAmount(level))}.`
 }
 
 export function choiceLabel(
@@ -199,7 +249,7 @@ export type PathwayFact = {
   entryRequirement: string
   duration: string
   tuitionUsd: number
-  registrationUsd: number | null
+  registrationUsd: number
   nextStep: string
   offeredOnProspectus: boolean
 }
@@ -230,7 +280,8 @@ export const PROGRESSION_NOTES = [
   'Entry requirements: Use the admission requirement for the level you are applying for.',
   "Recognition of Prior Learning (RPL) is only for Master's and PhD. It is not used for Certificate, Advanced Certificate, Diploma, Advanced Diploma, or Bachelor's.",
   "Master's and PhD via RPL are listed on Theology & Ministry programmes. Academic prices for those levels are approved, and those qualifications are not listed on academic programmes in this prospectus.",
-  "Registration is $100 for Master's and PhD (RPL). Registration for other programmes has not been set.",
+  "Registration is $25 for Certificate, Advanced Certificate, Diploma, Advanced Diploma, and Bachelor's on academic and theology programmes. Registration is $100 for Master's and PhD (RPL).",
+  'A deposit of 30% to 50% of the total fee, then monthly instalments for the balance.',
   'Accreditation: PBK programmes are globally accredited.',
   'Bridging courses: PBK offers bridging programmes for learners who do not meet the direct admission requirement for their chosen qualification.',
 ] as const

@@ -1,14 +1,15 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { IndagationFees } from '@/components/marketing/IndagationFees'
 import {
+  INDAGATION_IMAGES,
   INDAGATION_META_DESCRIPTION,
   INDAGATION_PARTNERSHIP,
   INDAGATION_PATH,
-  INDAGATION_WHATSAPP_LINK,
 } from '@/content/indagation'
 import { FACEBOOK_PAGE_URL } from '@/content/social'
-import { INSTITUTE_NAME } from '@/lib/institute'
+import { INSTITUTE_EMAIL, INSTITUTE_NAME, supportEmail } from '@/lib/institute'
 import { siteUrl } from '@/lib/site-url'
 
 export const metadata: Metadata = {
@@ -31,6 +32,7 @@ export const metadata: Metadata = {
 }
 
 export default function ResearchSupportPage() {
+  const email = supportEmail()
   const jsonLd = JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -42,13 +44,12 @@ export default function ResearchSupportPage() {
       '@type': 'Organization',
       name: INSTITUTE_NAME,
       url: siteUrl(),
+      email: INSTITUTE_EMAIL,
       sameAs: [FACEBOOK_PAGE_URL],
     },
     about: {
       '@type': 'Organization',
       name: 'The Indagation Institute',
-      email: INDAGATION_PARTNERSHIP.email,
-      telephone: '+260766100934',
       slogan: INDAGATION_PARTNERSHIP.slogan,
     },
   }).replace(/</g, '\\u003c')
@@ -64,6 +65,32 @@ export default function ResearchSupportPage() {
             {INDAGATION_PARTNERSHIP.heading}
           </h1>
           <p className="text-blue-100 text-base sm:text-lg max-w-2xl mx-auto">{INDAGATION_PARTNERSHIP.tagline}</p>
+        </div>
+      </section>
+
+      <section className="py-12 sm:py-16 px-4 sm:px-6" aria-label="Research and study">
+        <div className="max-w-5xl mx-auto">
+          <ul className="grid sm:grid-cols-3 gap-4">
+            {INDAGATION_IMAGES.map(image => (
+              <li key={image.src} className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                <Image
+                  src={image.src}
+                  alt={image.alt}
+                  width={image.width}
+                  height={image.height}
+                  sizes="(min-width: 640px) 33vw, 100vw"
+                  className="h-52 w-full object-cover"
+                />
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-gray-500 mt-3">
+            Photographs from{' '}
+            <a href="https://unsplash.com/license" className="underline hover:text-gray-700">
+              Unsplash
+            </a>
+            . The Unsplash Licence does not require attribution.
+          </p>
         </div>
       </section>
 
@@ -116,25 +143,24 @@ export default function ResearchSupportPage() {
 
       <section id="contact" className="py-12 sm:py-16 px-4 sm:px-6 scroll-mt-32">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">Contact The Indagation Institute</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Enquire through PBK</h2>
           <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-6">
-            Ask The Indagation Institute about research support, training and consultancy.
+            Enquiries about research support go to PBK. Use the contact page or email {email}.
           </p>
           <div className="grid sm:grid-cols-2 gap-4">
+            <Link
+              href="/contact"
+              className="rounded-xl border border-gray-200 p-5 hover:border-blue-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">Contact page</p>
+              <p className="font-medium text-gray-900 mt-2">Send a message to PBK</p>
+            </Link>
             <a
-              href={`mailto:${INDAGATION_PARTNERSHIP.email}`}
+              href={`mailto:${email}`}
               className="rounded-xl border border-gray-200 p-5 hover:border-blue-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
             >
               <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">Email</p>
-              <p className="font-medium text-gray-900 mt-2 break-all">{INDAGATION_PARTNERSHIP.email}</p>
-            </a>
-            <a
-              {...INDAGATION_WHATSAPP_LINK}
-              className="rounded-xl border border-gray-200 p-5 hover:border-blue-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-            >
-              <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">WhatsApp</p>
-              <p className="font-medium text-gray-900 mt-2">{INDAGATION_PARTNERSHIP.whatsAppDisplay}</p>
-              <span className="sr-only"> (opens in a new tab)</span>
+              <p className="font-medium text-gray-900 mt-2 break-all">{email}</p>
             </a>
           </div>
         </div>

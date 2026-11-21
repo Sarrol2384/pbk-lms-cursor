@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { openingPaymentUsd } from '@/lib/tuition'
 
 /** POST: student creates a payment row after an admin has approved the application (payment_pending). */
 export async function POST(request: NextRequest) {
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
 
   const { data: course } = await service.from('courses').select('fee').eq('id', enrollment.course_id).single()
   const fee = course?.fee ?? 0
-  const installmentAmount = totalInstallments > 1 ? Math.ceil(fee / totalInstallments) : fee
+  const installmentAmount = openingPaymentUsd(fee, totalInstallments)
 
   const { data: payment, error: payErr } = await service
     .from('payments')
