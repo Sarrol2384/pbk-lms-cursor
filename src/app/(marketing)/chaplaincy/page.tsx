@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { PageHero } from '@/components/marketing/PageHero'
 import { PaymentTerms } from '@/components/marketing/PaymentTerms'
+import { CHAPLAINCY_IMAGES } from '@/content/chaplaincy-media'
 import { CHAPLAINCY_FEES } from '@/content/programme-fees'
 import { INSTITUTE_NAME, supportEmail } from '@/lib/institute'
 import { formatUsd } from '@/lib/tuition'
@@ -31,6 +33,27 @@ export default function ChaplaincyPage() {
             PBK programmes are globally accredited. They are not registered with the South African Qualifications Authority (SAQA). Grade 12 (NQF 4) in the table is the applicant&apos;s school qualification.
           </p>
         </div>
+        <ul className="max-w-5xl mx-auto mt-10 grid gap-4 sm:grid-cols-3">
+          {CHAPLAINCY_IMAGES.map(image => (
+            <li key={image.src} className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+              <Image
+                src={image.src}
+                alt={image.alt}
+                width={image.width}
+                height={image.height}
+                sizes="(min-width: 640px) 33vw, 100vw"
+                className="h-52 w-full object-cover"
+              />
+            </li>
+          ))}
+        </ul>
+        <p className="max-w-5xl mx-auto text-xs text-gray-500 mt-3">
+          Photographs from{' '}
+          <a href="https://unsplash.com/license" className="underline hover:text-gray-700">
+            Unsplash
+          </a>
+          . The Unsplash Licence does not require attribution.
+        </p>
       </section>
 
       <section id="fees" className="py-12 sm:py-16 px-4 sm:px-6 bg-gray-50 scroll-mt-28">

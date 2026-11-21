@@ -199,20 +199,42 @@ export const applySteps = [
 ]
 
 /**
- * Memoranda of Understanding named by the institute.
- * TODO(logos): add logo files at public/logos/partners/eimi, birchwood, and
- * euroamerican when they are supplied. Do not hotlink logos from other sites.
- * Text badges are the stand-in until those files exist. EIMT in the marquee
- * is a different mark and is not a substitute for EIMI.
+ * Memoranda of Understanding. Logos were supplied by PBK and saved under
+ * public/logos/partners/. The older circular eimt.jpeg in the marquee is a
+ * separate mark and is not this wordmark.
  */
 export const mouPartners = [
-  { id: 'eimi', name: 'EIMI' },
-  { id: 'birchwood', name: 'Birchwood' },
-  { id: 'euroamerican', name: 'EuroAmerican' },
+  {
+    id: 'eimt',
+    name: 'EIMT',
+    detail: 'European Institute of Management & Technology',
+    alt: 'EIMT, European Institute of Management & Technology',
+    src: '/logos/partners/eimt.webp',
+    width: 960,
+    height: 331,
+  },
+  {
+    id: 'euroamerican',
+    name: 'EuroAmerican Education',
+    detail: null,
+    alt: 'EuroAmerican Education',
+    src: '/logos/partners/euroamerican.webp',
+    width: 960,
+    height: 341,
+  },
+  {
+    id: 'birchwood',
+    name: 'Birchwood University',
+    detail: null,
+    alt: 'Birchwood University',
+    src: '/logos/partners/birchwood.webp',
+    width: 960,
+    height: 356,
+  },
 ] as const
 
 export const mouPartnersStatement =
-  'PBK has Memoranda of Understanding with EIMI, Birchwood and EuroAmerican.'
+  'PBK has Memoranda of Understanding with EIMT (European Institute of Management & Technology), EuroAmerican Education and Birchwood University.'
 
 export const partnerLogos = [
   { id: 'aasa', name: 'AASA', src: '/logos/partners/aasa.jpeg' },

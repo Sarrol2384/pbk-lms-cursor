@@ -3,6 +3,7 @@ import { PageHero } from '@/components/marketing/PageHero'
 import { CTABand } from '@/components/marketing/CTABand'
 import { StudyPathwayTable } from '@/components/marketing/StudyPathwayTable'
 import { Prospectus } from '@/components/marketing/Prospectus'
+import Image from 'next/image'
 import Link from 'next/link'
 import {
   academicPathwayRows,
@@ -10,6 +11,7 @@ import {
   studyProgressionNotes,
   theologyPathwayRows,
 } from '@/content/marketing'
+import { CHAPLAINCY_IMAGES } from '@/content/chaplaincy-media'
 import { CHAPLAINCY_FEES, CHAPLAINCY_PATH, INSTALMENT_TERMS, RPL_REGISTRATION_USD, STANDARD_REGISTRATION_USD } from '@/content/programme-fees'
 import { INSTITUTE_MOTTO, INSTITUTE_NAME } from '@/lib/institute'
 import { formatUsd } from '@/lib/tuition'
@@ -65,16 +67,26 @@ export default function EducationPage() {
       </section>
 
       <section className="py-12 sm:py-16 px-4 sm:px-6">
-        <div className="max-w-3xl mx-auto bg-white border border-blue-100 rounded-xl p-6 sm:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">Chaplaincy</h2>
-          <p className="text-gray-600 text-sm leading-relaxed mb-4">
-            Designated, Certified, and Professional Chaplain are a separate pathway. Registration is {formatUsd(CHAPLAINCY_FEES.registrationUsd)} (one-off) and ACBC membership is {formatUsd(CHAPLAINCY_FEES.acbcMembershipUsd)} per year.
-          </p>
-          <p className="text-sm">
-            <Link href={CHAPLAINCY_PATH} className="font-semibold text-blue-700 hover:underline">
-              View chaplaincy levels and fees
-            </Link>
-          </p>
+        <div className="max-w-3xl mx-auto bg-white border border-blue-100 rounded-xl overflow-hidden sm:grid sm:grid-cols-[11rem_1fr]">
+          <Image
+            src={CHAPLAINCY_IMAGES[0].src}
+            alt={CHAPLAINCY_IMAGES[0].alt}
+            width={CHAPLAINCY_IMAGES[0].width}
+            height={CHAPLAINCY_IMAGES[0].height}
+            className="h-44 w-full object-cover sm:h-full"
+            sizes="(min-width: 640px) 11rem, 100vw"
+          />
+          <div className="p-6 sm:p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Chaplaincy</h2>
+            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+              Designated, Certified, and Professional Chaplain are a separate pathway. Registration is {formatUsd(CHAPLAINCY_FEES.registrationUsd)} (one-off) and ACBC membership is {formatUsd(CHAPLAINCY_FEES.acbcMembershipUsd)} per year.
+            </p>
+            <p className="text-sm">
+              <Link href={CHAPLAINCY_PATH} className="font-semibold text-blue-700 hover:underline">
+                View chaplaincy levels and fees
+              </Link>
+            </p>
+          </div>
         </div>
       </section>
 
