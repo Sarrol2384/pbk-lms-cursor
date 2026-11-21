@@ -3,24 +3,40 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { LEGACY_HEADING, LEGACY_PARAGRAPHS, LEGACY_TAGLINE } from './legacy.ts'
+import { LEGACY_HEADING, LEGACY_PARAGRAPHS, LEGACY_QUOTE, LEGACY_TAGLINE } from './legacy.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..')
 
-test('keeps the tribute to the supplied facts and the founder heading', () => {
+test('keeps the full tribute, the founder heading, and South African spelling', () => {
   assert.equal(LEGACY_HEADING, "In Memory of Rev. Percy Betani Kuzang'a (1952-1995)")
   assert.equal(LEGACY_TAGLINE, 'Raising Leaders. Shaping Nations. Preserving a Legacy.')
-  assert.equal(LEGACY_PARAGRAPHS.length, 3)
-  assert.match(LEGACY_PARAGRAPHS[0], /Luanshya|Zambia/)
-  assert.match(LEGACY_PARAGRAPHS[1], /Luanshya/)
-  assert.match(LEGACY_PARAGRAPHS[1], /students, executives, pastors, and political leaders/)
-  assert.match(LEGACY_PARAGRAPHS[2], /bookkeeper and mechanic/)
-  assert.match(LEGACY_PARAGRAPHS[2], /character, service, and impact/)
+  assert.equal(
+    LEGACY_QUOTE,
+    'True leadership is not defined by position, but by character, service, and impact.',
+  )
+  assert.ok(LEGACY_PARAGRAPHS.length >= 4 && LEGACY_PARAGRAPHS.length <= 6)
   const body = LEGACY_PARAGRAPHS.join('\n')
-  assert.equal(/\b(university|ordained|married|died|wife|children|SAQA|VAT)\b/i.test(body), false)
+  for (const phrase of [
+    'Luanshya',
+    'bookkeeper and mechanic',
+    'National Director of Life Ministry Zambia',
+    'first Zambian',
+    'institutionalise this legacy',
+    'centre for leadership formation',
+    'cut short in 1995',
+    'honouring the past',
+    'values he modelled',
+  ]) {
+    assert.match(body, new RegExp(phrase))
+  }
+  assert.equal(body.includes('institutionalize'), false)
+  assert.equal(/\b(SAQA accredited|VAT)\b/i.test(body), false)
 
   const about = readFileSync(join(root, 'src/app/(marketing)/about/page.tsx'), 'utf8')
+  const tribute = readFileSync(join(root, 'src/components/marketing/LegacyTribute.tsx'), 'utf8')
   assert.match(about, /LegacyTribute/)
+  assert.match(tribute, /id="legacy"/)
+  assert.match(tribute, /LEGACY_QUOTE/)
 })
 
 test('names the memoranda of understanding and leaves a logo TODO', () => {
