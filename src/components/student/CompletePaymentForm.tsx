@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { formatUsd } from '@/lib/tuition'
+import { INSTALMENT_TERMS } from '@/content/programme-fees'
+import { formatUsd, openingPaymentUsd } from '@/lib/tuition'
 
 const PLANS = [
   { months: 1, label: 'Pay in full' },
-  { months: 3, label: '3 monthly instalments' },
-  { months: 6, label: '6 monthly instalments' },
-  { months: 12, label: '12 monthly instalments' },
+  { months: 3, label: '3 month plan' },
+  { months: 6, label: '6 month plan' },
+  { months: 12, label: '12 month plan' },
 ]
 
 type Props = { enrollmentId: string; courseId: string; fee: number; durationMonths: number }
@@ -22,7 +23,6 @@ export default function CompletePaymentForm({ enrollmentId, courseId, fee, durat
 
   const maxDuration = durationMonths ?? 12
   const availablePlans = PLANS.filter(p => p.months <= maxDuration)
-  const monthlyAmount = selectedMonths > 1 ? Math.ceil(fee / selectedMonths) : fee
 
   async function submitPlan() {
     if (fee <= 0) {
@@ -57,10 +57,10 @@ export default function CompletePaymentForm({ enrollmentId, courseId, fee, durat
     <div className="space-y-4">
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <h2 className="font-semibold text-gray-900 mb-2">Choose your payment plan</h2>
-        <p className="text-sm text-gray-600 mb-4">Total course fee: <strong>{formatUsd(fee)}</strong> (USD). Select how you will pay, then upload your proof of payment below. Course access opens when the first instalment is recorded.</p>
+        <p className="text-sm text-gray-600 mb-4">Total course fee: <strong>{formatUsd(fee)}</strong> (USD). {INSTALMENT_TERMS} Select how you will pay, then upload your proof of payment below. Course access opens when the deposit is recorded.</p>
         <div className="space-y-2">
           {availablePlans.map(plan => {
-            const monthly = plan.months > 1 ? Math.ceil(fee / plan.months) : fee
+            const opening = openingPaymentUsd(fee, plan.months)
             return (
               <label
                 key={plan.months}
@@ -78,8 +78,8 @@ export default function CompletePaymentForm({ enrollmentId, courseId, fee, durat
                   <span className="text-sm font-medium text-gray-900">{plan.label}</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold text-gray-900">{formatUsd(monthly)}{plan.months > 1 ? '/mo' : ''}</p>
-                  {plan.months > 1 && <p className="text-xs text-gray-400">Total: {formatUsd(fee)}</p>}
+                  <p className="text-sm font-bold text-gray-900">{formatUsd(opening)}{plan.months > 1 ? ' deposit' : ''}</p>
+                  {plan.months > 1 && <p className="text-xs text-gray-400">Then monthly instalments for the balance</p>}
                 </div>
               </label>
             )

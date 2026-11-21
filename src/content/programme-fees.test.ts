@@ -9,6 +9,9 @@ import {
   CERTIFICATE_ONLY_PROGRAMME_ID,
   PROGRAMME_FEE_SCHEDULE,
   PROGRESSION_NOTES,
+  CHAPLAINCY_FEES,
+  CHAPLAINCY_PATH,
+  INSTALMENT_TERMS,
   RPL_REGISTRATION_USD,
   STANDARD_REGISTRATION_USD,
   STUDY_LEVEL_IDS,
@@ -49,8 +52,8 @@ const approved: Record<'academic' | 'theology', Record<StudyLevelId, { tuitionUs
   },
 }
 
-function sqlTuple(row: FeeScheduleRow): string {
-  const registration = row.registrationUsd == null ? 'NULL' : String(row.registrationUsd)
+function historicalSqlTuple(row: FeeScheduleRow): string {
+  const registration = isRplLevel(row.level) ? '100' : 'NULL'
   const offered = row.offeredOnProspectus ? 'true' : 'false'
   const name = row.name.replaceAll("'", "''")
   return `('${row.track}', '${row.level}', '${name}', ${row.tuitionUsd}, '${row.duration}', ${registration}, ${offered})`
@@ -79,17 +82,18 @@ describe('approved USD totals', () => {
     assert.equal(scheduleRow('theology', 'phd_rpl').name, 'PhD in Theology (RPL)')
   })
 
-  it('leaves standard registration unset and charges 100 for RPL only', () => {
-    assert.equal(STANDARD_REGISTRATION_USD, null)
+  it('charges 25 for standard registration on both tracks and 100 for RPL only', () => {
+    assert.equal(STANDARD_REGISTRATION_USD, 25)
     assert.equal(RPL_REGISTRATION_USD, 100)
     for (const row of PROGRAMME_FEE_SCHEDULE) {
       if (isRplLevel(row.level)) assert.equal(row.registrationUsd, 100)
-      else assert.equal(row.registrationUsd, null)
+      else assert.equal(row.registrationUsd, 25)
     }
-    assert.equal(registrationSentence('certificate', formatUsd), 'Registration for this programme has not been set.')
-    assert.equal(registrationSentence('bachelors', formatUsd), 'Registration for this programme has not been set.')
+    assert.equal(registrationSentence('certificate', formatUsd), 'Registration is $25.')
+    assert.equal(registrationSentence('bachelors', formatUsd), 'Registration is $25.')
     assert.equal(registrationSentence('masters_rpl', formatUsd), 'Registration is $100.')
     assert.equal(registrationSentence('phd_rpl', formatUsd), 'Registration is $100.')
+    assert.equal(INSTALMENT_TERMS, 'A deposit of 30% to 50% of the total fee, then monthly instalments for the balance.')
   })
 
   it('shows full USD prices, with no tax wording', () => {
@@ -161,7 +165,7 @@ describe('reviewed SQL', () => {
 
   it('inserts the same totals and does not update course fees', () => {
     for (const row of PROGRAMME_FEE_SCHEDULE) {
-      const tuple = sqlTuple(row)
+      const tuple = historicalSqlTuple(row)
       assert.equal(sql.split(tuple).length - 1, 1, tuple)
     }
     assert.match(sql, /INSERT INTO public\.registration_fee_config \(id, amount_usd, note\)\s*VALUES \(\s*'standard',\s*NULL,/)
@@ -171,6 +175,49 @@ describe('reviewed SQL', () => {
     for (const level of STUDY_LEVEL_IDS) {
       assert.match(sql, new RegExp(`'${level}'`))
     }
+  })
+})
+
+describe('standard registration follow-up', () => {
+  const sql = readFileSync(join(root, 'supabase/migrations/00037_standard_registration_usd.sql'), 'utf8')
+
+  it('sets 25 for non-RPL registration and leaves RPL at 100, without being applied here', () => {
+    assert.match(sql, /NOT APPLIED/)
+    assert.match(sql, /Do not run/)
+    assert.match(sql, /ownoxqbsdmhacalegsmr/)
+    assert.match(sql, /amount_usd = 25/)
+    assert.match(sql, /registration_usd = 25/)
+    assert.match(sql, /level NOT IN \('masters_rpl', 'phd_rpl'\)/)
+    assert.match(sql, /registration_usd IS DISTINCT FROM 100/)
+    assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /UPDATE\s+public\.courses/i)
+    assert.doesNotMatch(sql, /VAT/i)
+    assert.match(sql, /Chaplaincy certification fees are not stored here/)
+    assert.doesNotMatch(sql, /designated|professional chaplain/i)
+  })
+})
+
+describe('chaplaincy certification fees', () => {
+  it('keeps one source for registration, ACBC membership, and the three levels', () => {
+    assert.equal(CHAPLAINCY_PATH, '/chaplaincy')
+    assert.equal(CHAPLAINCY_FEES.registrationUsd, 50)
+    assert.equal(CHAPLAINCY_FEES.acbcMembershipUsd, 50)
+    assert.deepEqual(
+      CHAPLAINCY_FEES.levels.map(level => [level.id, level.feeUsd, level.entryRequirement, level.duration]),
+      [
+        ['designated', 80, 'Grade 12 (NQF 4) or higher', null],
+        ['certified', 150, 'Any theological diploma', '6 months'],
+        ['professional', 250, 'A degree', '1 year or more'],
+      ],
+    )
+  })
+
+  it('does not call the pathway SAQA accredited', () => {
+    const page = readFileSync(join(root, 'src/app/(marketing)/chaplaincy/page.tsx'), 'utf8')
+    assert.match(page, /globally accredited/)
+    assert.match(page, /CHAPLAINCY_FEES/)
+    assert.doesNotMatch(page, /SAQA accredited|NQF-aligned|VAT/i)
+    assert.match(page, /href="\/contact"/)
+    assert.match(page, /mailto:/)
   })
 })
 
@@ -214,6 +261,7 @@ describe('public catalogue still matches the ladders', () => {
       'src/components/marketing/FeeSchedule.tsx',
       'src/components/marketing/StudyPathwayTable.tsx',
       'src/components/marketing/PublicApplicationForm.tsx',
+      'src/app/(marketing)/chaplaincy/page.tsx',
     ]
     for (const page of pages) {
       const text = readFileSync(join(root, page), 'utf8')

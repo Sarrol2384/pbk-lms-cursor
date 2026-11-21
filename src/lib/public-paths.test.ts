@@ -14,6 +14,7 @@ test('keeps the existing public site open and the portals closed', () => {
     '/api/auth/callback',
     '/api/auth/signup',
     '/about',
+    '/chaplaincy',
     '/education',
     '/team',
     '/apply',

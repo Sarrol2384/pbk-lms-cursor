@@ -8,6 +8,7 @@ export const PUBLIC_PATH_PREFIXES = [
   '/api/auth/callback',
   '/api/auth/signup',
   '/about',
+  '/chaplaincy',
   '/education',
   '/team',
   '/apply',

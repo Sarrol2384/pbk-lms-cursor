@@ -91,19 +91,37 @@ export const INDAGATION_PARTNERSHIP = {
     'Access to TII services for research support, training and consultancy',
     'A trusted and legitimate research organisation',
   ],
-  email: 'indagationinstitute@gmail.com',
-  whatsAppDisplay: '+260 766 100 934',
-  whatsAppHref: 'https://wa.me/260766100934',
   slogan: 'Augmenting critical thinking and problem solving.',
   teaser:
     'PBK students can use research support from The Indagation Institute (TII), a strategic partner for quality research and academic excellence.',
 } as const
 
-export const INDAGATION_WHATSAPP_LINK = {
-  href: INDAGATION_PARTNERSHIP.whatsAppHref,
-  target: '_blank',
-  rel: 'noopener noreferrer',
-} as const
+/**
+ * Study photographs downloaded into the repo. Unsplash Licence: attribution is not required.
+ * Photographer names are not printed here because the download did not include them.
+ * Source files: photo-1481627834876-b7833e8f5570, photo-1434030216411-0b793f4b4173,
+ * photo-1517842645767-c639042777db.
+ */
+export const INDAGATION_IMAGES = [
+  {
+    src: '/research/library-shelves.webp',
+    alt: 'Bookshelves in a library',
+    width: 1200,
+    height: 1109,
+  },
+  {
+    src: '/research/study-desk.webp',
+    alt: 'A person writing notes at a desk',
+    width: 1200,
+    height: 800,
+  },
+  {
+    src: '/research/research-notes.webp',
+    alt: 'An open notebook with a pen and glasses',
+    width: 1200,
+    height: 800,
+  },
+] as const
 
 export const INDAGATION_META_DESCRIPTION =
   'The Indagation Institute (TII) and PBK Memorial Leadership Institute are strategic partners for quality research and academic excellence. Research support fees are in US dollars.'

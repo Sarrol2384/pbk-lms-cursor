@@ -1,5 +1,6 @@
-import { PROGRAMME_FEE_SCHEDULE, RPL_REGISTRATION_USD, type FeeTrack } from '@/content/programme-fees'
+import { PROGRAMME_FEE_SCHEDULE, RPL_REGISTRATION_USD, STANDARD_REGISTRATION_USD, type FeeTrack } from '@/content/programme-fees'
 import { formatUsd } from '@/lib/tuition'
+import { PaymentTerms } from '@/components/marketing/PaymentTerms'
 
 const tracks: { id: FeeTrack; title: string }[] = [
   { id: 'academic', title: 'Academic programmes' },
@@ -12,9 +13,10 @@ export function FeeSchedule() {
       <div className="text-center max-w-3xl mx-auto">
         <h2 className="text-2xl font-bold text-gray-900 mb-3">Programme fees</h2>
         <p className="text-sm text-gray-600 leading-relaxed">
-          Amounts are full totals in US dollars. Registration for Master&apos;s and PhD (RPL) is {formatUsd(RPL_REGISTRATION_USD)}.
-          Registration for other programmes has not been set.
+          Amounts are full totals in US dollars. Registration is {formatUsd(STANDARD_REGISTRATION_USD)} for academic and theology programmes other than Master&apos;s and PhD.
+          Registration for Master&apos;s and PhD (RPL) is {formatUsd(RPL_REGISTRATION_USD)}.
         </p>
+        <PaymentTerms className="text-sm text-gray-700 leading-relaxed mt-3" />
       </div>
       {tracks.map(track => {
         const rows = PROGRAMME_FEE_SCHEDULE.filter(row => row.track === track.id)
@@ -40,7 +42,7 @@ export function FeeSchedule() {
                     <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{row.duration}</td>
                     <td className="px-4 py-3 text-gray-900 whitespace-nowrap font-medium">{formatUsd(row.tuitionUsd)}</td>
                     <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
-                      {row.registrationUsd == null ? 'Not set' : formatUsd(row.registrationUsd)}
+                      {formatUsd(row.registrationUsd)}
                     </td>
                     <td className="px-4 py-3 text-gray-600">{row.offeredOnProspectus ? 'Yes' : 'No'}</td>
                   </tr>

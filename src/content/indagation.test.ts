@@ -1,14 +1,19 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { existsSync, readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import {
   INDAGATION_FEES,
+  INDAGATION_IMAGES,
   INDAGATION_META_DESCRIPTION,
   INDAGATION_PARTNERSHIP,
   INDAGATION_PATH,
-  INDAGATION_WHATSAPP_LINK,
   formatUsd,
 } from './indagation.ts'
 import { isPublicPath, PUBLIC_PATH_PREFIXES } from '../lib/public-paths.ts'
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '../..')
 
 const roundedFees = {
   bachelors: [160, 133, 160, 133],
@@ -76,11 +81,9 @@ test('uses the flyer partnership wording for PBK students', () => {
   assert.match(INDAGATION_PARTNERSHIP.about, /legitimate and reputable research organisation/)
   assert.match(INDAGATION_PARTNERSHIP.benefitsTitle, /PBK student/)
   assert.equal(INDAGATION_PARTNERSHIP.benefits.includes('Access to TII services for research support, training and consultancy'), true)
-  assert.equal(INDAGATION_PARTNERSHIP.email, 'indagationinstitute@gmail.com')
-  assert.equal(INDAGATION_PARTNERSHIP.whatsAppDisplay, '+260 766 100 934')
-  assert.equal(INDAGATION_WHATSAPP_LINK.href, 'https://wa.me/260766100934')
-  assert.equal(INDAGATION_WHATSAPP_LINK.target, '_blank')
-  assert.equal(INDAGATION_WHATSAPP_LINK.rel, 'noopener noreferrer')
+  assert.equal('email' in INDAGATION_PARTNERSHIP, false)
+  assert.equal('whatsAppDisplay' in INDAGATION_PARTNERSHIP, false)
+  assert.equal('whatsAppHref' in INDAGATION_PARTNERSHIP, false)
   assert.equal(INDAGATION_PARTNERSHIP.slogan, 'Augmenting critical thinking and problem solving.')
   assert.equal(INDAGATION_PARTNERSHIP.about.includes('LCBMU'), false)
 })
@@ -92,6 +95,22 @@ test('does not claim SAQA, NQF, SETA, or VAT on the partnership page', () => {
     INDAGATION_META_DESCRIPTION,
   })
   assert.equal(/\b(SAQA|NQF|SETA|VAT)\b/i.test(text), false)
+})
+
+test('sends research enquiries to PBK and keeps the photographs in the repo', () => {
+  const page = readFileSync(join(root, 'src/app/(marketing)/research-support/page.tsx'), 'utf8')
+  const published = `${page}\n${JSON.stringify(INDAGATION_PARTNERSHIP)}`
+  assert.equal(published.includes('indagationinstitute@gmail.com'), false)
+  assert.equal(published.includes('766'), false)
+  assert.equal(published.includes('wa.me'), false)
+  assert.match(page, /supportEmail/)
+  assert.match(page, /href="\/contact"/)
+  assert.match(page, /from 'next\/image'/)
+  assert.match(page, /INDAGATION_IMAGES/)
+  assert.equal(INDAGATION_IMAGES.length, 3)
+  for (const image of INDAGATION_IMAGES) {
+    assert.equal(existsSync(join(root, 'public', image.src.replace(/^\//, ''))), true, image.src)
+  }
 })
 
 test('publishes the research support page to signed-out visitors', () => {

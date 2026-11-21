@@ -5,6 +5,30 @@
 
 export const USD_BANKING_NOTE = 'Contact PBK Admin for USD banking details before payment'
 
+/**
+ * Minimum share of the total fee taken as the opening deposit on an instalment
+ * plan. Matches the published terms in programme-fees.ts: a deposit of 30% to
+ * 50%, then monthly instalments for the balance. Pay in full is not capped.
+ */
+export const MINIMUM_DEPOSIT_RATIO = 0.3
+
+/**
+ * Opening payment for a plan of `totalInstallments` months.
+ * One month is pay in full. Otherwise the opening amount is the greater of an
+ * equal share and 30% of the fee. Existing month counts are 1, 3, 6, and 12.
+ * This does not add a month count. A stored instalment amount on an older plan
+ * is left to `firstInstallmentDue`.
+ */
+export function openingPaymentUsd(totalDue: number, totalInstallments: number): number {
+  const due = Math.max(0, Math.round(Number.isFinite(totalDue) ? totalDue : 0))
+  const count = Math.max(1, Math.round(Number.isFinite(totalInstallments) ? totalInstallments : 1) || 1)
+  if (due === 0) return 0
+  if (count <= 1) return due
+  const equalShare = Math.ceil(due / count)
+  const minimumDeposit = Math.ceil(due * MINIMUM_DEPOSIT_RATIO)
+  return Math.max(equalShare, minimumDeposit)
+}
+
 export type PaymentSlice = {
   amount?: number | null
   amount_paid?: number | null

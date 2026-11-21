@@ -3,13 +3,16 @@ import { PageHero } from '@/components/marketing/PageHero'
 import { CTABand } from '@/components/marketing/CTABand'
 import { StudyPathwayTable } from '@/components/marketing/StudyPathwayTable'
 import { Prospectus } from '@/components/marketing/Prospectus'
+import Link from 'next/link'
 import {
   academicPathwayRows,
   studyPathwayIntro,
   studyProgressionNotes,
   theologyPathwayRows,
 } from '@/content/marketing'
+import { CHAPLAINCY_FEES, CHAPLAINCY_PATH, INSTALMENT_TERMS, RPL_REGISTRATION_USD, STANDARD_REGISTRATION_USD } from '@/content/programme-fees'
 import { INSTITUTE_MOTTO, INSTITUTE_NAME } from '@/lib/institute'
+import { formatUsd } from '@/lib/tuition'
 
 export const metadata: Metadata = {
   title: '2027 Prospectus',
@@ -61,9 +64,23 @@ export default function EducationPage() {
         </div>
       </section>
 
+      <section className="py-12 sm:py-16 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto bg-white border border-blue-100 rounded-xl p-6 sm:p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Chaplaincy</h2>
+          <p className="text-gray-600 text-sm leading-relaxed mb-4">
+            Designated, Certified, and Professional Chaplain are a separate pathway. Registration is {formatUsd(CHAPLAINCY_FEES.registrationUsd)} (one-off) and ACBC membership is {formatUsd(CHAPLAINCY_FEES.acbcMembershipUsd)} per year.
+          </p>
+          <p className="text-sm">
+            <Link href={CHAPLAINCY_PATH} className="font-semibold text-blue-700 hover:underline">
+              View chaplaincy levels and fees
+            </Link>
+          </p>
+        </div>
+      </section>
+
       <section className="py-12 px-4 bg-blue-50 border-y border-blue-100">
-        <div className="max-w-3xl mx-auto text-center text-sm text-gray-600">
-          Programme fees above are the full totals in US dollars. Registration for programmes other than Master&apos;s and PhD (RPL) has not been set. Current students sign in to the portal to continue an enrolment.
+        <div className="max-w-3xl mx-auto text-center text-sm text-gray-600 leading-relaxed">
+          Programme fees above are the full totals in US dollars. Registration is {formatUsd(STANDARD_REGISTRATION_USD)} for academic and theology programmes other than Master&apos;s and PhD, and {formatUsd(RPL_REGISTRATION_USD)} for Master&apos;s and PhD (RPL). {INSTALMENT_TERMS} Current students sign in to the portal to continue an enrolment.
         </div>
       </section>
 

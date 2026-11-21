@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { INSTALMENT_TERMS } from '@/content/programme-fees'
 
 type Course = { id: string; title: string; fee: number | null; duration_months: number | null }
 
@@ -52,7 +53,7 @@ export default function EnrollForm({ course, userId }: { course: Course; userId:
           <li>Submit your application below</li>
           <li>Wait for an administrator to approve it. You will get an email</li>
           <li>After approval, choose a payment plan and upload proof of payment</li>
-          <li>After your first instalment is verified, you can start the course. Fees are in US dollars</li>
+          <li>After your deposit is verified, you can start the course. {INSTALMENT_TERMS} Fees are in US dollars</li>
         </ol>
       </div>
 
