@@ -1,4 +1,4 @@
-import { LEGACY_HEADING, LEGACY_PARAGRAPHS, LEGACY_TAGLINE } from '@/content/legacy'
+import { LEGACY_HEADING, LEGACY_PARAGRAPHS, LEGACY_QUOTE, LEGACY_TAGLINE } from '@/content/legacy'
 
 export function LegacyTribute() {
   const yearsAt = LEGACY_HEADING.lastIndexOf('(')
@@ -13,6 +13,9 @@ export function LegacyTribute() {
           {years ? <span className="whitespace-nowrap">{years}</span> : null}
         </h2>
         <p className="font-serif text-lg sm:text-xl text-blue-100 mb-6">{LEGACY_TAGLINE}</p>
+        <blockquote className="border-l-4 border-blue-300 pl-4 mb-8">
+          <p className="font-serif text-lg sm:text-xl text-white leading-snug">{LEGACY_QUOTE}</p>
+        </blockquote>
         <div className="space-y-4">
           {LEGACY_PARAGRAPHS.map(paragraph => (
             <p key={paragraph} className="text-blue-100 leading-relaxed">{paragraph}</p>
