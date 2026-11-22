@@ -15,7 +15,7 @@ export type EventValue = {
 export const GRADUATION_START = '2027-04-03T09:00:00+02:00'
 export const CHAPLAINCY_LAUNCH_LABEL = '4 April 2027'
 export const CHAPLAINCY_LAUNCH_NOTE =
-  'The Chaplaincy launch is on 4 April 2027, the day after graduation.'
+  'The Chaplaincy launch is on 4 April 2027, the day after graduation. Venue to be confirmed. The time is not confirmed.'
 export type InstituteEvent = {
   slug: string
   title: string
