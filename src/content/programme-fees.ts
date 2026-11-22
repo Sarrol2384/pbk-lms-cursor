@@ -88,7 +88,7 @@ export const CHAPLAINCY_FEES: {
       name: 'Designated Chaplain',
       feeUsd: 80,
       entryRequirement: 'Grade 12 (NQF 4) or higher',
-      duration: null,
+      duration: '1 month',
     },
     {
       id: 'certified',

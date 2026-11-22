@@ -84,7 +84,7 @@ export default async function HomePage() {
             <Link href="/about" className="text-blue-700 hover:underline">mission</Link>,{' '}
             <Link href="/education" className="text-blue-700 hover:underline">programmes</Link>,{' '}
             <Link href="/team" className="text-blue-700 hover:underline">leadership team</Link>,{' '}
-            <Link href={INDAGATION_PARTNERSHIP.path} className="text-blue-700 hover:underline">research support</Link>, and{' '}
+            <Link href={INDAGATION_PARTNERSHIP.path} className="text-blue-700 hover:underline">Research Support</Link>, and{' '}
             <Link href="/events" className="text-blue-700 hover:underline">events</Link>.
           </p>
           <div className="grid sm:grid-cols-3 gap-6">
@@ -103,6 +103,15 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
+          <Link
+            href={INDAGATION_PARTNERSHIP.path}
+            className="mt-6 block rounded-xl border border-blue-100 bg-white p-6 hover:border-blue-300"
+          >
+            <h3 className="font-semibold text-gray-900 mb-1">Research Support</h3>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Dissertation and thesis support, including proposals, data analysis, report writing and research consultancy. Fees are in US dollars.
+            </p>
+          </Link>
         </div>
       </section>
 

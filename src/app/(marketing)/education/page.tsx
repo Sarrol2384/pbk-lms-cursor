@@ -12,6 +12,7 @@ import {
   theologyPathwayRows,
 } from '@/content/marketing'
 import { CHAPLAINCY_IMAGES } from '@/content/chaplaincy-media'
+import { INDAGATION_PATH } from '@/content/indagation'
 import { CHAPLAINCY_FEES, CHAPLAINCY_PATH, INSTALMENT_TERMS, RPL_REGISTRATION_USD, STANDARD_REGISTRATION_USD } from '@/content/programme-fees'
 import { INSTITUTE_MOTTO, INSTITUTE_NAME } from '@/lib/institute'
 import { formatUsd } from '@/lib/tuition'
@@ -87,6 +88,20 @@ export default function EducationPage() {
               </Link>
             </p>
           </div>
+        </div>
+      </section>
+
+      <section className="pb-12 sm:pb-16 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto bg-white border border-blue-100 rounded-xl p-6 sm:p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Research Support</h2>
+          <p className="text-gray-600 text-sm leading-relaxed mb-4">
+            Dissertation and thesis support for proposals, data analysis, report writing and research consultancy. Fees are in US dollars and are separate from PBK programme fees.
+          </p>
+          <p className="text-sm">
+            <Link href={INDAGATION_PATH} className="font-semibold text-blue-700 hover:underline">
+              View research support and fees
+            </Link>
+          </p>
         </div>
       </section>
 

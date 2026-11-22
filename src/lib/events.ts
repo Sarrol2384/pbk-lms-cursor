@@ -56,7 +56,7 @@ export function nextUpcomingEvent(list: readonly InstituteEvent[], now: Date): I
   return partitionEvents(list, now).upcoming[0] ?? null
 }
 
-/** South African English date and time, without the weekday. On the hour: "12 December 2026, 9am". */
+/** South African English date and time, without the weekday. On the hour: "3 April 2027, 9am". */
 export function formatEventWhen(iso: string): string {
   const date = new Date(iso)
   const datePart = new Intl.DateTimeFormat('en-GB', {

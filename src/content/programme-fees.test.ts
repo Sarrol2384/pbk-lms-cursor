@@ -204,7 +204,7 @@ describe('chaplaincy certification fees', () => {
     assert.deepEqual(
       CHAPLAINCY_FEES.levels.map(level => [level.id, level.feeUsd, level.entryRequirement, level.duration]),
       [
-        ['designated', 80, 'Grade 12 (NQF 4) or higher', null],
+        ['designated', 80, 'Grade 12 (NQF 4) or higher', '1 month'],
         ['certified', 150, 'Any theological diploma', '6 months'],
         ['professional', 250, 'A degree', '1 year or more'],
       ],

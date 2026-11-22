@@ -249,11 +249,15 @@ export const partnerLogos = [
 // QCTO and ETDP SETA logos are not shown. Both are South African NQF quality bodies,
 // so displaying them implied that PBK qualifications are SAQA registered. They are not.
 
-/** Center nav only — Apply is the blue button on the right.
- * Research support stays on the phone menu and footer so the institute name still fits. */
+/** Center nav. Apply is the blue button on the right. */
 export const chaplaincyLink = {
   href: CHAPLAINCY_PATH,
   label: 'Chaplaincy',
+} as const
+
+export const researchSupportLink = {
+  href: INDAGATION_PATH,
+  label: 'Research Support',
 } as const
 
 export const mainNavLinks = [
@@ -261,27 +265,14 @@ export const mainNavLinks = [
   { href: '/about', label: 'About' },
   { href: '/education', label: 'Education' },
   chaplaincyLink,
+  researchSupportLink,
   { href: '/team', label: 'Our Team' },
   { href: '/events', label: 'Events' },
   { href: '/contact', label: 'Contact' },
 ] as const
 
-export const researchSupportLink = {
-  href: INDAGATION_PATH,
-  label: 'Research support',
-} as const
-
-/** Phone menu and footer. The desktop bar stays on mainNavLinks so the institute name is not truncated. */
-export const mobileNavLinks = [
-  mainNavLinks[0],
-  mainNavLinks[1],
-  mainNavLinks[2],
-  chaplaincyLink,
-  researchSupportLink,
-  mainNavLinks[4],
-  mainNavLinks[5],
-  mainNavLinks[6],
-] as const
+/** Phone menu uses the same links as the desktop bar. The footer adds Apply. */
+export const mobileNavLinks = mainNavLinks
 
 export const navLinks = [
   ...mobileNavLinks,
