@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { PageHero } from '@/components/marketing/PageHero'
 import { PaymentTerms } from '@/components/marketing/PaymentTerms'
 import { CHAPLAINCY_IMAGES } from '@/content/chaplaincy-media'
+import { CHAPLAINCY_LAUNCH_LABEL, CHAPLAINCY_LAUNCH_NOTE } from '@/content/events'
 import { CHAPLAINCY_FEES } from '@/content/programme-fees'
 import { INSTITUTE_NAME, supportEmail } from '@/lib/institute'
 import { formatUsd } from '@/lib/tuition'
@@ -11,7 +12,7 @@ import { formatUsd } from '@/lib/tuition'
 export const metadata: Metadata = {
   title: 'Chaplaincy',
   description:
-    'Designated, Certified, and Professional Chaplain at PBK. Fees are in US dollars. Registration is a one-off amount, and ACBC membership is yearly.',
+    `Designated, Certified, and Professional Chaplain at PBK. The Chaplaincy launch is on ${CHAPLAINCY_LAUNCH_LABEL}. Fees are in US dollars.`,
 }
 
 export default function ChaplaincyPage() {
@@ -31,6 +32,9 @@ export default function ChaplaincyPage() {
           </p>
           <p>
             PBK programmes are globally accredited. They are not registered with the South African Qualifications Authority (SAQA). Grade 12 (NQF 4) in the table is the applicant&apos;s school qualification.
+          </p>
+          <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-blue-950">
+            {CHAPLAINCY_LAUNCH_NOTE}
           </p>
         </div>
         <ul className="max-w-5xl mx-auto mt-10 grid gap-4 sm:grid-cols-3">

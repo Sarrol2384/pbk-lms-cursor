@@ -27,6 +27,7 @@ export function EventCard({ event, past = false }: { event: InstituteEvent; past
           <h3 className="text-xl font-bold text-gray-900 mt-1 group-hover:text-blue-800">{event.title}</h3>
           <p className="text-gray-600 mt-2">{event.tagline}</p>
           <p className="text-sm text-gray-500 mt-3">{event.venue}</p>
+          {event.notice ? <p className="text-sm text-gray-700 mt-3">{event.notice}</p> : null}
           <span className="mt-4 text-sm font-semibold text-blue-700">View event</span>
         </div>
       </Link>

@@ -38,6 +38,7 @@ export function UpcomingEventStrip({ event }: { event: InstituteEvent }) {
               </h3>
               <p className="text-gray-600 mt-2">{event.tagline}</p>
               <p className="text-sm text-gray-500 mt-3">{event.venue}</p>
+              {event.notice ? <p className="text-sm text-gray-700 mt-3">{event.notice}</p> : null}
               <span className="mt-5 text-sm font-semibold text-blue-700">View event</span>
             </div>
           </Link>
